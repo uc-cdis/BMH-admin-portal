@@ -10,21 +10,23 @@ $(document).ready(function() {
 
     $("#click-me").on("click", function(e) {
         $("#response-alert").fadeToggle("slow")
-    })
+    });
 
-    $("#request-workspace-form").on("submit", function(e) {
+
+    $("#request-form-submit-button").on("click", function(e) {
         e.preventDefault();
         e.stopPropagation();
 
         if (!(this.checkValidity() === false)) {
             $.ajax({
-                url: 'https://ler9l6w54b.execute-api.us-east-1.amazonaws.com/store-request-info',
+                url: '<< ENTER URL HERE >>',
                 type: 'POST',
+                contentType:'application/json',
                 crossDomain: true,
-                data: $(this).serialize(),
+                data: JSON.stringify( $('#request-workspace-form').serializeArray() ),
                 success:function(result) {
                     var ele = $("#response-alert");
-                    ele.html("Success! Created Workspace: " + result['workspace_id']);
+                    ele.html("Success! Recieved request: " + result['request_id']);
                     ele.removeClass("alert-error alert-success");
                     ele.addClass("alert-success");
                     ele.fadeIn(1000);
@@ -34,6 +36,7 @@ $(document).ready(function() {
                 },
                 error: function(xhr, result) {
                     var ele = $("#response-alert");
+                    console.log(result)
                     ele.html("There was an error submitting your request. Please try again later.");
                     ele.removeClass("alert-danger alert-success");
                     ele.addClass("alert-danger");
@@ -45,7 +48,9 @@ $(document).ready(function() {
             })
         }
 
-        this.classList.add('was-validated');
+        $('#request-workspace-request-form').addClass('was-validated');
     })
+
+
 
 });

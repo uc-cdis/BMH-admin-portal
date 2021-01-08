@@ -7,6 +7,7 @@ from request_workspace_ui.request_workspace_ui_stack import RequestWorkspaceUiSt
 
 
 app = core.App()
+
 RequestWorkspaceBackendStack(app, "request-workspace-backend")
 RequestWorkspaceUiStack(app, "request-workspace-ui")
 

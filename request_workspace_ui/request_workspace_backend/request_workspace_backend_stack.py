@@ -1,69 +1,87 @@
+import json
+
 from aws_cdk import (
     core,
-    aws_dynamodb as dynamodb,
-    aws_ssm as ssm,
     aws_lambda as lambda_,
-    aws_apigatewayv2 as apigateway,
-    aws_apigatewayv2_integrations as apigateway_integrations
+    aws_apigateway as apigateway,
+    aws_logs as logs,
+    aws_iam as iam
 )
 
+from .stepfunctions_workflow import StepFunctionsWorkflow
 
 class RequestWorkspaceBackendStack(core.Stack):
-
     def __init__(self, scope: core.Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
+        
+        sf_workflow = StepFunctionsWorkflow(self, 'request-workspace-workflow')
 
-        # Create the dynamodb table and store the name in SystemsManager
-        # as a Parameter.
-        dynamodb_table = dynamodb.Table(
-            self, "Gen3WorkspaceRegistrationTable",
-            partition_key=dynamodb.Attribute(name="organization", type=dynamodb.AttributeType.STRING),
-            sort_key=dynamodb.Attribute(name="workspace_id", type=dynamodb.AttributeType.STRING),
-            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
-            encryption=dynamodb.TableEncryption.AWS_MANAGED
+        ## Create a role for the API Integration
+        api_role = iam.Role(
+            self, "api-role-for-step-fn",
+            description="Role for BMH API to control StepFn State Machine",
+            role_name="bmh-api-to-stepfn",
+            assumed_by=iam.ServicePrincipal("apigateway.amazonaws.com")
         )
+        sf_workflow.state_machine.grant_start_execution(api_role)
 
-        table_name_param = ssm.StringParameter(
-            self, "workspace-registration-table",
-            description="Dynamodb Table Name for Workspace Registration Info",
-            parameter_name="/bmh/workspace-registration-dynamodb-table",
-            string_value=dynamodb_table.table_name
-        )
-
-        # Create backend function to store data into dynamodb table.
-        store_info_function = lambda_.Function(
-            self, 'StoreRegistrationInfoFunction',
-            runtime=lambda_.Runtime.PYTHON_3_8,
-            code=lambda_.Code.asset('lambda'),
-            handler='store_workspace_registration_info.handler'
-        )
-
-        # Grant the lambda access to write to the dynamodb table
-        # and read the parameter
-        dynamodb_table.grant_read_write_data(store_info_function)
-        table_name_param.grant_read(store_info_function)
-
-        http_api = apigateway.HttpApi(
-            self, "store-registration-info",
-            cors_preflight={
-                "allow_origins": ["*"], # We should probably make this something more specific when we know what it should be.
+        log_group = logs.LogGroup(self, 'bmh-api-loggroup')
+        api = apigateway.RestApi(
+            self, 'workspace-request-api',
+            deploy_options=apigateway.StageOptions(
+                data_trace_enabled=True,
+                logging_level=apigateway.MethodLoggingLevel.INFO,
+                metrics_enabled=True,
+                access_log_destination=apigateway.LogGroupLogDestination(log_group),
+                stage_name="test"
+            ),
+            default_cors_preflight_options={
+                "allow_origins": apigateway.Cors.ALL_ORIGINS
             }
         )
 
-        lambda_integration = apigateway_integrations.LambdaProxyIntegration(
-            handler=store_info_function
+        mapping_template = {
+            'application/json': json.dumps({
+                'stateMachineArn': sf_workflow.state_machine.state_machine_arn,
+                'input': "$util.escapeJavaScript($input.json('$'))"
+            })
+        }
+
+        integration_response = [apigateway.IntegrationResponse(
+            selection_pattern = '200',
+            status_code = '200',
+            response_parameters = {
+                'method.response.header.access-control-allow-origin': "'*'"
+            },
+            response_templates = {
+                'application/json': "$input.json('$')"
+            }
+        )]
+
+        workspace_request = api.root.add_resource("workspace-request")
+        step_functions_integration = apigateway.AwsIntegration(
+            service='states', 
+            action='StartExecution',
+            options=apigateway.IntegrationOptions(
+                passthrough_behavior=apigateway.PassthroughBehavior.WHEN_NO_TEMPLATES,
+                request_templates=mapping_template,
+                integration_responses=integration_response,
+                credentials_role=api_role
+            )
         )
 
-        http_api.add_routes(
-            path="/store-request-info",
-            methods=[apigateway.HttpMethod.POST],
-            integration=lambda_integration
-        )
-
-        ssm.StringParameter(
-            self, "workspace-registration-url",
-            description="API URI for storing workspace registration details",
-            parameter_name="/bmh/workspace-registration-url",
-            string_value=http_api.url
-        )
+        method_response = [apigateway.MethodResponse(
+                status_code='200',
+                response_parameters={
+                    'method.response.header.access-control-allow-origin': True
+                },
+                response_models={
+                    'application/json': apigateway.EmptyModel()
+                }
+        )]
         
+        workspace_request.add_method(
+            "POST", step_functions_integration, 
+            method_responses=method_response
+        )
+       

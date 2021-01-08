@@ -28,6 +28,11 @@ setuptools.setup(
         "aws-cdk.aws-ssm",
         "aws-cdk.aws-apigatewayv2",
         "aws-cdk.aws-apigatewayv2-integrations",
+        "aws-cdk.aws-stepfunctions",
+        "aws-cdk.aws-stepfunctions-tasks",
+        "aws-cdk.aws-logs",
+        "aws-cdk.aws-events",
+        "aws-cdk.aws-events-targets"
     ],
 
     python_requires=">=3.6",

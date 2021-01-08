@@ -7,8 +7,11 @@ There are 2 Stacks defined: `request-workspace-backend` and `request-workspace-u
 
 This stack generates the CloudFormation templates which deploy the following resources:
 * DynamoDB for persisting request information.
-* Lambda function which recieves input from the form and persists to DynamoDB
 * API Gateway HTTP API endpoint for receiving requests from the frontend.
+* Step Functions worklow which orchestrates the backend workspace request process
+
+*Note*: This also deploys a lambda function which automatically polls for new approval activities every 1 minute. This
+will work for development. And should be turned off (in EventBridge, under Rules) to avoid unnecessary Lambda polling.
 
 ## Stack request-workspace-ui
 
