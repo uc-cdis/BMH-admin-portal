@@ -19,7 +19,7 @@ $(document).ready(function() {
 
         if (!(this.checkValidity() === false)) {
             $.ajax({
-                url: '<< ENTER URL HERE >>',
+                url: '{{ api_url }}{{ resource_name }}',
                 type: 'POST',
                 contentType:'application/json',
                 crossDomain: true,

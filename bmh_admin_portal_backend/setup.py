@@ -6,7 +6,7 @@ with open("README.md") as fp:
 
 
 setuptools.setup(
-    name="request_workspace_ui",
+    name="bmh_admin_portal_backend",
     version="0.0.1",
 
     description="An empty CDK Python app",
@@ -15,24 +15,20 @@ setuptools.setup(
 
     author="author",
 
-    package_dir={"": "request_workspace_ui"},
-    packages=setuptools.find_packages(where="request_workspace_ui"),
+    package_dir={"": "bmh_admin_portal_backend"},
+    packages=setuptools.find_packages(where="bmh_admin_portal_backend"),
 
     install_requires=[
-        "aws-cdk.core",
-        "aws-cdk.aws-s3",
-        "aws-cdk.aws-s3-deployment",
-        "aws-cdk.aws-cloudfront",
-        "aws-cdk.aws-cloudfront-origins",
-        "aws-cdk.aws-dynamodb",
-        "aws-cdk.aws-ssm",
-        "aws-cdk.aws-apigatewayv2",
-        "aws-cdk.aws-apigatewayv2-integrations",
-        "aws-cdk.aws-stepfunctions",
-        "aws-cdk.aws-stepfunctions-tasks",
+        "aws-cdk.core==1.82.0",
+        "aws-cdk.aws-apigateway",
         "aws-cdk.aws-logs",
+        "aws-cdk.aws-lambda",
+        "aws-cdk.aws-ssm",
+        "aws-cdk.aws-iam",
         "aws-cdk.aws-events",
-        "aws-cdk.aws-events-targets"
+        "aws-cdk.aws-events-targets",
+        "aws-cdk.aws-stepfunctions",
+        "aws-cdk.aws-stepfunctions-tasks"
     ],
 
     python_requires=">=3.6",

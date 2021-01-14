@@ -7,9 +7,9 @@ from aws_cdk import (
 )
 
 
-class RequestWorkspaceUiStack(core.Stack):
+class BmhAdminPortalUiStack(core.Stack):
 
-    def __init__(self, scope: core.Construct, construct_id: str,
+    def __init__(self, scope: core.Construct, construct_id: str, webui_distdir: str,
                  **kwargs) -> None:
 
         super().__init__(scope, construct_id, **kwargs)
@@ -30,7 +30,7 @@ class RequestWorkspaceUiStack(core.Stack):
 
         deployment = s3_deployment.BucketDeployment(
             self, "DeployRequestWorksapceUI",
-            sources=[s3_deployment.Source.asset("./webui-dist")],
+            sources=[s3_deployment.Source.asset(webui_distdir)],
             destination_bucket=request_ui_bucket,
             distribution=cf_distribution,
             server_side_encryption=s3_deployment.ServerSideEncryption.AES_256,

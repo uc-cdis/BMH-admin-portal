@@ -5,12 +5,13 @@ from aws_cdk import (
     aws_lambda as lambda_,
     aws_apigateway as apigateway,
     aws_logs as logs,
-    aws_iam as iam
+    aws_iam as iam,
+    aws_ssm as ssm
 )
 
 from .stepfunctions_workflow import StepFunctionsWorkflow
 
-class RequestWorkspaceBackendStack(core.Stack):
+class BmhAdminPortalBackendStack(core.Stack):
     def __init__(self, scope: core.Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
         
@@ -40,6 +41,14 @@ class RequestWorkspaceBackendStack(core.Stack):
             }
         )
 
+        # Store the API URL in SSM parameter store 
+        ssm.StringParameter(
+            self, "workspace-requests-api-url-parameter",
+            description="API URL for workspace request API",
+            parameter_name="/bmh/workspace-request-api-url",
+            string_value=api.url
+        )
+
         mapping_template = {
             'application/json': json.dumps({
                 'stateMachineArn': sf_workflow.state_machine.state_machine_arn,
@@ -58,7 +67,16 @@ class RequestWorkspaceBackendStack(core.Stack):
             }
         )]
 
+        # Create the REST API resource
+        resource_name = "workspace-request"
         workspace_request = api.root.add_resource("workspace-request")
+        ssm.StringParameter(
+            self, "workspace-requests-api-resource-parameter",
+            description="Resource name for requesting workspaces",
+            parameter_name="/bmh/workspace-request-api-resource-name",
+            string_value=resource_name
+        )
+
         step_functions_integration = apigateway.AwsIntegration(
             service='states', 
             action='StartExecution',
