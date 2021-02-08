@@ -19,6 +19,7 @@ setuptools.setup(
     packages=setuptools.find_packages(where="bmh_admin_portal_backend"),
 
     install_requires=[
+        "boto3",
         "aws-cdk.core==1.82.0",
         "aws-cdk.aws-apigateway",
         "aws-cdk.aws-logs",
@@ -28,7 +29,11 @@ setuptools.setup(
         "aws-cdk.aws-events",
         "aws-cdk.aws-events-targets",
         "aws-cdk.aws-stepfunctions",
-        "aws-cdk.aws-stepfunctions-tasks"
+        "aws-cdk.aws-stepfunctions-tasks",
+        "aws-cdk.aws-cognito",
+        "aws-cdk.aws-sqs",
+        
+        "warrant"
     ],
 
     python_requires=">=3.6",

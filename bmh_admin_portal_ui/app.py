@@ -10,16 +10,24 @@ from webui_src.build import BmhWebUiBuilder
 
 # Create logger
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 def main():
     # Build the static site, then create the Cfn to deploy it.
-    api_url = get_ssm_parameter_value("/bmh/workspace-request-api-url")
-    resource_name = get_ssm_parameter_value("/bmh/workspace-request-api-resource-name")
+    api_url = get_ssm_parameter_value("/bmh/workspaces-api/url")
+    resource_name = get_ssm_parameter_value("/bmh/workspaces-api/resource-name")
+
+    user_pool_id = get_ssm_parameter_value("/bmh/cognito-userpool-id")
+    user_pool_client_id = get_ssm_parameter_value("/bmh/cognito-appclient-id")
+
+    region = boto3.session.Session().region_name
 
     template_vars = {
         'api_url':api_url, 
-        'resource_name':resource_name
+        'resource_name':resource_name,
+        'user_pool_id':user_pool_id,
+        'user_pool_client_id':user_pool_client_id,
+        'region':region
     }
     dist_dir = "./webui_dist"
 

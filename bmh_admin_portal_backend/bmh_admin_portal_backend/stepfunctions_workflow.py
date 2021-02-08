@@ -21,8 +21,8 @@ class StoreRequestInfoConstruct(core.Construct):
         # as a Parameter.
         dynamodb_table = dynamodb.Table(
             self, "workspace-requests-table",
-            partition_key=dynamodb.Attribute(name="organization", type=dynamodb.AttributeType.STRING),
-            sort_key=dynamodb.Attribute(name="request_id", type=dynamodb.AttributeType.STRING),
+            partition_key=dynamodb.Attribute(name="user_id", type=dynamodb.AttributeType.STRING),
+            sort_key=dynamodb.Attribute(name="bmh_workspace_id", type=dynamodb.AttributeType.STRING),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             encryption=dynamodb.TableEncryption.AWS_MANAGED
         )
@@ -73,7 +73,7 @@ class RequestApprovalActivity(core.Construct):
             runtime=lambda_.Runtime.PYTHON_3_8,
             code=lambda_.Code.asset('lambda/poll_approval_tasks'),
             handler='poll_approval_tasks.handler',
-            timeout=core.Duration.seconds(80) # The polling will take at most 60 seconds.
+            timeout=core.Duration.seconds(180) # The polling will take at most 60 seconds.
         )
 
         # Grant the lambda function read permission to the parameter
@@ -87,7 +87,7 @@ class RequestApprovalActivity(core.Construct):
         )
 
         # Create a schedule for the lambda to run
-        lambda_schedule = events.Schedule.rate(core.Duration.minutes(1))
+        lambda_schedule = events.Schedule.rate(core.Duration.minutes(3))
 
         # And a target for the Rule
         event_lambda_target = events_targets.LambdaFunction(handler=poll_for_approval_tasks)
@@ -121,14 +121,14 @@ class ApproveDenyTask(core.Construct):
             self, 'sfn-approve-request',
             lambda_function=approve_deny_lambda,
             payload_response_only=True,
-            result_path=None
+            result_path=stepfunctions.JsonPath.DISCARD
         )
 
         self.deny_task = sfn_tasks.LambdaInvoke(
             self, 'sfn-deny-request',
             lambda_function=approve_deny_lambda,
             payload_response_only=True,
-            result_path=None
+            result_path=stepfunctions.JsonPath.DISCARD
         )
 
 class SetupWorkspaceTask(core.Construct):
@@ -150,7 +150,7 @@ class SetupWorkspaceTask(core.Construct):
             self, 'create-workspace-task',
             lambda_function=create_workspace_lambda,
             payload_response_only=True,
-            result_path=None
+            result_path=stepfunctions.JsonPath.DISCARD
         )
 
 class StepFunctionsWorkflow(core.Construct):
@@ -212,3 +212,5 @@ class StepFunctionsWorkflow(core.Construct):
         )
 
         self.state_machine = state_machine
+        self.dynamodb_table = sri_construct.dynamodb_table
+        self.table_name_param = sri_construct.table_name_param

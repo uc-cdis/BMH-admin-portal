@@ -13,7 +13,11 @@ class BmhWebUiBuilder():
     CDK application or as an executable directly. """
 
     render_files = [
-        'js/default.js'
+        'js/config.js',
+        'request_workspace.html',
+        'signin.html',
+        'accounts.html',
+        'index.html'
     ]
 
     skip_files = [
@@ -29,7 +33,7 @@ class BmhWebUiBuilder():
         dir_path = os.path.dirname(os.path.realpath(__file__))
         shutil.copytree(dir_path, dist_dir, dirs_exist_ok=True)
 
-        for root, dirs, files in os.walk(dir_path):
+        for root, _, files in os.walk(dir_path):
             for name in files:
                 full_path = os.path.join(root,name)
                 rel_path = os.path.relpath(full_path,start=dir_path)
