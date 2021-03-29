@@ -23,7 +23,7 @@ region and account).
 
 After checking out the repository:
  
-    $ cd request_workspace_ui
+    $ cd bmh_admin_portal_backend
     
     # Create virtual environment
     $ python -m venv .venv
@@ -34,6 +34,9 @@ After checking out the repository:
     
     $ cdk ls
     bmh-admin-portal-backend
+    
+    # Bootstrap
+    $ cdk bootstrap
     
     # Deploy the backend.
     $ cdk deploy
