@@ -1,3 +1,9 @@
+# © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
+# 
+# This AWS Content is provided subject to the terms of the AWS Customer Agreement
+# available at http://aws.amazon.com/agreement or other written agreement between
+# Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
+
 import boto3
 import os
 import logging
@@ -26,9 +32,9 @@ def handler(event, context):
     """
     logger.info(event)
 
-    reports_prefix = _get_ssm_param(os.environ['cur_prefix'])
-    reports_name   = _get_ssm_param(os.environ['cur_report_name'])
-    bucket_name    = _get_ssm_param(os.environ['cur_bucket_name'])
+    reports_prefix = os.environ['cur_prefix']
+    reports_name   = os.environ['cur_report_name']
+    bucket_name    = os.environ['cur_bucket_name']
 
     # Parse all the parquet files at this path
     path = "/".join(["s3:/", bucket_name, reports_prefix, reports_name])
@@ -37,13 +43,14 @@ def handler(event, context):
     # This will get the cost per month, but we just need the total of all months
     # sum_df = df.groupby(['year','month']).agg({COST_COL: 'sum'})
     total = df[COST_COL].sum()
+    logger.info(f"Total Cost: {total}")
 
     update_portal(total)
 
 def update_portal(total):
     """ Will send an https request to the update total usage endopint
     of the BMH Portal API """
-    base_uri = _get_ssm_param(os.environ['bmh_portal_uri'])
+    base_uri = _get_ssm_param(os.environ['brh_portal_uri'])
     workspace_id = _get_ssm_param(os.environ['workspace_id'])
     api_key = _get_ssm_param(os.environ['api_key'])
 
@@ -51,10 +58,13 @@ def update_portal(total):
         'Content-Type': 'application/json; charset=utf-8', 
         'x-api-key': api_key
     }
-    uri = "/".join([base_uri,"workspaces",workspace_id,"total-usage"])
+    uri = "/".join([base_uri,"workspaces",workspace_id,"total-usage"])    
     str_data = json.dumps({'total-usage':round(total, 2)})
+
+    logger.info(f"PUT {uri} [{str_data}]")
+    
     byte_data = str_data.encode("utf-8")
-    req = urllib.request.Request(uri, data=byte_data, headers=headers, method=PUT)
+    req = urllib.request.Request(uri, data=byte_data, headers=headers, method='PUT')
 
     # This should throw an exception on most errors
     resp = urllib.request.urlopen(req)

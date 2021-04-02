@@ -18,11 +18,17 @@ This stack generates the CloudFormation templates which deploy the following res
 * Python >= 3.6 (with virtualenv)
 * AWS default profile (appropriate configuration for the AWS CLI, with default 
 region and account).
+* The OCC/DDI Account Vending Automation ([DDI Github](https://github.com/occ-data/ddi-pay-per-compute/tree/main/account_creation_automation))
 
 *Note*: If this is the first time deploying a CDK application into this account, you may need to run `cdk bootstrap` before deploying this application.
 
-After checking out the repository:
+1. In order for the `create_account` to work as expected, a valid email address should be provided as the new account ROOT email address (and must not be associated with any other AWS Account). Currently, this is configured on line `215` in the `workspaces_api_resource_handler.py` lambda function. This will need to be replaced by some mechanism to generate unique email addresses for accounts.
+
+2. Add the OCC/DDI Account Vending Lambda ARN to `bmh_admin_portal_backend/bmh_admin_portal_backend/bmh_admin_portal_config.py`
+
+3. Perform the following commands after checking out the repository:
  
+    ```bash
     $ cd request_workspace_ui
     
     # Create virtual environment
@@ -37,39 +43,27 @@ After checking out the repository:
     
     # Deploy the backend.
     $ cdk deploy
+    ```
 
 ## Post-Deployment
 
 Below are some post deployment steps which may be helpful in testing the environment.
 
-### Create a user in the Cognito UserPool.
-In order to test the API, you'll need to have a valid ID token. In order to get a valid token, first create a user:
-
-    $ python ./scripts/add_verified_user.py --email user@email.com --password password12345
-
-This will create a user in the newly created Cognito UserPool which you can use to receive an ID Token that can be used for testing requests to the REST API. 
-
-### Generate a valid ID token
-To retrieve a token, you can run the following script:
-
-    $ python ./scripts/get_id_token.py --email user@email.com --password password12345
-
-This will print out a (rather long) ID token, which can be used in making requests to the API (see below).
-
 ## API
 ### Authentication
-Currently, most endpoints require an valid, unexpired ID token. Currently, the only way to get a token is to use the AWS Cognito Service, but this will be handled through a Front End in the future (see the Generate a valid ID token, above). In the documented endpoints below, the token should be sent as a header:
+Until Fence integration is added, the API is protected by API Keys managed within the AWS Account. A default API Key is created during the deployment process and can be retrieved from the AWS Console under the API Gateway service. The API Key should be provided with each request with the header `x-api-key` and value is a valid API Key.
 
-    'Authorization': 'ejy....PY97a'
+*Note* Until authentication with an Identity Provider is added, each request also requires an `email` query parameter to be included. This will simulate the email address of the authenticated user. Example: `POST api/workspaces?email=testuser@email.org`. This email address will be associated with the workspace request (not used as the ROOT user email for the newly generated account).
 
 ### POST api/workspaces
-* **Authorziation**: Required, Cognito.
+* **Authorziation**: Required, API Key.
 
-* **Description:** This is a proxy for future development which intitiates the Gen3 Workspace Provisioning process. Currently, it performs the following steps:
-  1. Assigns a unique workspace ID and creates a random AWS Account ID (placeholder)
-  2. Creates an API Key which can be used by the Workspace account to communicate to the BMH Portal
-  3. Creates an SNS topic and subscribes the Workspace Admin to receive email notifications (based on authorized user)
+* **Description:** Currently, it performs the following steps:
+  1. Assigns a unique workspace ID
+  2. Creates an API Key which can be used by the Workspace account to communicate to the BRH Portal
+  3. Creates an SNS topic and subscribes the Workspace Admin to receive email notifications (based on email parameter)
   4. Writes this information to DynamoDB
+  5. Kicks off Step Functions to create account, baseline account, and deploys BRH infrastructure.
 
 * **Request:** Body should be a json encoded key value attributes. Currently, there are no required parameters (this will change in the future). This represents creating a new Gen3 Workspace Request.
 
@@ -80,9 +74,9 @@ Currently, most endpoints require an valid, unexpired ID token. Currently, the o
   4. STRIDES Credits (default: 5000), Hard-limit (default 90% of STRIDES credits), and Soft-limit (default 50% of STRIDES credits)
 
 ### GET api/workspaces
-* **Authorziation**: Required, Cognito.
+* **Authorziation**: Required, API Key.
 
-* **Description:** This request will return a list of Workspaces from DynamoDB which are associated with the Authenticated user.
+* **Description:** This request will return a list of Workspaces from DynamoDB which are associated with the provided email address.
 
 * **Response:** Return all attributes used as input for the POST api/workspaces called. Will only return the Workspaces associated with the user how is authenticated. If no workspaces are found associated with the user, will return a status code of 204.
 
@@ -103,7 +97,7 @@ Currently, most endpoints require an valid, unexpired ID token. Currently, the o
       ]
 
 ### GET api/workspaces/{workspace_id}
-* **Authorziation**: Required, Cognito.
+* **Authorziation**: Required, API Key.
 
 * **Description:** This request will return a single workspace representation (see above), if a resource exists with the specified workspace_id. 
 
@@ -124,7 +118,7 @@ Currently, most endpoints require an valid, unexpired ID token. Currently, the o
       }
 
 ### PUT api/workspaces/{workspace_id}/limits
-* **Authorziation**: Required, Cognito.
+* **Authorziation**: Required, API Key.
 
 * **Description:** Used to set the hard and soft cost and usage limits of a single workspace. Separate endpoints for hard or soft limits do not exist. Stores new values in the DynamoDB table.
 

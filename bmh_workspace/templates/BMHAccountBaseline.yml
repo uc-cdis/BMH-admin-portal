@@ -1,0 +1,315 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: BRH Specific Infrastructure for Gen3 Workspace Accounts
+
+Parameters:
+  ArtifactBucket:
+    Type: 'String'
+    Description: 'Bucket name containing deployment artifacts'
+  ArtifactPrefix:
+    Type: 'String'
+    Description: 'Folder/prefix within ArtifactBucket.'
+
+  BRHWorkspaceId:
+    Type: 'String'
+    Description: Internal BRH Workspace ID
+  BRHPortalAPIURI:
+    Type: 'String'
+    Description: Base URI for the BRH Portal API
+  APIKey:
+    Type: 'String'
+    Description: Workspace account specific API Key for accessing BRH API endpoints
+
+Mappings:
+  Default:
+    CurSettings:
+      Prefix: "cur_reports"
+
+  
+Resources:
+  ##############################################################
+  ####               SSM Parameters                         ####
+  ##############################################################
+  BRHPortalAPIURIParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/brh/portal_uri-${AWS::StackName}"
+      Value: !Ref BRHPortalAPIURI
+      Type: String
+      Description: The BRH Portal URI for the API
+  APIKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/brh/portal_api_key-${AWS::StackName}"
+      Value: !Ref APIKey
+      Type: String
+      Description: API Key to interact with BRH Portal API
+  BRHWorkspaceIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/brh/workspace_id-${AWS::StackName}"
+      Value: !Ref BRHWorkspaceId
+      Type: String
+      Description: Workspace ID for this account
+  ##############################################################
+
+  ##############################################################
+  ####            Cost and Usage Report Bucket              ####
+  ##############################################################
+  CostUsageReportBucket:
+    DependsOn: InvokeParseCostAndUsage
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "brh-cur-${AWS::AccountId}-${AWS::StackName}"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: suffix
+                    Value: parquet
+            Function: !GetAtt ParseCostAndUsageLambda.Arn
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+
+  CostUsageReportBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: CostUsageReportBucket
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:GetBucketAcl
+              - s3:GetBucketPolicy
+            Effect: Allow
+            Principal:
+              Service: billingreports.amazonaws.com
+            Resource:
+              Fn::GetAtt:
+                - CostUsageReportBucket
+                - Arn
+          - Action: s3:PutObject
+            Effect: Allow
+            Principal:
+              Service: billingreports.amazonaws.com
+            Resource:
+              Fn::Join:
+                - ""
+                - - Fn::GetAtt:
+                      - CostUsageReportBucket
+                      - Arn
+                  - /*
+        Version: "2012-10-17"
+  ##############################################################
+
+  ##############################################################
+  ####            Cost and Usage Report (Custom)            ####
+  ##############################################################
+  CustomCostUsageReportDefinitionLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+      Policies:
+        - PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cur:PutReportDefinition
+                  - cur:DeleteReportDefinition
+                  - cur:ModifyReportDefinition
+                Resource: !Sub 'arn:aws:cur:${AWS::Region}:${AWS::AccountId}:definition/*'
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
+          PolicyName: !Sub 'CustomCostUsageReportDefinitionLambdaExecutionPolicy-${AWS::StackName}'
+
+  CustomCostUsageReportDefinitionLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Sub '${ArtifactPrefix}/custom_cost_and_usage_report_cfn.zip'
+      Description: Cloudformation custom resource for Cost Usage ReportDefinition
+      Handler: custom_cost_and_usage_report_cfn.handler
+      Role: !GetAtt 'CustomCostUsageReportDefinitionLambdaExecutionRole.Arn'
+      Runtime: python3.8
+      Timeout: 180
+
+  CostUsageReportDefinition:
+    Type: 'Custom::CostUsageReportDefinition'
+    Properties:
+      ReportName: !Sub 'BRH-CUR-${AWS::StackName}'
+      Compression: 'Parquet'
+      Format: 'Parquet'
+      ReportVersioning: 'OVERWRITE_REPORT'
+      S3Bucket: !Ref CostUsageReportBucket
+      S3Prefix: !FindInMap ['Default', 'CurSettings', 'Prefix'] 
+      S3Region: !Sub "${AWS::Region}"
+      TimeUnit: 'MONTHLY'
+      ServiceToken: !GetAtt CustomCostUsageReportDefinitionLambda.Arn
+  ##############################################################
+
+  ##############################################################
+  ####                 Parse CUR Lambda                     ####
+  ##############################################################
+  AWSWranglerLambdaLayer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      Content:
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Sub "${ArtifactPrefix}/awswrangler-layer-2.4.0-py3.8.zip"
+      CompatibleRuntimes:
+        - python3.8
+
+  ParseCostAndUsageLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    
+    # The lambda function should "depend on" this policy
+  ParseCostAndUsageLambdaPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - ssm:DescribeParameters
+              - ssm:GetParameters
+              - ssm:GetParameter
+              - ssm:GetParameterHistory
+            Effect: Allow
+            Resource:
+              Fn::Join:
+                - ""
+                - - "arn:"
+                  - Ref: AWS::Partition
+                  - ":ssm:"
+                  - Ref: AWS::Region
+                  - ":"
+                  - Ref: AWS::AccountId
+                  - :parameter
+                  - Ref: BRHPortalAPIURIParameter
+          - Action:
+              - ssm:DescribeParameters
+              - ssm:GetParameters
+              - ssm:GetParameter
+              - ssm:GetParameterHistory
+            Effect: Allow
+            Resource:
+              Fn::Join:
+                - ""
+                - - "arn:"
+                  - Ref: AWS::Partition
+                  - ":ssm:"
+                  - Ref: AWS::Region
+                  - ":"
+                  - Ref: AWS::AccountId
+                  - :parameter
+                  - Ref: APIKeyParameter
+          - Action:
+              - ssm:DescribeParameters
+              - ssm:GetParameters
+              - ssm:GetParameter
+              - ssm:GetParameterHistory
+            Effect: Allow
+            Resource:
+              Fn::Join:
+                - ""
+                - - "arn:"
+                  - Ref: AWS::Partition
+                  - ":ssm:"
+                  - Ref: AWS::Region
+                  - ":"
+                  - Ref: AWS::AccountId
+                  - :parameter
+                  - Ref: BRHWorkspaceIdParameter
+          - Action:
+              - s3:GetObject*
+              - s3:GetBucket*
+              - s3:List*
+              - s3:DeleteObject*
+              - s3:PutObject
+              - s3:Abort*
+            Effect: Allow
+            Resource:
+              - !Sub "arn:aws:s3:::brh-cur-${AWS::AccountId}-${AWS::StackName}"
+              - !Sub "arn:aws:s3:::brh-cur-${AWS::AccountId}-${AWS::StackName}/*"
+        Version: "2012-10-17"
+      PolicyName: BRHParseCostAndUsageLambdaPolicy
+      Roles:
+        - Ref: ParseCostAndUsageLambdaRole
+
+  ParseCostAndUsageLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Sub "${ArtifactPrefix}/parse_cost_and_usage_lambda.zip"
+      Role:
+        Fn::GetAtt:
+          - ParseCostAndUsageLambdaRole
+          - Arn
+      Environment:
+        Variables:
+          cur_bucket_name: !Sub "brh-cur-${AWS::AccountId}-${AWS::StackName}"
+          cur_prefix: !FindInMap ['Default', 'CurSettings', 'Prefix'] 
+          cur_report_name: !Sub 'BRH-CUR-${AWS::StackName}'
+          brh_portal_uri: !Ref BRHPortalAPIURIParameter
+          workspace_id: !Ref BRHWorkspaceIdParameter
+          api_key: !Ref APIKeyParameter
+      FunctionName: !Sub "brh-workspace-parse-cost-and-usage-${AWS::StackName}"
+      Handler: parse_cost_and_usage_lambda.handler
+      Layers:
+        - Ref: AWSWranglerLambdaLayer
+      Runtime: python3.8
+      Timeout: 600
+    DependsOn:
+      - ParseCostAndUsageLambdaPolicy
+      - ParseCostAndUsageLambdaRole
+
+  # This allows the S3 event to trigger the lambda
+  InvokeParseCostAndUsage:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - ParseCostAndUsageLambda
+          - Arn
+      Principal: s3.amazonaws.com
+      SourceAccount:
+        Ref: AWS::AccountId
+      SourceArn: !Sub "arn:aws:s3:::brh-cur-${AWS::AccountId}-${AWS::StackName}"
+
+  
