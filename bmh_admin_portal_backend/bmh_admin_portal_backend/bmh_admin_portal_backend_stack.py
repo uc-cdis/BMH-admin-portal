@@ -259,7 +259,7 @@ class BmhAdminPortalBackendStack(core.Stack):
     def create_step_functions_workflow(self, brh_asset_bucket, dynamodb_table, config):
         create_workspace_lambda = lambda_.Function.from_function_arn(
             self, 'workspace-occ-create-function',
-            function_arn="arn:aws:lambda:us-east-1:807499094734:function:bmh-account-vending-AccountBuilderLambda-1EKSUJFAHVBIM"
+            function_arn=config['account_creation_lambda_arn']
         )
         
         create_workspace_task = sfn_tasks.LambdaInvoke(
