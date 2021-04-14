@@ -1,3 +1,11 @@
+# © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
+# 
+# This AWS Content is provided subject to the terms of the AWS Customer Agreement
+# available at http://aws.amazon.com/agreement or other written agreement between
+# Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
+
+## DEPRECATED. This is not currently being used. It was originally used to demo
+## authentication capabilities.
 
 from aws_cdk import (
     core,

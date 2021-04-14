@@ -1,3 +1,9 @@
+# © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
+# 
+# This AWS Content is provided subject to the terms of the AWS Customer Agreement
+# available at http://aws.amazon.com/agreement or other written agreement between
+# Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
+
 import json
 import random
 import uuid
@@ -7,6 +13,7 @@ import decimal
 import os
 
 import boto3
+import botocore
 from botocore.exceptions import ClientError
 from boto3.dynamodb.conditions import Key
 from boto3.session import Session
@@ -16,6 +23,8 @@ import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger.setLevel(logging.INFO)
+
+
 
 DEFAULT_STRIDES_CREDITS_AMOUNT = 5000
 
@@ -51,34 +60,56 @@ def handler(event, context):
     path_params = event['pathParameters']
     
     # For authenticated endpoints
-    auth_claims = None
+    auth_claims = {}
     authorizer = event['requestContext'].get('authorizer',None)
     if authorizer is not None:
         auth_claims = event['requestContext']['authorizer']['claims']
+    elif event['queryStringParameters'] is not None and 'email' in event['queryStringParameters']:
+        # For now, until we implement an authorization strategy, we will
+        # also accept the email from a query parameter.
+        auth_claims['email'] = event['queryStringParameters']['email']
+        logger.info("Setting email from query string parameters")
+
+    if event['queryStringParameters'] is not None and 'test_account_id' in event['queryStringParameters']:
+        # Overloading the path_params.
+        if path_params is None:
+            path_params = {}
+        path_params['test_account_id'] = event['queryStringParameters']['test_account_id']
 
     # For API Key enpoints
     api_key = event['requestContext']['identity'].get('apiKey',None)
 
     body = event.get("body", "{}")
-    if body is not None:
-        body = json.loads(body)
-    
+    try:
+        if body is not None:
+            body = json.loads(body)
+    except Exception as e:
+        return {
+            "statusCode":400,
+            "body":json.dumps({'message':'Error: body is not valid json'})
+        }
+
     try:
         method = dispatch[resource][method]
     except KeyError as e:
         logger.exception(e)
         return {
             "statusCode":400,
-            "body":json.dumps({'message':"Did not know how to handle request"})
+            "body":json.dumps({'message':f"Did not know how to handle request [{resource=}, {method=}"})
         }
 
-    # Handle generic exceptions. Assuming it's a input/user issue.
+    # Handle generic exceptions.
     try:
         retval = method(body, path_params, auth_claims, api_key)
+    except AssertionError as e:
+        return {
+            "statusCode":400,
+            "message":json.dumps({"message":str(e)})
+        }
     except Exception as e:
         logger.exception(e)
         return {
-            "statusCode":400,
+            "statusCode":500,
             "body":json.dumps({"message":f"{type(e).__name__}: {str(e)}"})
         }
     
@@ -88,7 +119,7 @@ def handler(event, context):
 ####################### Functions to handle API Method Calls ###################
 def _workspaces_post(body, path_params, auth_claims, api_key):
     """ For now, this is a place holder for the actual process
-    which will create a workpace. For now, it performs the following:
+    which will create a workpace. Currently, it performs the following:
         1. Create API Key - used by Workspace accounts to communicate 
             back to the portal account.
         2. Create Workspace and Account IDs (randomly generated placeholders).
@@ -96,8 +127,14 @@ def _workspaces_post(body, path_params, auth_claims, api_key):
         4. Store information in DynamoDB and set some Account
             defaults (soft limit, hard limit, strides credits)
     """
-    workspace_id = str(uuid.uuid4())
 
+    logger.info(auth_claims)
+
+    # Temporarily until authorization works.
+    assert 'email' in auth_claims
+
+    workspace_id = str(uuid.uuid4())
+    
     apigateway = boto3.client('apigateway')
     resp = apigateway.create_api_key(
         name=f'workspace-{workspace_id}-key',
@@ -115,6 +152,12 @@ def _workspaces_post(body, path_params, auth_claims, api_key):
         keyType='API_KEY'
     )
 
+    test_account_id = None
+    if path_params is not None and 'test_account_id' in path_params:
+        test_account_id = path_params['test_account_id']
+
+    create_ws_response = _start_sfn_workflow(workspace_id, api_key, test_account_id)
+
     # Create the SNS topic for communication back to the user.
     sns = boto3.client('sns')
     response = sns.create_topic(
@@ -129,13 +172,14 @@ def _workspaces_post(body, path_params, auth_claims, api_key):
         Protocol="email",
         Endpoint=auth_claims['email']
     )
-
+    
     # Convert the input format.
-    params = {x['name']:x['value'] for x in body}
-    params['bmh_workspace_id'] = str(uuid.uuid4())
+    params = {}
+    if body is not None:
+        params = body
+    params['bmh_workspace_id'] = workspace_id
     params['user_id'] = auth_claims['email']
     params['api_key'] = api_key
-    params['account_id'] = "PSEUDO_" + ''.join(str(random.randint(0,9)) for _ in range(12))
     params['strides-credits'] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT)
     params['soft-limit'] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * .5)
     params['hard-limit'] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * .9)
@@ -156,9 +200,63 @@ def _workspaces_post(body, path_params, auth_claims, api_key):
         'body': json.dumps(params, cls=DecimalEncoder)
     }
 
+def _start_sfn_workflow(workspace_id, api_key, test_account_id=None):
+    
+    # We'll need to change this to something representing a CTDS email address.
+    email = ""
+    
+    # Much of this is not used as part of the lambda function, but is required to have 
+    # present in the payload to run without error.
+    payload = {
+        "RequestType": "Create",
+        "ResourceProperties": {
+            "SkipCloudCheckr": "true",
+            "AdminApiKey": "",
+            "AccountEmail": email,
+            "StackRegion": os.environ.get('AWS_REGION','us-east-1'),
+            "BaselineTemplate": "Accountbaseline.yml", ## Parameterize
+            "AccountBilling": "STRIDES-Credits",         
+            "CloudTrailBucket": "",
+            "SourceBucket": "bmh-account-vending", ## Parameterize
+            "CurBucket": "",
+            "CCStackName": "",
+            "DbrBucket": "",
+            "ConfigBucket": "",
+            "OrganizationalUnitName": "None",
+            "StackName": "avm-baseline-stack",
+            "AccountName": f"BRH {workspace_id}",
+        },
+        'brh_infrastructure':{
+            'workspace_id': workspace_id,
+            'api_key': api_key
+        }
+    }
+
+    ## This is for testing. Will use existing account if a test account id is provided.
+    if test_account_id is not None:
+        payload['ResourceProperties']['test_account_id'] = test_account_id
+
+    state_machine_arn = os.environ.get('state_machine_arn')
+    execution_uuid = str(uuid.uuid4())
+    execution_name = f'create-{workspace_id}_{execution_uuid}'
+
+    sfn = boto3.client('stepfunctions')
+    response = sfn.start_execution(
+        stateMachineArn=state_machine_arn,
+        name=execution_name,
+        input=json.dumps(payload)
+    )
+    logger.info(f"Calling create_account state machine {execution_name}")
+    logger.info(f"start_execution response: {response}")
+
+    return response
+
+# GET workspaces
+# GET workspaces/{workspace_id}
 def _workspaces_get(body, path_params, auth_claims, api_key):
     """ Will return a list of workspaces rows based the email 
     of the user """
+    assert 'email' in auth_claims
 
     dynamodb_table_name = _get_dynamodb_table_name()
     dynamodb = boto3.resource('dynamodb')
@@ -250,9 +348,6 @@ def _workspaces_set_total_usage(body, path_params, auth_claims, api_key):
     This is expected to be called by a Gen3 Workspace Account and is not authenticated
     like the rest of the methods (so auth_claims won't be useful)."""
 
-    logger.info("Called set total-usage")
-    logger.info(auth_claims)
-
     # Validate inputs
     assert 'workspace_id' in path_params
     assert 'total-usage' in body
@@ -274,8 +369,11 @@ def _workspaces_set_total_usage(body, path_params, auth_claims, api_key):
         )
     except ClientError as e:
         if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
-            raise Exception("Could not find BMH Workspace "
-                f"with id {workspace_id}")
+            return {
+                "statusCode":404,
+                "message":json.dumps({"message":"Could not find BMH Workspace "
+                    f"with id {workspace_id}"})
+            }
         else:
             raise e
 

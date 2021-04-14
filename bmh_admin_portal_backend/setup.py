@@ -32,6 +32,8 @@ setuptools.setup(
         "aws-cdk.aws-stepfunctions-tasks",
         "aws-cdk.aws-cognito",
         "aws-cdk.aws-sqs",
+        "aws-cdk.aws-s3",
+        "aws-cdk.aws-s3-deployment",
         
         "warrant"
     ],
