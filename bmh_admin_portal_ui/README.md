@@ -1,38 +1,70 @@
-# BMH Admin Portal UI
+# Getting Started with Create React App
 
-This CDK application provides the code and infrastructure to deploy a simple UI form to request a workspace. This should be
-deployed *after* the backend, as it relies on parameters stored in AWS Systems Manager at build time.
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## Stack: bmh-admin-portal-ui
+## Available Scripts
 
-This CDK application will build the Web UI and then create CloudFormation template to deploy:
-* An S3 bucket containing the static site
-* A CloudFront distribution
+In the project directory, you can run:
 
-## Deploying
+### `npm start`
 
-### Dependencies
-* AWS CDK - [go here](https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html) for instructions on how to install CDK.
-* Python >= 3.6 (with virtualenv)
-* AWS default profile (appropriate configuration for the AWS CLI, with default 
-region and account).
+Runs the app in the development mode.\
+Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-*Note*: This also deploys a lambda function which automatically polls for new approval activities every 1 minute. This
-will work for development. And should be turned off (in EventBridge, under Rules) to avoid unnecessary Lambda polling.
+The page will reload if you make edits.\
+You will also see any lint errors in the console.
 
-After checking out the repository:
- 
-    $ cd request_workspace_ui
-    
-    # Create virtual environment
-    $ python -m venv .venv
-    $ source .venv/bin/activate
-    
-    # Will install the necessary python dependencies.
-    $ pip install -r requirements.txt
-    
-    $ cdk ls
-    bmh-admin-portal-ui
-    
-    # Deploy the ui.
-    $ cdk deploy
+### `npm test`
+
+Launches the test runner in the interactive watch mode.\
+See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+
+### `npm run build`
+
+Builds the app for production to the `build` folder.\
+It correctly bundles React in production mode and optimizes the build for the best performance.
+
+The build is minified and the filenames include the hashes.\
+Your app is ready to be deployed!
+
+See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+
+### `npm run eject`
+
+**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+
+If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+
+Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+
+You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+
+## Learn More
+
+You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+
+To learn React, check out the [React documentation](https://reactjs.org/).
+
+### Code Splitting
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+
+### Analyzing the Bundle Size
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+
+### Making a Progressive Web App
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+
+### Advanced Configuration
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+
+### Deployment
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+
+### `npm run build` fails to minify
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
