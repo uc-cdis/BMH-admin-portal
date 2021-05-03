@@ -11,6 +11,8 @@ import sys
 import traceback
 import decimal
 import os
+import base64
+from urllib.request import Request, urlopen
 
 import boto3
 import botocore
@@ -24,8 +26,6 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger.setLevel(logging.INFO)
 
-
-
 DEFAULT_STRIDES_CREDITS_AMOUNT = 5000
 
 def handler(event, context):
@@ -36,45 +36,19 @@ def handler(event, context):
             API Keys.
     """
 
-    dispatch = {
-        '/workspaces':{
-            'POST': _workspaces_post,
-            'GET': _workspaces_get
-        },
-        '/workspaces/{workspace_id}':{
-            'GET': _workspaces_get,
-        },
-        '/workspaces/{workspace_id}/limits':{
-            'PUT': _workspaces_set_limits
-        },
-        '/workspaces/{workspace_id}/total-usage':{
-            'PUT': _workspaces_set_total_usage
-        }
-    }
-
     logger.info(json.dumps(event))
 
     resource = event['resource']
     path = event['path']
     method = event['httpMethod']
     path_params = event['pathParameters']
-    
-    # For authenticated endpoints
-    auth_claims = {}
+    query_string_params = event['queryStringParameters']
     authorizer = event['requestContext'].get('authorizer',None)
-    if authorizer is not None:
-        auth_claims = event['requestContext']['authorizer']['claims']
-    elif event['queryStringParameters'] is not None and 'email' in event['queryStringParameters']:
-        # For now, until we implement an authorization strategy, we will
-        # also accept the email from a query parameter.
-        auth_claims['email'] = event['queryStringParameters']['email']
-        logger.info("Setting email from query string parameters")
+    
 
-    if event['queryStringParameters'] is not None and 'test_account_id' in event['queryStringParameters']:
-        # Overloading the path_params.
-        if path_params is None:
-            path_params = {}
-        path_params['test_account_id'] = event['queryStringParameters']['test_account_id']
+    email = None
+    if authorizer is not None:
+        email = event['requestContext']['authorizer'].get('email', None)
 
     # For API Key enpoints
     api_key = event['requestContext']['identity'].get('apiKey',None)
@@ -84,40 +58,197 @@ def handler(event, context):
         if body is not None:
             body = json.loads(body)
     except Exception as e:
-        return {
-            "statusCode":400,
-            "body":json.dumps({'message':'Error: body is not valid json'})
+        return create_response(
+            status_code=400,
+            body={"message":"Error: Body is not valid json"}
+        )
+
+    dispatch = {
+        '/auth/get-tokens':{
+            'GET': lambda: _get_tokens(query_string_params, api_key)
+        },
+        '/auth/refresh-tokens':{
+            'PUT': lambda: _refresh_tokens(body, api_key)
+        },
+        '/workspaces':{
+            'POST': lambda: _workspaces_post(body, email, query_string_params),
+            'GET': lambda: _workspaces_get(path_params, email)
+        },
+        '/workspaces/{workspace_id}':{
+            'GET': lambda: _workspaces_get(path_params, email)
+        },
+        '/workspaces/{workspace_id}/limits':{
+            'PUT': lambda: _workspaces_set_limits(body, path_params, email)
+        },
+        '/workspaces/{workspace_id}/total-usage':{
+            'PUT': lambda: _workspaces_set_total_usage(body, path_params, api_key)
         }
+    }
 
     try:
-        method = dispatch[resource][method]
+        closure = dispatch[resource][method]
     except KeyError as e:
         logger.exception(e)
-        return {
-            "statusCode":400,
-            "body":json.dumps({'message':f"Did not know how to handle request [{resource=}, {method=}"})
-        }
+        return create_response(
+            status_code=400,
+            body={'message':f"Did not know how to handle request [{resource=}, {method=}"}
+        )
 
-    # Handle generic exceptions.
+    # Handle generic exceptions. Maybe we should have specific errors to indicate the
+    # status code to be returned.
     try:
-        retval = method(body, path_params, auth_claims, api_key)
+        retval = closure()
     except AssertionError as e:
-        return {
-            "statusCode":400,
-            "message":json.dumps({"message":str(e)})
-        }
+        return create_response(
+            status_code=400,
+            body={"message":str(e)}
+        )
     except Exception as e:
         logger.exception(e)
-        return {
-            "statusCode":500,
-            "body":json.dumps({"message":f"{type(e).__name__}: {str(e)}"})
-        }
-    
+        return create_response(
+            status_code=500,
+            body={"message":f"{type(e).__name__}: {str(e)}"}
+        )
+           
     return retval
 ################################################################################
 
+####################### Create API Proxy response ###############################
+def create_response(status_code=200, body=None, headers=None):
+    """ Creates the response object to return through API Gateway as
+    proxy. Should include Access-Control-Allow-Origin for CORS support:
+    https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html 
+    """
+
+    if body is None:
+        body = {}
+
+    if headers is None:
+        headers = {}
+
+    ## TODO: This is fine for development, but should be changed to Domain
+    ## used for the front end application.
+    headers['Access-Control-Allow-Origin'] = "*"
+
+    retval = {
+        'statusCode':status_code,
+        'headers': headers,
+        'body': json.dumps(body, cls=DecimalEncoder)
+    }
+
+    logger.info("Response: ")
+    logger.info(json.dumps(retval))
+    return retval
+
+
+################################################################################
+
+################################################################################
+#  Token Handling
+################################################################################
+def _get_tokens(query_string_params, api_key):
+    """ This will take in a code (path_params) which was retrieved from the 
+    auth provider (Fence) and exchange it for access and id tokens using the client 
+    secret. """
+
+    try:
+        code = query_string_params['code']
+    except Exception as e:
+        raise AssertionError("'code' is required query string parameter to get-tokens")
+
+    base_url = os.environ.get('auth_oidc_uri', None)
+    grant_type = "authorization_code"
+    redirect_uri = os.environ.get('auth_redirect_uri', None)
+    client_id = os.environ.get('auth_client_id', None)
+    client_secret_name = os.environ.get('auth_client_secret_name', None)
+
+    # Grab the client secret value from SecretsManager
+    client_secret = get_secret(client_secret_name)
+
+    auth_string = f"{client_id}:{client_secret}".encode('utf-8')
+    auth_b64 = base64.b64encode(auth_string).decode('utf-8')
+
+    url = "{}/oauth2/token?grant_type={}&code={}&redirect_uri={}".format(
+        base_url, grant_type, code, redirect_uri
+    )
+    logger.info(f"Requesting tokens: {url}")
+    req = Request(url, data={})
+    req.add_header('Content-Type', 'application/x-www-form-urlencoded')
+    req.add_header('Authorization', f'Basic {auth_b64}')
+
+    try:
+        response = urlopen(req)
+    except Exception as e:
+        logger.exception(e)
+        raise RuntimeError("Error when exchanging code for tokens")
+
+    if response.getcode() != 200:
+        logger.info(f"Response Status Code: {response.getcode()}")
+        logger.info(f"Response read: {reponse.read()}")
+        raise RuntimeError("Error when exchanging code for tokens")
+        
+    content = json.loads(response.read())
+
+    return create_response(
+        status_code=200,
+        body=content
+    )
+
+def _refresh_tokens(body, api_key):
+    """ This takes a refresh_token in the body and returns a new set of tokens """
+
+    try:
+        refresh_token = body['refresh_token']
+    except Exception as e:
+        raise AssertionError("'refresh_token' not found in data provided to refresh tokens calls.")
+
+    base_url = os.environ.get('auth_oidc_uri', None)
+    grant_type = "refresh_token"
+    client_id = os.environ.get('auth_client_id', None)
+    client_secret_name = os.environ.get('auth_client_secret_name', None)
+
+    # Grab the client secret value from SecretsManager
+    client_secret = get_secret(client_secret_name)
+
+    auth_string = f"{client_id}:{client_secret}".encode('utf-8')
+    auth_b64 = base64.b64encode(auth_string).decode('utf-8')
+
+    url = "{}/oauth2/token?grant_type={}&refresh_token={}".format(
+        base_url, grant_type, refresh_token
+    )
+    logger.info(url)
+    req = Request(url, data={})
+    req.add_header('Content-Type', 'application/x-www-form-urlencoded')
+    req.add_header('Authorization', f'Basic {auth_b64}')
+
+    try:
+        response = urlopen(req)
+    except Exception as e:
+        logger.exception(e)
+        raise RuntimeError("Error when exchanging code for tokens")
+
+    if response.getcode() != 200:
+        logger.info(f"Response Status Code: {response.getcode()}")
+        logger.info(f"Response read: {reponse.read()}")
+        raise RuntimeError("Error when exchanging code for tokens")
+        
+    content = json.loads(response.read())
+
+    # We discard the access token here because the application doesn't need it.
+    response_data = {
+        'id_token': content['id_token'],
+        'refresh_token': content['refresh_token']
+    }
+    
+    return create_response(
+        status_code=200,
+        body=response_data
+    )
+
+
+
 ####################### Functions to handle API Method Calls ###################
-def _workspaces_post(body, path_params, auth_claims, api_key):
+def _workspaces_post(body, email, query_string_params ):
     """ For now, this is a place holder for the actual process
     which will create a workpace. Currently, it performs the following:
         1. Create API Key - used by Workspace accounts to communicate 
@@ -128,63 +259,63 @@ def _workspaces_post(body, path_params, auth_claims, api_key):
             defaults (soft limit, hard limit, strides credits)
     """
 
-    logger.info(auth_claims)
+    workspace_request_id = str(uuid.uuid4())
+  
+    if(False):  
+        apigateway = boto3.client('apigateway')
+        resp = apigateway.create_api_key(
+            name=f'workspace-{workspace_id}-key',
+            description=f'API Key for workspace {workspace_id}',
+            enabled=True
+        )
+        key_id = resp['id']
+        api_key = resp['value']
 
-    # Temporarily until authorization works.
-    assert 'email' in auth_claims
+        # Grab the Usage Plan Id
+        usage_plan_id = _get_param(os.environ['api_usage_id_param_name'])
+        apigateway.create_usage_plan_key(
+            usagePlanId=usage_plan_id,
+            keyId=key_id,
+            keyType='API_KEY'
+        )
 
-    workspace_id = str(uuid.uuid4())
-    
-    apigateway = boto3.client('apigateway')
-    resp = apigateway.create_api_key(
-        name=f'workspace-{workspace_id}-key',
-        description=f'API Key for workspace {workspace_id}',
-        enabled=True
-    )
-    key_id = resp['id']
-    api_key = resp['value']
+        test_account_id = None
+        if query_string_params is not None and 'test_account_id' in query_string_params:
+            test_account_id = query_string_params['test_account_id']
 
-    # Grab the Usage Plan Id
-    usage_plan_id = _get_param(os.environ['api_usage_id_param_name'])
-    apigateway.create_usage_plan_key(
-        usagePlanId=usage_plan_id,
-        keyId=key_id,
-        keyType='API_KEY'
-    )
+        create_ws_response = _start_sfn_workflow(workspace_id, api_key, test_account_id)
 
-    test_account_id = None
-    if path_params is not None and 'test_account_id' in path_params:
-        test_account_id = path_params['test_account_id']
-
-    create_ws_response = _start_sfn_workflow(workspace_id, api_key, test_account_id)
-
-    # Create the SNS topic for communication back to the user.
-    sns = boto3.client('sns')
-    response = sns.create_topic(
-        Name=f'bmh-workspace-topic-{workspace_id}',
-        Tags=[
-            {'Key': "bmh_workspace_id","Value":workspace_id}
-        ]
-    )
-    topic_arn = response['TopicArn']
-    sns.subscribe(
-        TopicArn=topic_arn,
-        Protocol="email",
-        Endpoint=auth_claims['email']
-    )
+        # Create the SNS topic for communication back to the user.
+        sns = boto3.client('sns')
+        response = sns.create_topic(
+            Name=f'bmh-workspace-topic-{workspace_id}',
+            Tags=[
+                {'Key': "bmh_workspace_id","Value":workspace_id}
+            ]
+        )
+        topic_arn = response['TopicArn']
+        sns.subscribe(
+            TopicArn=topic_arn,
+            Protocol="email",
+            Endpoint=email
+        )
+    else:
+        topic_arn = "FAKEARN::NOTHING"
+        api_key = "ALSOFAKE"
     
     # Convert the input format.
     params = {}
     if body is not None:
         params = body
-    params['bmh_workspace_id'] = workspace_id
-    params['user_id'] = auth_claims['email']
-    params['api_key'] = api_key
+    params['bmh_workspace_id'] = workspace_request_id
+    params['request_status'] = "pending"
+    params['user_id'] = email
+    #params['api_key'] = api_key
     params['strides-credits'] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT)
     params['soft-limit'] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * .5)
     params['hard-limit'] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * .9)
     params['total-usage'] = 0
-    params['sns-topic-arn'] = topic_arn
+    #params['sns-topic-arn'] = topic_arn
 
     # Get the dynamodb table name from SSM Parameter Store
     dynamodb_table_name = _get_dynamodb_table_name()
@@ -195,10 +326,10 @@ def _workspaces_post(body, path_params, auth_claims, api_key):
         Item=params
     )
 
-    return {
-        'statusCode': 200,
-        'body': json.dumps(params, cls=DecimalEncoder)
-    }
+    return create_response(
+        status_code=200,
+        body=params
+    )
 
 def _start_sfn_workflow(workspace_id, api_key, test_account_id=None):
     
@@ -253,11 +384,9 @@ def _start_sfn_workflow(workspace_id, api_key, test_account_id=None):
 
 # GET workspaces
 # GET workspaces/{workspace_id}
-def _workspaces_get(body, path_params, auth_claims, api_key):
+def _workspaces_get(path_params, email):
     """ Will return a list of workspaces rows based the email 
     of the user """
-    assert 'email' in auth_claims
-
     dynamodb_table_name = _get_dynamodb_table_name()
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(dynamodb_table_name)
@@ -268,7 +397,7 @@ def _workspaces_get(body, path_params, auth_claims, api_key):
         response = table.get_item(
             Key={
                 'bmh_workspace_id':path_params['workspace_id'],
-                'user_id':auth_claims['email']
+                'user_id':email
             }
         )
         retval = response.get('Item', None)
@@ -277,30 +406,29 @@ def _workspaces_get(body, path_params, auth_claims, api_key):
 
     else:
         response = table.query(
-            KeyConditionExpression=Key('user_id').eq(auth_claims['email'])
+            KeyConditionExpression=Key('user_id').eq(email)
         )
         
         retval = response.get('Items',[])
         if len(retval) == 0:
             status_code = 204 # No content, resource was found, but it's empty.
 
-    return {
-        "statusCode":status_code,
-        "body": json.dumps(retval, cls=DecimalEncoder)
-    }
+    return create_response(
+        status_code=status_code,
+        body=retval
+    )
 
-def _workspaces_set_limits(body, path_params, auth_claims, api_key):
+def _workspaces_set_limits(body, path_params, email):
     logger.info(f"Called 'set limit': {body}")
 
     # Validate body and path_params
     assert 'workspace_id' in path_params
     assert 'soft-limit' in body
     assert 'hard-limit' in body
-    assert 'email' in auth_claims
 
     # Get the dynamodb table name from SSM Parameter Store
     workspace_id = path_params['workspace_id']
-    user_id = auth_claims['email']
+    user_id = email
     dynamodb_table_name = _get_dynamodb_table_name()
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(dynamodb_table_name)
@@ -337,16 +465,15 @@ def _workspaces_set_limits(body, path_params, auth_claims, api_key):
         else:
             raise e
 
-    return {
-        'statusCode':200,
-        'body':json.dumps(table_response['Attributes'], cls=DecimalEncoder)
-    }
+    return create_response(
+        status_code=200,
+        body=table_response['Attributes']
+    )
 
-
-def _workspaces_set_total_usage(body, path_params, auth_claims, api_key):
+def _workspaces_set_total_usage(body, path_params, api_key):
     """ This function handles calls to update total-usage of a workspace.
     This is expected to be called by a Gen3 Workspace Account and is not authenticated
-    like the rest of the methods (so auth_claims won't be useful)."""
+    like the rest of the methods."""
 
     # Validate inputs
     assert 'workspace_id' in path_params
@@ -369,11 +496,11 @@ def _workspaces_set_total_usage(body, path_params, auth_claims, api_key):
         )
     except ClientError as e:
         if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
-            return {
-                "statusCode":404,
-                "message":json.dumps({"message":"Could not find BMH Workspace "
-                    f"with id {workspace_id}"})
-            }
+            return create_response(
+                status_code=400,
+                body={
+                    "message":f"Could not find BMH Workspace with id {workspace_id}"}
+            )
         else:
             raise e
 
@@ -441,10 +568,10 @@ def _workspaces_set_total_usage(body, path_params, auth_claims, api_key):
         """
         _publish_to_sns_topic(sns_topic_arn, subject, message)
 
-    return {
-        'statusCode':200,
-        'body':json.dumps({})
-    }
+    return create_response(
+        status_code=200,
+        body={}
+    )
 
 ################################################################################
 
@@ -478,4 +605,54 @@ class DecimalEncoder(json.JSONEncoder):
             else:
                 return int(o)
         return super(DecimalEncoder, self).default(o)
+
+
+def get_secret(secret_name):
+
+    #secret_name = "/brh/fence_client_secret"
+
+    # Create a Secrets Manager client
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager'
+    )
+
+    # In this sample we only handle the specific exceptions for the 'GetSecretValue' API.
+    # See https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+    # We rethrow the exception by default.
+    secret = None
+
+    try:
+        get_secret_value_response = client.get_secret_value(
+            SecretId=secret_name
+        )
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'DecryptionFailureException':
+            # Secrets Manager can't decrypt the protected secret text using the provided KMS key.
+            # Deal with the exception here, and/or rethrow at your discretion.
+            raise e
+        elif e.response['Error']['Code'] == 'InternalServiceErrorException':
+            # An error occurred on the server side.
+            # Deal with the exception here, and/or rethrow at your discretion.
+            raise e
+        elif e.response['Error']['Code'] == 'InvalidParameterException':
+            # You provided an invalid value for a parameter.
+            # Deal with the exception here, and/or rethrow at your discretion.
+            raise e
+        elif e.response['Error']['Code'] == 'InvalidRequestException':
+            # You provided a parameter value that is not valid for the current state of the resource.
+            # Deal with the exception here, and/or rethrow at your discretion.
+            raise e
+        elif e.response['Error']['Code'] == 'ResourceNotFoundException':
+            # We can't find the resource that you asked for.
+            # Deal with the exception here, and/or rethrow at your discretion.
+            raise e
+        else:
+            raise e
+    else:
+        secret = get_secret_value_response['SecretString']
+
+    # Actually returned as a json string. So just get the value.
+    data = json.loads(secret) 
+    return data['fence_client_secret']
 ################################################################################

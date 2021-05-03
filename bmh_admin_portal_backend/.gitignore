@@ -1,3 +1,6 @@
+# Prevent accidentally checking in configured file
+bmh_admin_portal_backend/bmh_admin_portal_config.py
+
 *.swp
 package-lock.json
 __pycache__

@@ -1,72 +1,36 @@
-import React, { Component } from 'react';
+import React, { useState,useEffect } from 'react';
 import { Route, Switch, Redirect } from 'react-router-dom';
+
+import { isAuthenticated } from './util/oidc';
+import PrivateRoute from "./components/private-route"
 import NavBar from './components/nav-bar';
-import Loading from './components/loading';
 import WorkspaceAccounts from './views/workspace-accounts';
 import RequestWorkspace from './views/request-workspace';
 import LoginForm from './views/login-form';
-import LoginCallback from './views/login-form';
-import { withAuth0 } from '@auth0/auth0-react';
+import LoginCallback from './views/login-callback';
 import './App.css';
 
-class App extends Component {
-  state = {};
+export default function App() {
+  const [authenticated, setAuthenticated] = useState(isAuthenticated());
 
-  async getJWT() {
-    const { getAccessTokenSilently } = this.props.auth0;
+  return (
+    <div className="App">
+    <NavBar isAuthenticated={authenticated}/>
+    <div className="container">
+      <Switch>
+        
+        {/* Public routes meant for login */}
+        <Route exact path="/login/callback">
+          <LoginCallback setParentAuthenticated={setAuthenticated} />
+        </Route>
+        <Route exact path="/login" component={LoginForm}/>
+        
+        {/* React Router protected routes */}
+        <PrivateRoute path="/request-workspace" component={RequestWorkspace} />
+        <PrivateRoute path="/" component={WorkspaceAccounts} />
 
-    try {
-      const accessToken = await getAccessTokenSilently({
-        audience: "https://dev--8buztdg.us.auth0.com/api/v2/",
-        scope: "read:current_user"
-      })
-
-      window.localStorage.setItem('token', accessToken);
-
-    }
-    catch (e) {
-      console.log(e.message);
-    }
-  }
-
-  render() {
-    const { isLoading, isAuthenticated } = this.props.auth0;
-
-    if (isLoading) {
-      return <Loading />;
-    }
-
-    if (isAuthenticated) {
-      this.getJWT();
-    }
-
-    return (
-      <div className="App">
-        <NavBar isAuthenticated={isAuthenticated}/>
-        <div className="container">
-          <Switch>
-            {/* Public routes meant for login */}
-            <Route path="/login" component={LoginForm}/>
-            <Route path="/login/callback" component={LoginCallback}/>
-            
-            {/* React Router protected routes */}
-            <Route 
-              path="/request-workspace" 
-              render={props => {
-                if (!isAuthenticated) return <Redirect to="/login" />;
-                return <RequestWorkspace {...props}/>;
-              }}/>
-            <Route 
-              path="/" 
-              render={props => {
-                if (!isAuthenticated) return <Redirect to="/login" />;
-                return <WorkspaceAccounts {...props}/>;
-              }}/>
-          </Switch>
-        </div>
-      </div>
-    );
-  }
+      </Switch>
+    </div>
+  </div>
+  )
 }
-
-export default withAuth0(App);

@@ -19,4 +19,17 @@ class BMHAdminPortalBackendConfig():
 
             "account_creation_lambda_arn": "",
 
+            ## This should be removed before checking in
+            "auth_redirect_uri": "",
+            "auth_client_id": "",
+            "auth_oidc_uri": "",
+
+            # This is a secret that should have already been created in the deployment account.
+            # If this uses a CMK or other encryption key, you may need to add additional permissions to allow
+            # the lambda to use that key.
+            "auth_client_secret_arn": "",
+            "auth_client_secret_name": ""
+
+
+
         }

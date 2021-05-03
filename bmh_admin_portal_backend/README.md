@@ -22,11 +22,14 @@ region and account).
 
 *Note*: If this is the first time deploying a CDK application into this account, you may need to run `cdk bootstrap` before deploying this application.
 
-1. In order for the `create_account` to work as expected, a valid email address should be provided as the new account ROOT email address (and must not be associated with any other AWS Account). Currently, this is configured on line `215` in the `workspaces_api_resource_handler.py` lambda function. This will need to be replaced by some mechanism to generate unique email addresses for accounts.
-
-2. Add the OCC/DDI Account Vending Lambda ARN to `bmh_admin_portal_backend/bmh_admin_portal_backend/bmh_admin_portal_config.py`
-
-3. Perform the following commands after checking out the repository:
+1. Configure the deployment. Copy `bmh_admin_portal_backend/bmh_admin_portal_backend/bmh_admin_portal_config_TEMPLATE.py` to `bmh_admin_portal_backend/bmh_admin_portal_backend/bmh_admin_portal_config.py`. 
+   * auth_redirect_uri - Callback URL for Auth server (Fence)
+   * auth_client_id - Client Id provided from Auth provider (Fence)
+   * auth_oidc_uri - base url for communicating with auth provider (i.e. https://fence.url/user)
+   * auth_client_secret_arn and auth_client_secret_name - The backend lambda uses the client secret to communicate to Fence. A AWS SecretManager secret needs to be created manually. The arn and name are required here. This will work with default encryption. If a CMK is used to encrypt the secret, that will need to be added to the CDK application so that the Lambda can be granted permissions to use the Key.
+   * account_creation_lambda_arn - The arn of the OCC/DDI deployed lambda function.
+  
+2. Run the following commands to deploy:
  
     ```bash
     $ cd bmh_admin_portal_backend
@@ -48,16 +51,7 @@ region and account).
     $ cdk deploy
     ```
 
-## Post-Deployment
-
-Below are some post deployment steps which may be helpful in testing the environment.
-
 ## API
-### Authentication
-Until Fence integration is added, the API is protected by API Keys managed within the AWS Account. A default API Key is created during the deployment process and can be retrieved from the AWS Console under the API Gateway service. The API Key should be provided with each request with the header `x-api-key` and value is a valid API Key.
-
-*Note* Until authentication with an Identity Provider is added, each request also requires an `email` query parameter to be included. This will simulate the email address of the authenticated user. Example: `POST api/workspaces?email=testuser@email.org`. This email address will be associated with the workspace request (not used as the ROOT user email for the newly generated account).
-
 ### POST api/workspaces
 * **Authorziation**: Required, API Key.
 

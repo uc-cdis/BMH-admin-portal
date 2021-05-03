@@ -13,9 +13,10 @@ from aws_cdk import (
     aws_s3 as s3,
     aws_s3_deployment as s3_deployment,
     aws_stepfunctions as stepfunctions,
-    aws_stepfunctions_tasks as sfn_tasks
-
+    aws_stepfunctions_tasks as sfn_tasks,
+    aws_secretsmanager as secretsmanager
 )
+from aws_cdk.aws_lambda_python import PythonFunction
 
 from .bmh_cognito_userpool import BMHAdminPortalCognitoUserPool
 from .bmh_admin_portal_config import BMHAdminPortalBackendConfig
@@ -87,15 +88,32 @@ class BmhAdminPortalBackendStack(core.Stack):
             string_value=api.url
         )
 
-        # Create COGNITO authorizer
-        """ cognito_authorizer = apigateway.CfnAuthorizer(
-            scope=self, id='apigateway-cognito-userpool-authorizer',
-            name='CognitoUserPool-Authorizer',
-            rest_api_id=api.rest_api_id,
-            type='COGNITO_USER_POOLS',
-            provider_arns=[cognito_user_pool.pool.user_pool_arn],
-            identity_source="method.request.header.Authorization",
-        ) """
+        auth_fn = PythonFunction(
+            self, "workspaces-auth-lambda",
+            runtime=lambda_.Runtime.PYTHON_3_8,
+            entry="lambda/lambda_authorizer",
+            index="lambda_authorizer.py",
+            handler="lambda_handler",
+            description="Lambda token authorizer function",
+            environment={
+                'auth_base_url': "https://fence.planx-pla.net/user", # TODO make config
+            }
+        )
+
+        # Create token authorizer
+        token_authorizer = apigateway.TokenAuthorizer(
+            scope=self, id='apigateway-lambda-token-authorizer',
+            handler=auth_fn
+        )
+
+        apigateway.GatewayResponse(
+            self, "gateway-response-401",
+            rest_api=api,
+            type=apigateway.ResponseType.UNAUTHORIZED,
+            response_headers={
+                'Access-Control-Allow-Origin': "'*'"
+            }
+        )
         #####################################################################################
 
         #####################################################################################
@@ -129,7 +147,16 @@ class BmhAdminPortalBackendStack(core.Stack):
         step_fn_workflow = self.create_step_functions_workflow(brh_workspace_assets_bucket, dynamodb_table, config)
         ########################################################################################
 
+        ## Secret for Authorization Client secret. If an non-default encryption key was
+        ## used, we'll need to add it here so that we can grant read permissions to the lambda.
+        ## See from_secret_attributes() here: 
+        ## https://docs.aws.amazon.com/cdk/api/latest/python/aws_cdk.aws_secretsmanager/Secret.html
+        auth_client_secret_param = secretsmanager.Secret.from_secret_complete_arn(
+            self, 'auth_client_secret',
+            secret_complete_arn=config['auth_client_secret_arn']
+        )
 
+        ## Lambda function which handles the API Gateway endpoints.
         workspaces_resource_lambda = lambda_.Function(
             self, 'workspaces-resource-function',
             runtime=lambda_.Runtime.PYTHON_3_8,
@@ -143,10 +170,15 @@ class BmhAdminPortalBackendStack(core.Stack):
                 'api_usage_id_param_name': config['api_usage_id_param_name'],
                 'brh_asset_bucket': brh_workspace_assets_bucket.bucket_name,
                 'brh_portal_url': config['api_url_param_name'],
-                'state_machine_arn': step_fn_workflow.state_machine_arn
+                'state_machine_arn': step_fn_workflow.state_machine_arn,
+                'auth_redirect_uri': config['auth_redirect_uri'],
+                'auth_client_id': config['auth_client_id'],
+                'auth_client_secret_name': config['auth_client_secret_name'],
+                'auth_oidc_uri': config['auth_oidc_uri']
             }
         )
 
+        auth_client_secret_param.grant_read(workspaces_resource_lambda)
         step_fn_workflow.grant_start_execution(workspaces_resource_lambda)
 
         ## Grant read/write to all SSM Parameters in the /bmh namespace.
@@ -190,20 +222,37 @@ class BmhAdminPortalBackendStack(core.Stack):
         workspaces_resource_lambda_integration = apigateway.LambdaIntegration(
             handler=workspaces_resource_lambda
         )
+
+        ################################ GET /auth/get-tokens ##############################
+        auth_resource = api.root.add_resource('auth')
+        get_tokens = auth_resource.add_resource("get-tokens")
+        get_method = get_tokens.add_method(
+            "GET", workspaces_resource_lambda_integration,
+            api_key_required=True
+        )
+        ####################################################################################
+
+        ################################ PUT /auth/refresh-tokens ##########################
+        refresh_tokens = auth_resource.add_resource("refresh-tokens")
+        put_method = refresh_tokens.add_method(
+            "PUT", workspaces_resource_lambda_integration,
+            api_key_required=True
+        )
+        ####################################################################################
+
         workspaces_resource = api.root.add_resource("workspaces")
-
-
+        
         ################################ GET workspaces/ ####################################
         get_method = workspaces_resource.add_method(
             "GET", workspaces_resource_lambda_integration,
-            api_key_required=True
+            authorizer=token_authorizer
         )
         #####################################################################################
 
         ############################### POST workspaces/ ####################################
         post_method = workspaces_resource.add_method(
             "POST", workspaces_resource_lambda_integration,
-            api_key_required=True
+            authorizer=token_authorizer
         )
         ######################################################################################
 
@@ -211,7 +260,8 @@ class BmhAdminPortalBackendStack(core.Stack):
         workspace_resource = workspaces_resource.add_resource("{workspace_id}")
         workspace_get = workspace_resource.add_method(
             "GET", workspaces_resource_lambda_integration,
-            api_key_required=True
+            authorizer=token_authorizer
+
         )
         ######################################################################################
 
@@ -219,7 +269,7 @@ class BmhAdminPortalBackendStack(core.Stack):
         limits_resource = workspace_resource.add_resource("limits")
         limits_put = limits_resource.add_method(
             "PUT", workspaces_resource_lambda_integration,
-            api_key_required=True
+            authorizer=token_authorizer
         )
         ######################################################################################
 

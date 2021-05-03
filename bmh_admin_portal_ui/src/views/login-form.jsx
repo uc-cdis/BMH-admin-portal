@@ -1,21 +1,15 @@
+// © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
+// 
+// This AWS Content is provided subject to the terms of the AWS Customer Agreement
+// available at http://aws.amazon.com/agreement or other written agreement between
+// Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
+
 import React, { Component } from 'react';
 import LoginButton from '../components/login-button';
 
 class LoginForm extends Component {
-  state = {
-    account: { email: '', password: '' }
-  }
-
   handleSubmit = e => {
     e.preventDefault();
-
-    console.log('submitted')
-  }
-
-  handleChange = e => {
-    const account = { ...this.state.account };
-    account[e.currentTarget.name] = e.currentTarget.value;
-    this.setState({ account });
   }
 
   render() {
@@ -31,21 +25,10 @@ class LoginForm extends Component {
         <br/>
         <br/>
         <form onSubmit={this.handleSubmit}>
-          {/*<div className="mb-3">
-            <label htmlFor="exampleInputEmail1" className="form-label">Email address</label>
-            <input value={this.state.account.email} onChange={this.handleChange} name="email" type="email" className="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" />
-          </div>
-          <div className="mb-3">
-            <label htmlFor="exampleInputPassword1" className="form-label">Password</label>
-            <input value={this.state.account.password} onChange={this.handleChange} name="password" type="password" className="form-control" id="exampleInputPassword1" />
-          </div>*/}
-          
           <LoginButton />       
-          
         </form>
       </div>
     )
   }
 }
-// <button type="submit" className="btn btn-primary">Submit</button>
 export default LoginForm;
