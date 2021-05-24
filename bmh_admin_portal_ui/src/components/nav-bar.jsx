@@ -7,10 +7,9 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import LogoutButton from './logout-button';
-/* eslint-disable */
 
 const NavBar = ({isAuthenticated}) => {
-	
+
 	let auth_control = (
 		<li class="nav-item logout-btn"></li>
 	)

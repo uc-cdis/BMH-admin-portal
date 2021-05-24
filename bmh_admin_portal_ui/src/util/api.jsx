@@ -10,7 +10,7 @@
 
 import { getIdToken, logout, refresh } from "./oidc"
 
-const base_url = process.env.REACT_APP_API_GW_ENDPOINT
+const baseUrl = process.env.REACT_APP_API_GW_ENDPOINT
 
 const makeApiCall = async (apiCall, callback) => {
     /* Helper method to handle API calls and refresh token if we receive a 
@@ -49,7 +49,7 @@ export const getWorkspaces = (callback) => {
     })
 }
 const getWorkspacesResponse = async () => {
-    const api = `${base_url}/workspaces`
+    const api = `${baseUrl}/workspaces`
     const id_token = getIdToken()
     if( id_token == null ) {
         console.log("Error getting id token before getting workspaces")
@@ -73,7 +73,7 @@ export const requestWorkspace = (form_data, callback) => {
 }
 
 const callRequestWorkspace = async (form_data) => { 
-    const api = `${base_url}/workspaces`
+    const api = `${baseUrl}/workspaces`
     const id_token = getIdToken()
     if( id_token == null ) {
         console.log("Error getting id token before getting workspaces")
@@ -102,7 +102,7 @@ export const setWorkspaceLimits = (workspace_id, limits) => {
 }
 
 const callSetWorkspaceLimits = async (workspace_id, limits) => {
-    const api = `${base_url}/workspaces/${workspace_id}/limits`
+    const api = `${baseUrl}/workspaces/${workspace_id}/limits`
     const id_token = getIdToken()
     if( id_token == null ) {
         logout();
