@@ -20,7 +20,11 @@ class BMHAdminPortalBackendConfig():
             "cognito_userpool_id_param_name":  "/bmh/cognito-userpool-id",
             "cognito_appclient_id_param_name": "/bmh/cognito-appclient-id",
 
+            # This is the ARN of the lambda function deployed for the OCC/DDI account creation lambda.
+            # That will also deploy an S3 bucket with an Account Baseline yaml file. That bucket name is 
+            # necessary to run the lambda function wihout error.
             "account_creation_lambda_arn": "",
+            "account_creation_asset_bucket_name": "",
 
             # Used in provisioning newly created workspace accounts. Should match the
             # role name in new accounts. Expects admin privileges and should trust the account

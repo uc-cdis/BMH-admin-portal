@@ -177,7 +177,8 @@ class BmhAdminPortalBackendStack(core.Stack):
                 'auth_oidc_uri': config['auth_oidc_uri'],
                 'email_domain': config['email_domain'],
                 'strides_credits_request_email': config['strides_credits_request_email'],
-                'strides_grant_request_email': config['strides_grant_request_email']
+                'strides_grant_request_email': config['strides_grant_request_email'],
+                'account_creation_asset_bucket_name': config['account_creation_asset_bucket_name']
             }
         )
 

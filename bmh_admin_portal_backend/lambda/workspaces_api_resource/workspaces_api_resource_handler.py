@@ -435,7 +435,7 @@ def _start_sfn_workflow(workspace_id, api_key, account_id):
                 "BaselineTemplate": "Accountbaseline-brh.yml", ## Parameterize
                 "AccountBilling": "BRH",         
                 "CloudTrailBucket": "",
-                "SourceBucket": "occ-account-vending-394659319646", ## Parameterize
+                "SourceBucket": os.environ['account_creation_asset_bucket_name'],
                 "CurBucket": "",
                 "CCStackName": "",
                 "DbrBucket": "",
@@ -626,9 +626,6 @@ def _workspaces_set_total_usage(body, path_params, api_key):
     soft_limit = table_response['Attributes']['soft-limit']
     hard_limit = table_response['Attributes']['hard-limit']
 
-    # Did we just pass the billing limits? 
-    # TODO: These should probably be their own lambdas, but for now, just
-    # sends something to the SNS topic for demonstration purposes.
     sns_topic_arn = table_response['Attributes']['sns-topic-arn']
     message = "Success"
     if old_total_usage < hard_limit and formatted_total_usage >= hard_limit:
