@@ -1,47 +1,44 @@
-import React, { Component } from 'react';
-import { Link } from 'react-router-dom';
+// © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
+// 
+// This AWS Content is provided subject to the terms of the AWS Customer Agreement
+// available at http://aws.amazon.com/agreement or other written agreement between
+// Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
+
+import React from 'react';
+import { NavLink, Link } from 'react-router-dom';
 import LogoutButton from './logout-button';
-/* eslint-disable */
 
-class NavBar extends Component {
-	state = {}
-	render() {
+const NavBar = ({isAuthenticated}) => {
 
-		const { isAuthenticated } = this.props;
+	let auth_control = (
+		<li class="nav-item logout-btn"></li>
+	)
 
-		let body;
-		if (isAuthenticated) {
-			body = (
-				<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-				<div class="container">
-		      <Link class="navbar-brand" to="/">Biomedical Hub</Link>
-		      <ul class="navbar-nav mr-auto">
-		        <li class="nav-item active">
-		          <Link class="nav-link" to="/">Accounts</Link>
-		        </li>
-		        <li class="nav-item">
-		          <Link class="nav-link" to="/request-workspace">Request Workspace</Link>
-		        </li>
-		        <li class="nav-item logout-btn">
-		          <LogoutButton />
-		        </li>
-		      </ul>
-		      {/*<div id="user_info" class="nav-item" style={{display:"none"}}>
-		        <span class="text-white" id="user_email" >Not Logged In: ERROR</span>
-		        <a to="#" id="logout" class="ml-1 text-secondary"><small>(Logout)</small></a>
-		      </div>*/}
-		    </div>  
-		  </nav>
-			)
-		}
-
-		return (
-			<div>
-				{body}
-			</div>
+	if(isAuthenticated) {
+		auth_control = (
+			<li class="nav-item logout-btn">
+				<LogoutButton />
+			</li>
 		)
-	}
-}
+	} 
 
-// export default withAuth0(NavBar);
+	return (
+		<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+		<div class="container">
+			  <Link class="navbar-brand" to="/">Biomedical Research Hub</Link>
+			  <ul class="navbar-nav mr-auto">
+				<li class="nav-item">
+					<NavLink exact activeStyle={{fontWeight:"bold"}} className="nav-link" to="/">Accounts</NavLink>
+				</li>
+				<li class="nav-item">
+					<NavLink exact activeStyle={{fontWeight:"bold"}} className="nav-link" to="/request-workspace">Request Workspace</NavLink>
+				</li>
+				{auth_control}
+			</ul>
+		</div>  
+	  </nav>
+	)
+
+};
+
 export default NavBar;

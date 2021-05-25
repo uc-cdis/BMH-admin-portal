@@ -37,4 +37,4 @@ You should then be ready to deploy the CloudFormation template `AccountCreationL
 This will deploy the backend API which will handle requests. The deployment instructions can be found [here](bmh_admin_portal_backend/README.md).
 
 ## Deploy BRH Admin Portal Frontend
-** Coming Soon **
+This will deploy the front end React application. The deployment instructions can be found [here](bmh_admin_portal_ui/README_DEPLOYMENT.md).

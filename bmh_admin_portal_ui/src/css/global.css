@@ -4,7 +4,11 @@ body {
 }
 
 .logout-btn {
-  margin-left: 612px;
+  margin-left: 300px;
+}
+
+.tooltip {
+  width: 300px;
 }
 
 /*body {
