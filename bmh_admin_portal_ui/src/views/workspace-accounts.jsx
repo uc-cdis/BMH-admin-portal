@@ -28,6 +28,7 @@ const WorkspaceAccounts = () => {
 
   const dollar_formatter = (cell, row) => "$" + cell
   const editable_header_formatter = (col, colIndex, components) => (<span>{col.text} <BiEditAlt /></span>)
+  const capitalize_word_formatter = (cell, row) => cell.charAt(0).toUpperCase() + cell.slice(1)
 
   const no_data_indication = () => {
     return (
@@ -65,7 +66,7 @@ const WorkspaceAccounts = () => {
     } else if( newValue <= 0 ) {
       valid = false
       message = "Hard limit must be greater than 0 (zero)."
-    } else if( row['strides-credits'] !== null && newValue > row['strides-credits'] ) {
+    } else if( row['strides-credits'] !== null && newValue > row['strides-credits'] && row['strides-credits'] !== 0 ) {
       valid = false
       message = "Hard limit must be less than or equal to the Strides Credits amount."
     }
@@ -87,6 +88,11 @@ const WorkspaceAccounts = () => {
   },{
     dataField: 'request_status',
     text: 'Request Status',
+    editable: false,
+    formatter: capitalize_word_formatter
+  },{
+    dataField: 'workspace_type',
+    text: 'Workspace Type',
     editable: false
   },{
     dataField: 'total-usage',
@@ -134,9 +140,13 @@ const WorkspaceAccounts = () => {
       </div>
   
       <div className="py-5 text-center">
-        <BootstrapTable keyField='bmh_workspace_id' data={ workspaces } columns={ columns }
-          hover={true} bordered={true} cellEdit={cellEdit} noDataIndication={no_data_indication} 
-          loading={loading} overlay={ overlayFactory({ spinner: true, background: 'rgba(192,192,192,0.1)' }) }/>
+        <BootstrapTable keyField='bmh_workspace_id' data={ workspaces } columns={ columns } noDataIndication={no_data_indication} 
+          hover={true} cellEdit={ cellEdit } bordered={true}
+          loading={loading} overlay={ overlayFactory({ spinner: true, background: 'rgba(192,192,192,0.1)' }) }
+        />
+          {/*hover={true}  
+  
+  /> */}
       </div>
   
       <Link to="/request-workspace" className="btn btn-primary btn-lg mb-6">Request New Workspace</Link>

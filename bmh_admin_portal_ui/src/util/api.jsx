@@ -35,7 +35,7 @@ const makeApiCall = async (apiCall, callback) => {
             // The token is still no good. Logout.
             logout();
         } else {
-            console.log("Error getting workspaces.")
+            console.log("Error calling API.")
         }
     }
 
@@ -44,7 +44,12 @@ const makeApiCall = async (apiCall, callback) => {
 /***************  getWorkspaces **************************/
 export const getWorkspaces = (callback) => {
     makeApiCall(getWorkspacesResponse, async (resp) => {
-        const data = await resp.json()
+        let data = []
+        // 204 No Content
+        if( resp.status !== 204 ) {
+            console.log("Awaiting data, status: " + resp.status)
+            data = await resp.json()
+        } 
         callback(data)
     })
 }

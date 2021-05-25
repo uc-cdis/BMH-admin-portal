@@ -20,13 +20,18 @@ from botocore.exceptions import ClientError
 from boto3.dynamodb.conditions import Key
 from boto3.session import Session
 
+from email_helper.email_helper import EmailHelper
+
 
 import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger.setLevel(logging.INFO)
 
-DEFAULT_STRIDES_CREDITS_AMOUNT = 5000
+DEFAULT_STRIDES_CREDITS_AMOUNT = 1000
+STRIDES_CREDITS_WORKSPACE_TYPE="STRIDES Credits"
+STRIDES_GRANT_WORKSPACE_TYPE="STRIDES Grant"
+VALID_WORKSPACE_TYPES = [STRIDES_CREDITS_WORKSPACE_TYPE, STRIDES_GRANT_WORKSPACE_TYPE]
 
 def handler(event, context):
     """ Handles all API requests for the BMH Portal Backend
@@ -71,7 +76,7 @@ def handler(event, context):
             'PUT': lambda: _refresh_tokens(body, api_key)
         },
         '/workspaces':{
-            'POST': lambda: _workspaces_post(body, email, query_string_params),
+            'POST': lambda: _workspaces_post(body, email),
             'GET': lambda: _workspaces_get(path_params, email)
         },
         '/workspaces/{workspace_id}':{
@@ -82,6 +87,9 @@ def handler(event, context):
         },
         '/workspaces/{workspace_id}/total-usage':{
             'PUT': lambda: _workspaces_set_total_usage(body, path_params, api_key)
+        },
+        '/workspaces/{workspace_id}/provision':{
+            'POST': lambda: _workspace_provision(body, path_params)
         }
     }
 
@@ -245,10 +253,67 @@ def _refresh_tokens(body, api_key):
         body=response_data
     )
 
-
-
 ####################### Functions to handle API Method Calls ###################
-def _workspaces_post(body, email, query_string_params ):
+def _workspaces_post(body, email):
+
+    assert 'workspace_type' in body
+    workspace_type = body['workspace_type']
+
+    if workspace_type not in VALID_WORKSPACE_TYPES:
+        raise ValueError(f"Invalid workspace_type: {workspace_type}")
+
+    workspace_request_id = str(uuid.uuid4())
+
+    # Generate email address for root account
+    email_domain = os.environ.get("email_domain", None)
+    if email_domain is None:
+        raise ValueError("Could not find root account email domain.")
+
+    root_email = f"root_{workspace_request_id}@{email_domain}"
+
+    item = {}
+    if body is not None:
+        item = body
+
+    item['workspace_request_id'] = workspace_request_id
+    item['user_id'] = email
+    item['root_account_email'] = root_email
+
+    # Set some defaults
+    item['bmh_workspace_id'] = workspace_request_id
+    item['request_status'] = "pending"
+    item['user_id'] = email
+
+    if workspace_type == STRIDES_CREDITS_WORKSPACE_TYPE:
+        item['strides-credits'] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT)
+    else:
+        item['strides-credits'] = decimal.Decimal(0)
+
+    item['soft-limit'] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * .5)
+    item['hard-limit'] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * .9)
+    item['total-usage'] = 0
+
+    # Get the dynamodb table name from SSM Parameter Store
+    dynamodb_table_name = _get_dynamodb_table_name()
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table(dynamodb_table_name)
+
+    table.put_item(
+        Item=item
+    )
+
+    ## Send request email
+    if workspace_type == 'STRIDES Credits':
+        EmailHelper.send_credits_workspace_request_email(item)
+    elif workspace_type == 'STRIDES Grant':
+        EmailHelper.send_grant_workspace_request_email(item)
+
+    return create_response(
+        status_code=200,
+        body=item
+    )
+
+def _workspace_provision(body, path_params):
     """ For now, this is a place holder for the actual process
     which will create a workpace. Currently, it performs the following:
         1. Create API Key - used by Workspace accounts to communicate 
@@ -258,114 +323,134 @@ def _workspaces_post(body, email, query_string_params ):
         4. Store information in DynamoDB and set some Account
             defaults (soft limit, hard limit, strides credits)
     """
+    assert 'workspace_id' in path_params
+    assert 'account_id' in body
 
-    workspace_request_id = str(uuid.uuid4())
-  
-    if(False):  
-        apigateway = boto3.client('apigateway')
-        resp = apigateway.create_api_key(
-            name=f'workspace-{workspace_id}-key',
-            description=f'API Key for workspace {workspace_id}',
-            enabled=True
-        )
-        key_id = resp['id']
-        api_key = resp['value']
+    workspace_id = path_params['workspace_id']
+    account_id = body['account_id']
 
-        # Grab the Usage Plan Id
-        usage_plan_id = _get_param(os.environ['api_usage_id_param_name'])
-        apigateway.create_usage_plan_key(
-            usagePlanId=usage_plan_id,
-            keyId=key_id,
-            keyType='API_KEY'
-        )
+    strides_credits_amount = body.get('strides_credits_amount', None)
 
-        test_account_id = None
-        if query_string_params is not None and 'test_account_id' in query_string_params:
-            test_account_id = query_string_params['test_account_id']
+    # Grab the current status. Don't provision unless
+    # the request is pending
+    status, email = _get_workspace_request_status_and_email(workspace_id)
+    if status not in ['pending','failed','error']:
+        raise ValueError("Request must be in pending status to provision")
 
-        create_ws_response = _start_sfn_workflow(workspace_id, api_key, test_account_id)
+    apigateway = boto3.client('apigateway')
+    resp = apigateway.create_api_key(
+        name=f'workspace-{workspace_id}-key',
+        description=f'API Key for workspace {workspace_id}',
+        enabled=True
+    )
+    key_id = resp['id']
+    api_key = resp['value']
 
-        # Create the SNS topic for communication back to the user.
-        sns = boto3.client('sns')
-        response = sns.create_topic(
-            Name=f'bmh-workspace-topic-{workspace_id}',
-            Tags=[
-                {'Key': "bmh_workspace_id","Value":workspace_id}
-            ]
-        )
-        topic_arn = response['TopicArn']
-        sns.subscribe(
-            TopicArn=topic_arn,
-            Protocol="email",
-            Endpoint=email
-        )
-    else:
-        topic_arn = "FAKEARN::NOTHING"
-        api_key = "ALSOFAKE"
-    
-    # Convert the input format.
-    params = {}
-    if body is not None:
-        params = body
-    params['bmh_workspace_id'] = workspace_request_id
-    params['request_status'] = "pending"
-    params['user_id'] = email
-    #params['api_key'] = api_key
-    params['strides-credits'] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT)
-    params['soft-limit'] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * .5)
-    params['hard-limit'] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * .9)
-    params['total-usage'] = 0
-    #params['sns-topic-arn'] = topic_arn
+    # Grab the Usage Plan Id
+    usage_plan_id = _get_param(os.environ['api_usage_id_param_name'])
+    apigateway.create_usage_plan_key(
+        usagePlanId=usage_plan_id,
+        keyId=key_id,
+        keyType='API_KEY'
+    )
+
+    # Create the SNS topic for communication back to the user.
+    sns = boto3.client('sns')
+    response = sns.create_topic(
+        Name=f'bmh-workspace-topic-{workspace_id}',
+        Tags=[
+            {'Key': "bmh_workspace_id","Value":workspace_id}
+        ]
+    )
+    topic_arn = response['TopicArn']
+    sns.subscribe(
+        TopicArn=topic_arn,
+        Protocol="email",
+        Endpoint=email
+    )
 
     # Get the dynamodb table name from SSM Parameter Store
     dynamodb_table_name = _get_dynamodb_table_name()
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(dynamodb_table_name)
 
-    table.put_item(
-        Item=params
-    )
+    update_expression = "set #apikey = :apikey, #snstopic = :snstopic, #requeststatus = :requeststatus"
+    expression_attribute_values = {
+        ':apikey': api_key,
+        ':snstopic': topic_arn,
+        ':requeststatus': 'provisioning'
+    }
+    expression_attribute_names = {
+        '#apikey': 'api-key',
+        '#snstopic': 'sns-topic',
+        '#requeststatus': 'request_status'
+    }
+
+    if strides_credits_amount is not None:
+        update_expression += ", #stridescredits = :stridescredits"
+        expression_attribute_names['#stridescredits'] = 'strides-credits'
+        expression_attribute_values[':stridescredits'] = decimal.Decimal(strides_credits_amount)
+
+    try:
+        table_response = table.update_item(
+            Key={
+                'bmh_workspace_id':workspace_id,
+                'user_id': email
+            },
+            UpdateExpression=update_expression,
+            ConditionExpression='attribute_exists(bmh_workspace_id)',
+            ExpressionAttributeValues=expression_attribute_values,
+            ExpressionAttributeNames=expression_attribute_names,
+            ReturnValues='ALL_NEW'
+        )
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
+            raise Exception("Could not find BMH Workspace "
+                f"with id {workspace_id}")
+        else:
+            raise e
+    
+
+    _start_sfn_workflow(workspace_id, api_key, account_id)
 
     return create_response(
-        status_code=200,
-        body=params
+        status_code=200
     )
 
-def _start_sfn_workflow(workspace_id, api_key, test_account_id=None):
+def _start_sfn_workflow(workspace_id, api_key, account_id):
     
     # We'll need to change this to something representing a CTDS email address.
-    email = ""
+    email = "placeholder@email.com"
     
     # Much of this is not used as part of the lambda function, but is required to have 
     # present in the payload to run without error.
     payload = {
-        "RequestType": "Create",
-        "ResourceProperties": {
-            "SkipCloudCheckr": "true",
-            "AdminApiKey": "",
-            "AccountEmail": email,
-            "StackRegion": os.environ.get('AWS_REGION','us-east-1'),
-            "BaselineTemplate": "Accountbaseline.yml", ## Parameterize
-            "AccountBilling": "STRIDES-Credits",         
-            "CloudTrailBucket": "",
-            "SourceBucket": "bmh-account-vending", ## Parameterize
-            "CurBucket": "",
-            "CCStackName": "",
-            "DbrBucket": "",
-            "ConfigBucket": "",
-            "OrganizationalUnitName": "None",
-            "StackName": "avm-baseline-stack",
-            "AccountName": f"BRH {workspace_id}",
+        'ddi_lambda_input': {
+            "RequestType": "Create",
+            "ResourceProperties": {
+                "SkipCloudCheckr": "true",
+                "AdminApiKey": "",
+                "AccountEmail": email,
+                "StackRegion": os.environ.get('AWS_REGION','us-east-1'),
+                "BaselineTemplate": "Accountbaseline-brh.yml", ## Parameterize
+                "AccountBilling": "BRH",         
+                "CloudTrailBucket": "",
+                "SourceBucket": "occ-account-vending-394659319646", ## Parameterize
+                "CurBucket": "",
+                "CCStackName": "",
+                "DbrBucket": "",
+                "ConfigBucket": "",
+                "OrganizationalUnitName": "None",
+                "StackName": "avm-baseline-stack",
+                "AccountName": f"BRH {workspace_id}",
+                'test_account_id': str(account_id)
+            }
         },
         'brh_infrastructure':{
             'workspace_id': workspace_id,
             'api_key': api_key
         }
     }
-
-    ## This is for testing. Will use existing account if a test account id is provided.
-    if test_account_id is not None:
-        payload['ResourceProperties']['test_account_id'] = test_account_id
 
     state_machine_arn = os.environ.get('state_machine_arn')
     execution_uuid = str(uuid.uuid4())
@@ -576,6 +661,41 @@ def _workspaces_set_total_usage(body, path_params, api_key):
 ################################################################################
 
 ################################ Helper Methods ################################
+def _get_workspace_request_status_and_email(workspace_request_id):
+    # Get the dynamodb table name from SSM Parameter Store
+    dynamodb_table_name = _get_dynamodb_table_name()
+    dynamodb_index_name = _get_dynamodb_index_name()
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table(dynamodb_table_name)
+
+    retval = None
+    try:
+        response = table.query(
+            IndexName=dynamodb_index_name,
+            KeyConditionExpression=Key('bmh_workspace_id').eq(workspace_request_id),
+            ReturnConsumedCapacity='NONE',
+        )
+    except Exception as e:
+        raise e
+
+    items = response.get('Items',[])
+    assert len(items) == 1
+    email = items[0]['user_id']
+
+    try:
+        response = table.get_item(
+            Key={
+                'bmh_workspace_id':workspace_request_id,
+                'user_id':email
+            },
+            ProjectionExpression="request_status"
+        )
+    except Exception as e:
+        raise ValueError()
+
+    return response['Item']['request_status'], email
+    
+
 def _publish_to_sns_topic(topic_arn, subject, message):
     sns = boto3.client('sns')
     sns.publish(

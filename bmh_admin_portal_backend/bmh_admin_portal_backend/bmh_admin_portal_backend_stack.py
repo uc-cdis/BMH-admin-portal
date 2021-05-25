@@ -8,7 +8,7 @@ from aws_cdk import (
     aws_logs as logs,
     aws_iam as iam,
     aws_ssm as ssm,
-    aws_sqs as sqs,
+    aws_sns as sns,
     aws_dynamodb as dynamodb,
     aws_s3 as s3,
     aws_s3_deployment as s3_deployment,
@@ -96,7 +96,7 @@ class BmhAdminPortalBackendStack(core.Stack):
             handler="lambda_handler",
             description="Lambda token authorizer function",
             environment={
-                'auth_base_url': "https://fence.planx-pla.net/user", # TODO make config
+                'auth_base_url': config['auth_oidc_uri']
             }
         )
 
@@ -174,7 +174,10 @@ class BmhAdminPortalBackendStack(core.Stack):
                 'auth_redirect_uri': config['auth_redirect_uri'],
                 'auth_client_id': config['auth_client_id'],
                 'auth_client_secret_name': config['auth_client_secret_name'],
-                'auth_oidc_uri': config['auth_oidc_uri']
+                'auth_oidc_uri': config['auth_oidc_uri'],
+                'email_domain': config['email_domain'],
+                'strides_credits_request_email': config['strides_credits_request_email'],
+                'strides_grant_request_email': config['strides_grant_request_email']
             }
         )
 
@@ -214,6 +217,14 @@ class BmhAdminPortalBackendStack(core.Stack):
                 "sns:Publish"
             ],
             resources=["*"]
+        ))
+
+        ## The lambda will need to send emails using SES
+        workspaces_resource_lambda.add_to_role_policy(iam.PolicyStatement(
+            actions=["ses:SendEmail"],
+            resources=[
+                "*"
+            ]
         ))
 
         # Allow lambda to read the dynamodb table 
@@ -265,6 +276,14 @@ class BmhAdminPortalBackendStack(core.Stack):
         )
         ######################################################################################
 
+        ############################## POST workspaces/{workspace_id}/provision #########################
+        ws_provision_resource = workspace_resource.add_resource("provision")
+        workspace_provision = ws_provision_resource.add_method(
+            "POST", workspaces_resource_lambda_integration,
+            api_key_required=True
+        )
+        ######################################################################################
+
         ################ PUT workspaces/{workspace_id}/limits #############################
         limits_resource = workspace_resource.add_resource("limits")
         limits_put = limits_resource.add_method(
@@ -311,32 +330,57 @@ class BmhAdminPortalBackendStack(core.Stack):
             self, 'workspace-occ-create-function',
             function_arn=config['account_creation_lambda_arn']
         )
+
+        # Create an SNS topic to publish errors and success messages to.
+        stepfn_event_topic = sns.Topic(
+            self, "stepfn-topic",
+            display_name="Provision Workspace StepFunction SNS Topic",
+        )
         
         create_workspace_task = sfn_tasks.LambdaInvoke(
             self, 'create-workspace-task',
             lambda_function=create_workspace_lambda,
             payload_response_only=True,
-            result_path="$.workspace_creation_result"
+            input_path="$.ddi_lambda_input",
+            result_path="$.brh_infrastructure.ddi_lambda_output"
         )
 
         deploy_brh_infra = lambda_.Function(
             self, 'create-workspace-function',
             runtime=lambda_.Runtime.PYTHON_3_8,
             timeout=core.Duration.seconds(600),
-            code=lambda_.Code.asset('lambda/deploy_brh_infra'),
-            handler='deploy_brh_infra.handler',
+            code=lambda_.Code.asset('lambda/step_functions_handler'),
+            handler='src.app.handler',
             description='Function which deploys BRH specific infrastructure (cost and usage, etc.) to member accounts.',
             environment={
                 'brh_asset_bucket_param_name': config['brh-workspace-assets-bucket'],
                 "brh_portal_url": config['api_url_param_name'],
                 "dynamodb_index_param_name": config['dynamodb_index_param_name'],
-                "dynamodb_table_param_name": config['dynamodb_table_param_name']
+                "dynamodb_table_param_name": config['dynamodb_table_param_name'],
+                "cross_account_role_name": config['cross_account_role_name'],
+                "provision_workspace_sns_topic": stepfn_event_topic.topic_arn
             }
+        )
+
+        stepfn_event_topic.grant_publish(deploy_brh_infra)
+
+        handle_error_task = sfn_tasks.LambdaInvoke(
+            self, 'handle-error-task',
+            lambda_function=deploy_brh_infra,
+            payload_response_only=True,
+            payload=stepfunctions.TaskInput.from_object({
+                'action':'failure',
+                'input.$':'$'
+            })
+        )
+
+        create_workspace_task.add_catch(
+            handle_error_task,
+            result_path="$.error"
         )
 
         # Allow lambda to read the dynamodb table 
         dynamodb_table.grant_read_write_data(deploy_brh_infra)
-
 
         deploy_brh_infra.add_to_role_policy(iam.PolicyStatement(
             actions=[
@@ -369,15 +413,36 @@ class BmhAdminPortalBackendStack(core.Stack):
             self, 'deploy_brh_infra_task',
             lambda_function=deploy_brh_infra,
             payload_response_only=True,
+            payload=stepfunctions.TaskInput.from_object({
+                'action':'provision_brh',
+                'input.$':'$.brh_infrastructure'
+            }),
             result_path="$.deploy_brh_infra_result"
         )
+
+        deploy_brh_infra_task.add_catch(
+            handle_error_task,
+            result_path="$.error"
+        )
+
+        finish_task = sfn_tasks.LambdaInvoke(
+            self, 'stepfn-success',
+            lambda_function=deploy_brh_infra,
+            payload_response_only=True,
+            payload=stepfunctions.TaskInput.from_object({
+                'action':'success',
+                'input.$':'$'
+            })
+        )
+
+        chain = create_workspace_task.next(deploy_brh_infra_task).next(finish_task)
 
         ## Add logging
         log_group = logs.LogGroup(self, "sfn-loggroup")
 
         state_machine = stepfunctions.StateMachine(
             self, "workflow-request-state-machine",
-            definition=create_workspace_task.next(deploy_brh_infra_task),
+            definition=chain,
             logs={
                 "destination": log_group,
                 "level": stepfunctions.LogLevel.ALL

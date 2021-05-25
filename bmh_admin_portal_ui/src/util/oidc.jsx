@@ -50,6 +50,8 @@ export const loadLoginScreen = () => {
         `&idp=google`,
         '&scope=openid'
     ].join('');
+
+    console.log("Redirecting to " + redirect_location);
     window.location.assign(redirect_location);
 }
 
@@ -100,9 +102,13 @@ export const login = async code => {
 }
 
 export const logout = () => {
-    window.localStorage.removeItem('id_token');
-    window.localStorage.removeItem('refresh_token');
-    window.location.reload();
+  removeTokens()
+  window.location.reload();
+}
+
+export const removeTokens = () => {
+  window.localStorage.removeItem('id_token');
+  window.localStorage.removeItem('refresh_token');
 }
 
 export const refresh = async () => {

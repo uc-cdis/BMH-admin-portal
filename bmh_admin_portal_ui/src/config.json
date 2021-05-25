@@ -1,3 +1,6 @@
 {
-  "apiUrl": "http://google.com"
+  "authorized_emails": [
+    "kevingalens@gmail.com",
+    "qureshi@uchicago.edu"
+  ]
 }
