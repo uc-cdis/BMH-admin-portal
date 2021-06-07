@@ -16,9 +16,8 @@ class BMHAdminPortalBackendConfig():
             "api_url_param_name":          "/bmh/workspaces-api/url",
             "api_usage_id_param_name":     "/bmh/usage_plan_id",
             "brh-workspace-assets-bucket": "/bmh/workspace-assets-bucket",
+            "admin_vm_instance_id_param_name": "/brh/admin_vm_instance_id",
 
-            "cognito_userpool_id_param_name":  "/bmh/cognito-userpool-id",
-            "cognito_appclient_id_param_name": "/bmh/cognito-appclient-id",
 
             # This is the ARN of the lambda function deployed for the OCC/DDI account creation lambda.
             # That will also deploy an S3 bucket with an Account Baseline yaml file. That bucket name is 

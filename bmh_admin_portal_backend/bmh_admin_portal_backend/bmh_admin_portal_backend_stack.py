@@ -1,5 +1,6 @@
 import json
 import os
+import subprocess
 
 from aws_cdk import (
     core,
@@ -8,27 +9,22 @@ from aws_cdk import (
     aws_logs as logs,
     aws_iam as iam,
     aws_ssm as ssm,
-    aws_sns as sns,
     aws_dynamodb as dynamodb,
     aws_s3 as s3,
     aws_s3_deployment as s3_deployment,
-    aws_stepfunctions as stepfunctions,
-    aws_stepfunctions_tasks as sfn_tasks,
     aws_secretsmanager as secretsmanager
 )
 from aws_cdk.aws_lambda_python import PythonFunction
 
-from .bmh_cognito_userpool import BMHAdminPortalCognitoUserPool
 from .bmh_admin_portal_config import BMHAdminPortalBackendConfig
+from .brh_provisioning.base_workflow import ProvisioningWorkflow
+from .brh_provisioning.adminvm import AdminVM
 
 class BmhAdminPortalBackendStack(core.Stack):
     def __init__(self, scope: core.Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         config = BMHAdminPortalBackendConfig.get_config()
-
-        # Create the user pool, ssm parameteres and app client.
-        #cognito_user_pool = BMHAdminPortalCognitoUserPool(self, "cognito-user-pool")
 
         # Create the dynamodb table and store the name in SystemsManager
         # as a Parameter.
@@ -118,6 +114,12 @@ class BmhAdminPortalBackendStack(core.Stack):
 
         #####################################################################################
         ####### BRH Workspace Assets
+        # Rebuild the artifacts before pushing.
+        brh_workspace_build_script = os.path.join(os.getcwd(), "..", "bmh_workspace", "build.sh")
+        proc = subprocess.run(brh_workspace_build_script)
+        if proc.returncode != 0:
+            raise RuntimeError(f"Error running build script for bmh_workspace: {brh_workspace_build_script}")
+
         brh_workspace_builddir = os.path.join(os.getcwd(), "..", "bmh_workspace", "build")
 
         # Create the s3 bucket
@@ -141,10 +143,21 @@ class BmhAdminPortalBackendStack(core.Stack):
         )
         ########################################################################################
 
+
+        ########################################################################################
+        ##### Admin VM
+        ########################################################################################
+        admin_vm = AdminVM(self, 'brh-admin-vm')
+
         ########################################################################################
         ##### Step Functions Workflow
         ########################################################################################
-        step_fn_workflow = self.create_step_functions_workflow(brh_workspace_assets_bucket, dynamodb_table, config)
+        provisioning_workflow = ProvisioningWorkflow(
+            self, "provision_step_fn",
+            brh_asset_bucket=brh_workspace_assets_bucket,
+            dynamodb_table=dynamodb_table,
+        )
+        step_fn_workflow = provisioning_workflow.workflow
         ########################################################################################
 
         ## Secret for Authorization Client secret. If an non-default encryption key was
@@ -324,130 +337,3 @@ class BmhAdminPortalBackendStack(core.Stack):
             string_value=default_usage_plan.usage_plan_id
         )
         ######################################################################################
-
-
-    def create_step_functions_workflow(self, brh_asset_bucket, dynamodb_table, config):
-        create_workspace_lambda = lambda_.Function.from_function_arn(
-            self, 'workspace-occ-create-function',
-            function_arn=config['account_creation_lambda_arn']
-        )
-
-        # Create an SNS topic to publish errors and success messages to.
-        stepfn_event_topic = sns.Topic(
-            self, "stepfn-topic",
-            display_name="Provision Workspace StepFunction SNS Topic",
-        )
-        
-        create_workspace_task = sfn_tasks.LambdaInvoke(
-            self, 'create-workspace-task',
-            lambda_function=create_workspace_lambda,
-            payload_response_only=True,
-            input_path="$.ddi_lambda_input",
-            result_path="$.brh_infrastructure.ddi_lambda_output"
-        )
-
-        deploy_brh_infra = lambda_.Function(
-            self, 'create-workspace-function',
-            runtime=lambda_.Runtime.PYTHON_3_8,
-            timeout=core.Duration.seconds(600),
-            code=lambda_.Code.asset('lambda/step_functions_handler'),
-            handler='src.app.handler',
-            description='Function which deploys BRH specific infrastructure (cost and usage, etc.) to member accounts.',
-            environment={
-                'brh_asset_bucket_param_name': config['brh-workspace-assets-bucket'],
-                "brh_portal_url": config['api_url_param_name'],
-                "dynamodb_index_param_name": config['dynamodb_index_param_name'],
-                "dynamodb_table_param_name": config['dynamodb_table_param_name'],
-                "cross_account_role_name": config['cross_account_role_name'],
-                "provision_workspace_sns_topic": stepfn_event_topic.topic_arn
-            }
-        )
-
-        stepfn_event_topic.grant_publish(deploy_brh_infra)
-
-        handle_error_task = sfn_tasks.LambdaInvoke(
-            self, 'handle-error-task',
-            lambda_function=deploy_brh_infra,
-            payload_response_only=True,
-            payload=stepfunctions.TaskInput.from_object({
-                'action':'failure',
-                'input.$':'$'
-            })
-        )
-
-        create_workspace_task.add_catch(
-            handle_error_task,
-            result_path="$.error"
-        )
-
-        # Allow lambda to read the dynamodb table 
-        dynamodb_table.grant_read_write_data(deploy_brh_infra)
-
-        deploy_brh_infra.add_to_role_policy(iam.PolicyStatement(
-            actions=[
-                "s3:PutBucketPolicy",
-                "s3:GetBucketPolicy",
-            ],
-            resources=[brh_asset_bucket.bucket_arn]
-        ))
-
-        deploy_brh_infra.add_to_role_policy(iam.PolicyStatement(
-            actions=[
-                "sts:AssumeRole"
-            ],
-            resources=["arn:aws:iam::*:role/OrganizationAccountAccessRole"]
-        ))
-
-        ## Grant read/write to all SSM Parameters in the /bmh namespace.
-        ## This is done to get rid of circular dependencies.
-        deploy_brh_infra.add_to_role_policy(iam.PolicyStatement(
-            actions=[
-                "ssm:DescribeParameters",
-                "ssm:GetParameters",
-                "ssm:GetParameter",
-                "ssm:GetParameterHistory"
-            ],
-            resources=[f"arn:aws:ssm:{self.region}:{self.account}:parameter/bmh/*"]
-        ))
-
-        deploy_brh_infra_task = sfn_tasks.LambdaInvoke(
-            self, 'deploy_brh_infra_task',
-            lambda_function=deploy_brh_infra,
-            payload_response_only=True,
-            payload=stepfunctions.TaskInput.from_object({
-                'action':'provision_brh',
-                'input.$':'$.brh_infrastructure'
-            }),
-            result_path="$.deploy_brh_infra_result"
-        )
-
-        deploy_brh_infra_task.add_catch(
-            handle_error_task,
-            result_path="$.error"
-        )
-
-        finish_task = sfn_tasks.LambdaInvoke(
-            self, 'stepfn-success',
-            lambda_function=deploy_brh_infra,
-            payload_response_only=True,
-            payload=stepfunctions.TaskInput.from_object({
-                'action':'success',
-                'input.$':'$'
-            })
-        )
-
-        chain = create_workspace_task.next(deploy_brh_infra_task).next(finish_task)
-
-        ## Add logging
-        log_group = logs.LogGroup(self, "sfn-loggroup")
-
-        state_machine = stepfunctions.StateMachine(
-            self, "workflow-request-state-machine",
-            definition=chain,
-            logs={
-                "destination": log_group,
-                "level": stepfunctions.LogLevel.ALL
-            }
-        )
-
-        return state_machine

@@ -7,6 +7,7 @@
 import logging
 import json
 import urllib3
+import hashlib
 
 import boto3
 
@@ -59,7 +60,7 @@ def handler(event, context):
     else:
         message = f"Invalid RequestType {event['RequestType']}"
         logger.error(message)
-        _responsd_failed(event, context, {"error":message})
+        _respond_failed(event, context, {"error":message})
         raise ValueError(message)
 
     logger.info(f"Response: {response}")
@@ -111,6 +112,13 @@ def _parse_resource_properties(input_data):
     # This should raise an exception when the SDK CUR API calls fail
     # AWS Validation.
     assert 'ReportName' in retval
+
+    # Add an md5 sum of the service token (lambda name) which will
+    # make the name of the report consistently unique between deployments.
+    service_token = input_data.get('ServiceToken', None)
+    if service_token is not None:
+        md5 = hashlib.md5(service_token.encode()).hexdigest()
+        retval['ReportName'] = "-".join([retval['ReportName'],md5])
 
     return retval
 

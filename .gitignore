@@ -1,5 +1,6 @@
 # BMH Web UI build
 webui_dist
+*.zip
 
 # Mac Finder Directories
 .DS_Store

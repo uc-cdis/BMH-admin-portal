@@ -374,22 +374,24 @@ def _workspace_provision(body, path_params):
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(dynamodb_table_name)
 
-    update_expression = "set #apikey = :apikey, #snstopic = :snstopic, #requeststatus = :requeststatus"
+    update_expression = "set #apikey = :apikey, #snstopic = :snstopic, #requeststatus = :requeststatus, #accountid = :accountid"
     expression_attribute_values = {
         ':apikey': api_key,
         ':snstopic': topic_arn,
-        ':requeststatus': 'provisioning'
+        ':requeststatus': 'provisioning',
+        ':accountid': account_id
     }
     expression_attribute_names = {
         '#apikey': 'api-key',
         '#snstopic': 'sns-topic',
-        '#requeststatus': 'request_status'
+        '#requeststatus': 'request_status',
+        '#accountid': "account_id"
     }
 
     if strides_credits_amount is not None:
         update_expression += ", #stridescredits = :stridescredits"
         expression_attribute_names['#stridescredits'] = 'strides-credits'
-        expression_attribute_values[':stridescredits'] = decimal.Decimal(strides_credits_amount)
+        expression_attribute_values[':stridescredits'] = decimal.Decimal(strides_credits_amount),
 
     try:
         table_response = table.update_item(

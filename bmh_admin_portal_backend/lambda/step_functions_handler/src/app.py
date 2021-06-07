@@ -6,7 +6,13 @@
 import json
 from enum import Enum
 
-from .handlers import ProvisionBRHHandler, FailureHandler, SuccessHandler
+from .handlers import (
+    ProvisionBRHHandler, 
+    FailureHandler, 
+    SuccessHandler,
+    SSMRunCommandHandler,
+    SSMCommandStatus
+)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -19,7 +25,9 @@ def handler(event, context):
     dispatch = {
         Actions.BRH_PROVISION.value: ProvisionBRHHandler,
         Actions.SUCCESS.value: SuccessHandler,
-        Actions.FAILURE.value: FailureHandler
+        Actions.FAILURE.value: FailureHandler,
+        Actions.SSM_RUN_COMMAND.value: SSMRunCommandHandler,
+        Actions.SSM_COMMAND_STATUS.value: SSMCommandStatus
     }
 
     action = event.get('action', None)
@@ -45,5 +53,7 @@ class InvalidActionException(Exception):
 
 class Actions(Enum):
     BRH_PROVISION = 'provision_brh'
+    SSM_RUN_COMMAND = 'ssm_run_command'
+    SSM_COMMAND_STATUS = 'ssm_command_status'
     SUCCESS = 'success'
     FAILURE = 'failure'

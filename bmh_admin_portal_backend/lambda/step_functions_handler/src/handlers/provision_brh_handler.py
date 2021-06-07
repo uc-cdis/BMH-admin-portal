@@ -96,7 +96,7 @@ class ProvisionBRHHandler():
 
         brh_portal_url = Util.get_param(os.environ.get("brh_portal_url", None))
 
-        stack_name = 'brh-infrastructure'
+        stack_name = 'brh-infrastructure-cur'
         try:
             response = cfn.create_stack(
                 StackName=stack_name,
@@ -122,8 +122,12 @@ class ProvisionBRHHandler():
                 ],
                 Capabilities=['CAPABILITY_IAM']
             )
-        except botocore.exceptions.ClientError as err:
-            raise err
+        except botocore.exceptions.ClientError as error:
+            if error.response['Error']['Code'] == 'AlreadyExistsException':
+                # Not a problem. We should actually ensure that it finished successfully...
+                return {'success': True}
+            else:
+                raise error
 
         ## Wait for the stack to complete. Expectation is this should
         ## take less than 5 minutes
