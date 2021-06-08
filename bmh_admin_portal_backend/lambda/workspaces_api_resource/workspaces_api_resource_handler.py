@@ -628,7 +628,7 @@ def _workspaces_set_total_usage(body, path_params, api_key):
     soft_limit = table_response['Attributes']['soft-limit']
     hard_limit = table_response['Attributes']['hard-limit']
 
-    sns_topic_arn = table_response['Attributes']['sns-topic-arn']
+    sns_topic_arn = table_response['Attributes']['sns-topic']
     message = "Success"
     if old_total_usage < hard_limit and formatted_total_usage >= hard_limit:
         logger.info(f"Surpassed the hard limit: {old_total_usage=} {formatted_total_usage=} {hard_limit=}")

@@ -113,13 +113,6 @@ def _parse_resource_properties(input_data):
     # AWS Validation.
     assert 'ReportName' in retval
 
-    # Add an md5 sum of the service token (lambda name) which will
-    # make the name of the report consistently unique between deployments.
-    service_token = input_data.get('ServiceToken', None)
-    if service_token is not None:
-        md5 = hashlib.md5(service_token.encode()).hexdigest()
-        retval['ReportName'] = "-".join([retval['ReportName'],md5])
-
     return retval
 
 ############ Included cfnresponse module
