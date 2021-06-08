@@ -93,8 +93,14 @@ def validate_token(token):
     key_info = [x for x in keys['keys'] if x['kid'] == kid]
     public_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(key_info[0]))
 
-    # This should fail if the token has expired.
-    payload = jwt.decode(token, key=public_key, algorithms=[key_info[0]['alg']], audience="openid")
+    #logger.info(f"ID Token: {token}")
+
+    client_id = os.environ.get('auth_client_id', None)
+    if client_id is None:
+        raise KeyError("Expected auth_client_id in environment.")
+
+    # This should fail if the token has expire or if there's an audience mismatch.
+    payload = jwt.decode(token, key=public_key, algorithms=[key_info[0]['alg']], audience=client_id)
     
     return payload
 
