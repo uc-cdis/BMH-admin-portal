@@ -53,7 +53,7 @@ class ProvisioningWorkflow(core.Construct):
             self, 'test-run-command',
             step_fn_lambda=self.stepfn_lambda,
             working_directory="",
-            commands=["pwd","ls","sleep 45"]
+            commands=["pwd","ls -la","sleep 45"]
         )
         return run_command_task
 
@@ -168,7 +168,16 @@ class ProvisioningWorkflow(core.Construct):
         return brh_provision_task
 
     def create_step_functions_workflow(self):
-        finish_task = stepfunctions.Succeed(self, "succeed-task")
+
+        finish_task = sfn_tasks.LambdaInvoke(
+            self, 'success-task',
+            lambda_function=self.stepfn_lambda,
+            payload_response_only=True,
+            payload=stepfunctions.TaskInput.from_object({
+                'action':'success',
+                'input.$':'$'
+            })
+        )
 
         chain = (
             self.occ_lambda_task
