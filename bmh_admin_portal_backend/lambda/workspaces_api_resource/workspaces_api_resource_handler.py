@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger.setLevel(logging.INFO)
 
-DEFAULT_STRIDES_CREDITS_AMOUNT = 1000
+DEFAULT_STRIDES_CREDITS_AMOUNT = 250
 STRIDES_CREDITS_WORKSPACE_TYPE="STRIDES Credits"
 STRIDES_GRANT_WORKSPACE_TYPE="STRIDES Grant"
 VALID_WORKSPACE_TYPES = [STRIDES_CREDITS_WORKSPACE_TYPE, STRIDES_GRANT_WORKSPACE_TYPE]
@@ -310,7 +310,7 @@ def _workspaces_post(body, email):
 
     return create_response(
         status_code=200,
-        body=item
+        body={"message":"success"}
     )
 
 def _workspace_provision(body, path_params):
@@ -416,7 +416,8 @@ def _workspace_provision(body, path_params):
     _start_sfn_workflow(workspace_id, api_key, account_id)
 
     return create_response(
-        status_code=200
+        status_code=200,
+        body={"message":"success"}
     )
 
 def _start_sfn_workflow(workspace_id, api_key, account_id):
@@ -478,6 +479,27 @@ def _workspaces_get(path_params, email):
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(dynamodb_table_name)
 
+    # Use expression attributes because dashes are not
+    # allowed.
+    projection = ", ".join([
+        '#nihaward',
+        '#requeststatus',
+        '#workspacetype',
+        '#totalusage',
+        '#stridescredits',
+        '#softlimit',
+        '#hardlimit'
+    ])
+    expression_attribute_names = {
+        "#nihaward": 'nih_funded_award_number',
+        '#requeststatus':'request_status',
+        '#workspacetype':'workspace_type',
+        '#totalusage': 'total-usage',
+        '#stridescredits': 'strides-credits',
+        '#softlimit': 'soft-limit',
+        '#hardlimit': 'hard-limit'
+    }
+
     status_code = 200
     retval = []
     if path_params is not None and 'workspace_id' in path_params:
@@ -485,7 +507,9 @@ def _workspaces_get(path_params, email):
             Key={
                 'bmh_workspace_id':path_params['workspace_id'],
                 'user_id':email
-            }
+            },
+            ProjectExpression=projection,
+            ExpressionAttributeNames=expression_attribute_names
         )
         retval = response.get('Item', None)
         if retval is None:
@@ -493,7 +517,9 @@ def _workspaces_get(path_params, email):
 
     else:
         response = table.query(
-            KeyConditionExpression=Key('user_id').eq(email)
+            KeyConditionExpression=Key('user_id').eq(email),
+            ProjectionExpression=projection,
+            ExpressionAttributeNames=expression_attribute_names
         )
         
         retval = response.get('Items',[])
