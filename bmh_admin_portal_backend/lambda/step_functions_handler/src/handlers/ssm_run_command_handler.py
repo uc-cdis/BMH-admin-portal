@@ -24,6 +24,11 @@ class SSMRunCommandHandler():
         working_dir = event['working_directory']
         instance_id = self._get_param(event['instance_id_parameter_name'])
 
+        ## Step functions workflow input is stored in event['input']. This is an example
+        ## of how to retrieve the Account ID.
+        account_id = event['input']['brh_infrastructure']['ddi_lambda_output']['account_id']
+        commands.append(f'echo "{account_id}"')
+
         response = self.ssm_client.send_command(
             InstanceIds=[instance_id],
             DocumentName="AWS-RunShellScript",

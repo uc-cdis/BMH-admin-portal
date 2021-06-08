@@ -30,6 +30,7 @@ region and account).
    * auth_oidc_uri - base url for communicating with auth provider (i.e. https://fence.url/user)
    * auth_client_secret_arn and auth_client_secret_name - The backend lambda uses the client secret to communicate to Fence. An AWS SecretManager secret needs to be created manually. The arn and name are required here. This will work with default encryption. If a CMK is used to encrypt the secret, that will need to be added to the CDK application so that the Lambda can be granted permissions to use the Key.
    * account_creation_lambda_arn - The arn of the OCC/DDI deployed lambda function.
+   * account_creation_asset_bucket_name - The bucket created when the OCC/DDI lambda function is deployed. Contains Account baseline CloudFormation template.
    * email_domain - The domain used for autogenerating emails to be used as root accounts.
    * strides_credits_request_email - Email to send requests to when a STRIDES credits account is requested.
    * strides_grant_request_email - Email to send requests to when a STRIDES Grant account type is request.
@@ -60,32 +61,14 @@ region and account).
 ### Subscribe to SNS Topic
 The CDK application will have created an SNS topic where status notifications will be sent during the BRH Workspace provisioning process (success and failure). You can subscribe to the topic from the AWS Console with whichever email(s) should receive these notifications. ([SNS - AWS Console](https://console.aws.amazon.com/sns/v3/home?region=us-east-1#/dashboard)). The Topic should be named similarly to `bmh-admin-portal-backend-stepfntopic<UNIQUEID>`.
 
-## TMP
+### Adding SSM Run Commands to Step Functions Workflow
+To add a run command SSM capability to the Provisioning Workflow, look at the current .bmh_admin_portal_backend.brh_provisioning.base_workflow. This module demonstrates adding a simple run command.
 
-    dispatch = {
-        '/auth/get-tokens':{
-            'GET': lambda: _get_tokens(query_string_params, api_key)
-        },
-        '/auth/refresh-tokens':{
-            'PUT': lambda: _refresh_tokens(body, api_key)
-        },
-        '/workspaces':{
-            'POST': lambda: _workspaces_post(body, email),
-            'GET': lambda: _workspaces_get(path_params, email)
-        },
-        '/workspaces/{workspace_id}':{
-            'GET': lambda: _workspaces_get(path_params, email)
-        },
-        '/workspaces/{workspace_id}/limits':{
-            'PUT': lambda: _workspaces_set_limits(body, path_params, email)
-        },
-        '/workspaces/{workspace_id}/total-usage':{
-            'PUT': lambda: _workspaces_set_total_usage(body, path_params, api_key)
-        },
-        '/workspaces/{workspace_id}/provision':{
-            'POST': lambda: _workspace_provision(body, path_params)
-        }
-    }
+The run command is actually deployed from the step_functions_handler lambda function. If parameters need to be included in the run command, they can be pulled from the Step Functions input (see example in `lambda.step_functions_handler.src.handlers.ssm_run_command_handler.py`)
+
+**Note:** Before the run command will work on a specific EC2 Instance, please ensure:
+1. The EC2 has the correct permissions to be managed by SSM (i.e. by adding the mananged policy `AmazonSSMManagedInstanceCore` to the instance profile). See the [docs](https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-instance-profile.html) for more detailed information. This isn't necessary if the EC2 instance has Admin privileges associated with the Instace Project (although, this should be avoided if possible).
+2. The VM is running an instance of SSM Agent running. For instructions on how to deploy this on Ubuntu, see the [docs](https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-ubuntu.html)
 
 ## API
 ### GET api/auth/get-tokens
@@ -106,8 +89,7 @@ The CDK application will have created an SNS topic where status notifications wi
   
 * **Request:** Body should be a json encoded key value attributes. Currently, there are no required parameters. This represents creating a new Gen3 Workspace Request.
 
-* **Response:** Will return json encoded key-value attributes same as input, with the following attributes added:
-  1. Workspace Request ID: unique ID for the "created" workspace and default request attributes.
+* **Response:** Will return status code 200 and body: {"message":"success"} on success, 401 if invalid token was provided, or 50X if an internal error occurred.
 
 ### GET api/workspaces
 * **Authorziation**: Required, valid JWT Token
@@ -117,17 +99,16 @@ The CDK application will have created an SNS topic where status notifications wi
 * **Response:** Return all attributes used as input for the POST api/workspaces called. Will only return the Workspaces associated with the user how is authenticated. If no workspaces are found associated with the user, will return a status code of 204.
 
       [{
-          "sns-topic-arn": "arn:aws:sns:us-east-1:807499094734:bmh-workspace-topic-74cfc35d-92d9-4561-a684-0611059bd557",
           "total-usage": 216.73,
-          "api_key": "RxP50W3Cmz9jStnndhG4o67g0xGAbX8s2jZQScBP",
-          "account_id": "PSEUDO_220144521636",
-          "strides-id": "",
-          "strides-credits": 5000,
-          "hard-limit": 4500,
+          "strides-credits": 250,
+          "hard-limit": 225,
           "user_id": "researcher@university.edu",
-          "organization": "Research University",
           "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde101",
-          "soft-limit": 2500
+          "soft-limit": 150,
+          "total-usage": 7.43,
+          "request_status": "active",
+          "workspace_type": "STRIDES Credits",
+          "nih_funded_award_number": "4325534543"
       },
       ....
       ]
@@ -140,17 +121,16 @@ The CDK application will have created an SNS topic where status notifications wi
 * **Response:** Will return a single representation of a workspace. Otherwise, will return status code 404.
 
       {
-          "sns-topic-arn": "arn:aws:sns:us-east-1:807499094734:bmh-workspace-topic-74cfc35d-92d9-4561-a684-0611059bd557",
           "total-usage": 216.73,
-          "api_key": "RxP50W3Cmz9jStnndhG4o67g0xGAbX8s2jZQScBP",
-          "account_id": "PSEUDO_220144521636",
-          "strides-id": "",
-          "strides-credits": 5000,
-          "hard-limit": 4500,
+          "strides-credits": 250,
+          "hard-limit": 225,
           "user_id": "researcher@university.edu",
-          "organization": "Research University",
           "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde101",
-          "soft-limit": 2500
+          "soft-limit": 150,
+          "total-usage": 7.43,
+          "request_status": "active",
+          "workspace_type": "STRIDES Credits",
+          "nih_funded_award_number": "4325534543"
       }
 
 ### POST api/workspaces/{workspace_id}/provision
@@ -160,7 +140,7 @@ The CDK application will have created an SNS topic where status notifications wi
   2. Store status in database.
   3. Start step functions workflow (OCC/DDI Lambda, BRH Provision Lambda).
 
-* **Response**: Status code 200 on success (empty body).
+* **Response**: Status code 200 on success. Body: {"message":"success"}
 
 ### PUT api/workspaces/{workspace_id}/limits
 * **Authorziation**: Required, API Key
