@@ -47,8 +47,8 @@ export const loadLoginScreen = () => {
         '&response_type=code',
         `&client_id=${process.env.REACT_APP_OIDC_CLIENT_ID}`,
         `&redirect_uri=${process.env.REACT_APP_OIDC_REDIRECT_URI}`,
-        `&idp=google`,
-        '&scope=openid'
+        `&idp=ras`,
+        '&scope=openid%20user'
     ].join('');
 
     console.log("Redirecting to " + redirect_location);

@@ -13,6 +13,8 @@ import { requestWorkspace } from '../../util/api';
 const initialFormData = Object.freeze({
     workspace_type: "STRIDES Grant",
 	scientific_poc: "",
+    poc_email: "",
+    confirm_poc_email: "",
 	scientific_institution: "",
 	nih_funded_award_number: "",
 	administering_nih_institute: "",
@@ -33,8 +35,18 @@ const StridesGrantForm = (props) => {
 
     const [formData, updateFormData] = useState(initialFormData)
     const [buttonDisabled, setButtonDisabled] = useState(false)
+    const [validated, setValidated] = useState(false)
 
 	const handleChange = (e) => {
+
+        if( e.target.name === "confirm_poc_email" ) {
+            if( e.target.value.trim() != formData['poc_email'] ) {
+                e.target.setCustomValidity("Must match email")
+            } else {
+                e.target.setCustomValidity("")
+            }
+        }
+
 		updateFormData({
 			...formData,
 			[e.target.name]: e.target.value.trim()
@@ -43,14 +55,20 @@ const StridesGrantForm = (props) => {
 
 	const handleSubmit = (e) => {
 		e.preventDefault()
-        setButtonDisabled(true)
-		requestWorkspace(formData, () => {
-			updateRedirectHome(true)
-		})
+
+        const form = e.currentTarget;
+        if ( form.checkValidity() ) {
+            setButtonDisabled(true)
+            requestWorkspace(formData, () => {
+                updateRedirectHome(true)
+            })
+        }
+
+        setValidated(true);
 	}
 
     return (
-        <Form onSubmit={handleSubmit}>
+        <Form noValidate validated={validated} onSubmit={handleSubmit}>
             <Form.Row className="mb-3">
                 <Col>
                     <Form.Label>Scientific POC Name <span data-tip data-for="scientific_poc_help"><BiHelpCircle /></span></Form.Label>
@@ -58,14 +76,45 @@ const StridesGrantForm = (props) => {
                         Principal Investigator or other awardee who has overall responsibility for scientific direction, <br />
                         responsible for setting (or delegating) security policies and financial oversight of cloud resources
                     </ReactTooltip>
-                    <Form.Control onChange={handleChange} type="text" name="scientific_poc" placeholder="Jane Smith" />
+                    <Form.Control required onChange={handleChange} type="text" name="scientific_poc" placeholder="Jane Smith" />
                 </Col>
                 <Col>
                     <Form.Label>Scientific Institution <span data-tip data-for="scientific_institution_help"><BiHelpCircle /></span></Form.Label>
                     <ReactTooltip class="tooltip" id="scientific_institution_help" place="top" effect="solid" multiline={true}>
                         Examples: Harvard Medical School, Mayo Clinic, University of Chicago, etc.
                     </ReactTooltip>
-                    <Form.Control type="text" onChange={handleChange} name="scientific_institution" placeholder="University or Institution" />
+                    <Form.Control required type="text" onChange={handleChange} name="scientific_institution" placeholder="University or Institution" />
+                </Col>
+            </Form.Row>
+
+            <Form.Row className="mb-3">
+                <Col>
+                    <Form.Label>Scientific POC Email <span data-tip data-for="poc_email"><BiHelpCircle /></span></Form.Label>
+                    <ReactTooltip class="tooltip" id="poc_email" place="top" effect="solid" multiline={true}>
+                        Email address used for contact regarding the BRH Workspace.
+                    </ReactTooltip>
+                    <Form.Control 
+                        type="email" onChange={handleChange} 
+                        name="poc_email" placeholder="user@email.org" 
+                        required
+                    />
+
+                    <Form.Control.Feedback type="invalid">
+                        Must be a valid email
+                    </Form.Control.Feedback>
+                </Col>
+                <Col>
+                    <Form.Label>Confirm Scientific POC Email <span data-tip data-for="confirm_poc_email"><BiHelpCircle /></span></Form.Label>
+                    <ReactTooltip class="tooltip" id="configm_poc_email" place="top" effect="solid" multiline={true}>
+                        Email address used for contact regarding the BRH Workspace.
+                    </ReactTooltip>
+                    <Form.Control required type="email" onChange={handleChange} name="confirm_poc_email" placeholder="user@email.org" 
+                       feedback="Value must match Scientific POC Email" 
+                    />
+
+                    <Form.Control.Feedback type="invalid">
+                        Must be a valid email and match "Scientific POC Email"
+                    </Form.Control.Feedback>
                 </Col>
             </Form.Row>
 
@@ -75,7 +124,7 @@ const StridesGrantForm = (props) => {
                     <ReactTooltip class="tooltip" id="nih_funded_award_number_help" place="top" effect="solid" multiline={true}>
                         Derived from NIH Notice of Award, uniquely identifies NIH-funded research projects
                     </ReactTooltip>
-                    <Form.Control type="text" onChange={handleChange} name="nih_funded_award_number" placeholder="123456789" />
+                    <Form.Control type="text" onChange={handleChange} name="nih_funded_award_number" placeholder="123456789" required />
                 </Col>
                 <Col>
                     <Form.Label>Administering NIH Institute or Center <span data-tip data-for="administering_nih_institute_help"><BiHelpCircle /></span></Form.Label>
