@@ -9,7 +9,8 @@ This stack generates the CloudFormation templates which deploy the following res
 * DynamoDB for persisting request information.
 * API Gateway REST API endpoints for receiving requests from the frontend.
 * Lambda function to handle REST API calls
-* Cognito User Pool, used by (most of) the REST API endpoints for Authorization
+* Step Functions to coordinate BRH Workspace Provisioning Process
+* SNS Topic used for status updates of the provisioning process.
 
 ## Deployment
 
@@ -23,11 +24,16 @@ region and account).
 *Note*: If this is the first time deploying a CDK application into this account, you may need to run `cdk bootstrap` before deploying this application.
 
 1. Configure the deployment. Copy `bmh_admin_portal_backend/bmh_admin_portal_backend/bmh_admin_portal_config_TEMPLATE.py` to `bmh_admin_portal_backend/bmh_admin_portal_backend/bmh_admin_portal_config.py`. 
+   * cross_account_role_name - Name of the role to be used when provisioning BRH workspaces in target account.
    * auth_redirect_uri - Callback URL for Auth server (Fence)
    * auth_client_id - Client Id provided from Auth provider (Fence)
    * auth_oidc_uri - base url for communicating with auth provider (i.e. https://fence.url/user)
-   * auth_client_secret_arn and auth_client_secret_name - The backend lambda uses the client secret to communicate to Fence. A AWS SecretManager secret needs to be created manually. The arn and name are required here. This will work with default encryption. If a CMK is used to encrypt the secret, that will need to be added to the CDK application so that the Lambda can be granted permissions to use the Key.
+   * auth_client_secret_arn and auth_client_secret_name - The backend lambda uses the client secret to communicate to Fence. An AWS SecretManager secret needs to be created manually. The arn and name are required here. This will work with default encryption. If a CMK is used to encrypt the secret, that will need to be added to the CDK application so that the Lambda can be granted permissions to use the Key.
    * account_creation_lambda_arn - The arn of the OCC/DDI deployed lambda function.
+   * account_creation_asset_bucket_name - The bucket created when the OCC/DDI lambda function is deployed. Contains Account baseline CloudFormation template.
+   * email_domain - The domain used for autogenerating emails to be used as root accounts.
+   * strides_credits_request_email - Email to send requests to when a STRIDES credits account is requested.
+   * strides_grant_request_email - Email to send requests to when a STRIDES Grant account type is request.
   
 2. Run the following commands to deploy:
  
@@ -51,71 +57,93 @@ region and account).
     $ cdk deploy
     ```
 
+## Post Deployment
+### Subscribe to SNS Topic
+The CDK application will have created an SNS topic where status notifications will be sent during the BRH Workspace provisioning process (success and failure). You can subscribe to the topic from the AWS Console with whichever email(s) should receive these notifications. ([SNS - AWS Console](https://console.aws.amazon.com/sns/v3/home?region=us-east-1#/dashboard)). The Topic should be named similarly to `bmh-admin-portal-backend-stepfntopic<UNIQUEID>`.
+
+### Adding SSM Run Commands to Step Functions Workflow
+To add a run command SSM capability to the Provisioning Workflow, look at the current .bmh_admin_portal_backend.brh_provisioning.base_workflow. This module demonstrates adding a simple run command.
+
+The run command is actually deployed from the step_functions_handler lambda function. If parameters need to be included in the run command, they can be pulled from the Step Functions input (see example in `lambda.step_functions_handler.src.handlers.ssm_run_command_handler.py`)
+
+**Note:** Before the run command will work on a specific EC2 Instance, please ensure:
+1. The EC2 has the correct permissions to be managed by SSM (i.e. by adding the mananged policy `AmazonSSMManagedInstanceCore` to the instance profile). See the [docs](https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-instance-profile.html) for more detailed information. This isn't necessary if the EC2 instance has Admin privileges associated with the Instace Project (although, this should be avoided if possible).
+2. The VM is running an instance of SSM Agent running. For instructions on how to deploy this on Ubuntu, see the [docs](https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-ubuntu.html)
+
 ## API
+### GET api/auth/get-tokens
+* **Authorization**: Required, API Key.
+
+* **Description** This request takes a `code` as a query string parameter and exchanges this code for user credentials with the configured auth service (OAuth) using the client id and client secret. Used by UI frontend.
+
+### GET api/auth/refresh-tokens
+* **Authorization**: Required, API Key
+  
+* **Description**: Takes a refresh token and exchanges it for a new ID Token from the configured Auth service (OAuth).
+
 ### POST api/workspaces
-* **Authorziation**: Required, API Key.
+* **Authorziation**: Required, valid JWT token.
 
 * **Description:** Currently, it performs the following steps:
-  1. Assigns a unique workspace ID
-  2. Creates an API Key which can be used by the Workspace account to communicate to the BRH Portal
-  3. Creates an SNS topic and subscribes the Workspace Admin to receive email notifications (based on email parameter)
-  4. Writes this information to DynamoDB
-  5. Kicks off Step Functions to create account, baseline account, and deploys BRH infrastructure.
+  1. Assigns a unique workspace request ID and sends provided information to configured email for workspace request account creation.
+  
+* **Request:** Body should be a json encoded key value attributes. Currently, there are no required parameters. This represents creating a new Gen3 Workspace Request.
 
-* **Request:** Body should be a json encoded key value attributes. Currently, there are no required parameters (this will change in the future). This represents creating a new Gen3 Workspace Request.
-
-* **Response:** Will return json encoded key-value attributes same as input, with the following attributes added:
-  1. workspace ID: unique ID for the "created" workspace
-  2. Account ID: AWS account ID for the "created" workspace (placeholder)
-  3. API Key: The API key for the newly "created" workspace to communicate to the BMH Portal.
-  4. STRIDES Credits (default: 5000), Hard-limit (default 90% of STRIDES credits), and Soft-limit (default 50% of STRIDES credits)
+* **Response:** Will return status code 200 and body: {"message":"success"} on success, 401 if invalid token was provided, or 50X if an internal error occurred.
 
 ### GET api/workspaces
-* **Authorziation**: Required, API Key.
+* **Authorziation**: Required, valid JWT Token
 
 * **Description:** This request will return a list of Workspaces from DynamoDB which are associated with the provided email address.
 
 * **Response:** Return all attributes used as input for the POST api/workspaces called. Will only return the Workspaces associated with the user how is authenticated. If no workspaces are found associated with the user, will return a status code of 204.
 
       [{
-          "sns-topic-arn": "arn:aws:sns:us-east-1:807499094734:bmh-workspace-topic-74cfc35d-92d9-4561-a684-0611059bd557",
           "total-usage": 216.73,
-          "api_key": "RxP50W3Cmz9jStnndhG4o67g0xGAbX8s2jZQScBP",
-          "account_id": "PSEUDO_220144521636",
-          "strides-id": "",
-          "strides-credits": 5000,
-          "hard-limit": 4500,
+          "strides-credits": 250,
+          "hard-limit": 225,
           "user_id": "researcher@university.edu",
-          "organization": "Research University",
           "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde101",
-          "soft-limit": 2500
+          "soft-limit": 150,
+          "total-usage": 7.43,
+          "request_status": "active",
+          "workspace_type": "STRIDES Credits",
+          "nih_funded_award_number": "4325534543"
       },
       ....
       ]
 
 ### GET api/workspaces/{workspace_id}
-* **Authorziation**: Required, API Key.
+* **Authorziation**: Required, valid JWT token
 
 * **Description:** This request will return a single workspace representation (see above), if a resource exists with the specified workspace_id. 
 
 * **Response:** Will return a single representation of a workspace. Otherwise, will return status code 404.
 
       {
-          "sns-topic-arn": "arn:aws:sns:us-east-1:807499094734:bmh-workspace-topic-74cfc35d-92d9-4561-a684-0611059bd557",
           "total-usage": 216.73,
-          "api_key": "RxP50W3Cmz9jStnndhG4o67g0xGAbX8s2jZQScBP",
-          "account_id": "PSEUDO_220144521636",
-          "strides-id": "",
-          "strides-credits": 5000,
-          "hard-limit": 4500,
+          "strides-credits": 250,
+          "hard-limit": 225,
           "user_id": "researcher@university.edu",
-          "organization": "Research University",
           "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde101",
-          "soft-limit": 2500
+          "soft-limit": 150,
+          "total-usage": 7.43,
+          "request_status": "active",
+          "workspace_type": "STRIDES Credits",
+          "nih_funded_award_number": "4325534543"
       }
 
+### POST api/workspaces/{workspace_id}/provision
+* **Authorization**: Required, API Key
+* **Description**: Will begin the provisioning process for a BRH Workspace.
+  1. Create account specific API Key and SNS topic.
+  2. Store status in database.
+  3. Start step functions workflow (OCC/DDI Lambda, BRH Provision Lambda).
+
+* **Response**: Status code 200 on success. Body: {"message":"success"}
+
 ### PUT api/workspaces/{workspace_id}/limits
-* **Authorziation**: Required, API Key.
+* **Authorziation**: Required, API Key
 
 * **Description:** Used to set the hard and soft cost and usage limits of a single workspace. Separate endpoints for hard or soft limits do not exist. Stores new values in the DynamoDB table.
 

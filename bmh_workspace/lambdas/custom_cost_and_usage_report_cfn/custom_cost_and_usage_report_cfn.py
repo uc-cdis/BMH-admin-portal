@@ -7,6 +7,7 @@
 import logging
 import json
 import urllib3
+import hashlib
 
 import boto3
 
@@ -59,7 +60,7 @@ def handler(event, context):
     else:
         message = f"Invalid RequestType {event['RequestType']}"
         logger.error(message)
-        _responsd_failed(event, context, {"error":message})
+        _respond_failed(event, context, {"error":message})
         raise ValueError(message)
 
     logger.info(f"Response: {response}")

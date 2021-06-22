@@ -14,7 +14,7 @@ class LoginForm extends Component {
 
   render() {
     return (
-      <div className="container">
+      <div className="container text-center">
         <br/>
         <br/>
         <br/>

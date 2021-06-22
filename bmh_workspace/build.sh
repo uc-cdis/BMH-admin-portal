@@ -16,6 +16,6 @@ popd
 cp $BINDIR/lambdas/parse_cost_and_usage_lambda/parse_cost_and_usage_lambda.zip $DISTDIR/
 
 cp $BINDIR/lambdas/awswrangler-layer-2.4.0-py3.8.zip $DISTDIR/
-cp templates/BMHAccountBaseline.yml $DISTDIR/
+cp $BINDIR/templates/BMHAccountBaseline.yml $DISTDIR/
 
 echo "Done Building. Upload $DISTDIR to S3."

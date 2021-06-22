@@ -25,7 +25,7 @@ const NavBar = ({isAuthenticated}) => {
 	return (
 		<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
 		<div class="container">
-			  <Link class="navbar-brand" to="/">Biomedical Research Hub</Link>
+			  <Link className="navbar-brand" to="/">Biomedical Research Hub</Link>
 			  <ul class="navbar-nav mr-auto">
 				<li class="nav-item">
 					<NavLink exact activeStyle={{fontWeight:"bold"}} className="nav-link" to="/">Accounts</NavLink>

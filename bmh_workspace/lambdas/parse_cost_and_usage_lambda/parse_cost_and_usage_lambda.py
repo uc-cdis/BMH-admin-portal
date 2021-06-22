@@ -37,7 +37,7 @@ def handler(event, context):
     bucket_name    = os.environ['cur_bucket_name']
 
     # Parse all the parquet files at this path
-    path = "/".join(["s3:/", bucket_name, reports_prefix, reports_name])
+    path = "/".join(["s3:/", bucket_name, reports_prefix, reports_name, reports_name])
     df = wr.s3.read_parquet(path=path, dataset=True)
     
     # This will get the cost per month, but we just need the total of all months
