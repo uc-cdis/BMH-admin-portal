@@ -51,9 +51,9 @@ def handler(event, context):
     authorizer = event['requestContext'].get('authorizer',None)
     
 
-    email = None
+    user = None
     if authorizer is not None:
-        email = event['requestContext']['authorizer'].get('email', None)
+        user = event['requestContext']['authorizer'].get('user', None)
 
     # For API Key enpoints
     api_key = event['requestContext']['identity'].get('apiKey',None)
@@ -76,14 +76,14 @@ def handler(event, context):
             'PUT': lambda: _refresh_tokens(body, api_key)
         },
         '/workspaces':{
-            'POST': lambda: _workspaces_post(body, email),
-            'GET': lambda: _workspaces_get(path_params, email)
+            'POST': lambda: _workspaces_post(body, user),
+            'GET': lambda: _workspaces_get(path_params, user)
         },
         '/workspaces/{workspace_id}':{
-            'GET': lambda: _workspaces_get(path_params, email)
+            'GET': lambda: _workspaces_get(path_params, user)
         },
         '/workspaces/{workspace_id}/limits':{
-            'PUT': lambda: _workspaces_set_limits(body, path_params, email)
+            'PUT': lambda: _workspaces_set_limits(body, path_params, user)
         },
         '/workspaces/{workspace_id}/total-usage':{
             'PUT': lambda: _workspaces_set_total_usage(body, path_params, api_key)
@@ -531,7 +531,7 @@ def _workspaces_get(path_params, email):
         body=retval
     )
 
-def _workspaces_set_limits(body, path_params, email):
+def _workspaces_set_limits(body, path_params, user):
     logger.info(f"Called 'set limit': {body}")
 
     # Validate body and path_params
@@ -541,7 +541,6 @@ def _workspaces_set_limits(body, path_params, email):
 
     # Get the dynamodb table name from SSM Parameter Store
     workspace_id = path_params['workspace_id']
-    user_id = email
     dynamodb_table_name = _get_dynamodb_table_name()
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(dynamodb_table_name)
@@ -556,7 +555,7 @@ def _workspaces_set_limits(body, path_params, email):
         table_response = table.update_item(
             Key={
                 'bmh_workspace_id':workspace_id,
-                'user_id':user_id
+                'user_id':user
             },
             UpdateExpression="set #hard = :hard, #soft = :soft",
             ConditionExpression='attribute_exists(bmh_workspace_id)',
@@ -705,7 +704,7 @@ def _get_workspace_request_status_and_email(workspace_request_id):
 
     items = response.get('Items',[])
     assert len(items) == 1
-    email = items[0]['user_id']
+    email = items[0]['poc_email']
 
     try:
         response = table.get_item(
