@@ -73,7 +73,7 @@ def lambda_handler(event, context):
     # these are made available by APIGW like so: $context.authorizer.<key>
     # additional context is cached
     context = {
-        "email": name
+        "user": name
     }
     # context['arr'] = ['foo'] <- this is invalid, APIGW will not accept it
     # context['obj'] = {'foo':'bar'} <- also invalid
