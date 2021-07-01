@@ -36,10 +36,12 @@ const WorkspaceAccounts = () => {
     )
   }
 
-  const soft_limit_validator = (newValue, row, column) => {
+  const soft_limit_validator = (newValueStr, row, column) => {
     let valid = true
     let message = ""
-    if( newValue >= row['hard-limit'] ) {
+    let newValue = parseInt(newValueStr)
+    let hardLimit = parseInt(row['hard-limit'])
+    if( newValue >= hardLimit ) {
       valid = false
       message = "Soft limit must be less than hard limit."
     } else if( newValue <= 0 ) {
@@ -57,18 +59,23 @@ const WorkspaceAccounts = () => {
     }
   }
 
-  const hard_limit_validator = (newValue, row, column) => {
+  const hard_limit_validator = (newValueStr, row, column) => {
     let valid = true
     let message = ""
-    if( newValue <= row['soft-limit'] ) {
+    let newValue = parseInt(newValueStr)
+    let softLimit = parseInt(row['soft-limit'])
+    if( newValue <= softLimit ) {
       valid = false
       message = "Hard limit must be greater than soft limit."
     } else if( newValue <= 0 ) {
       valid = false
       message = "Hard limit must be greater than 0 (zero)."
-    } else if( row['strides-credits'] !== null && newValue > row['strides-credits'] && row['strides-credits'] !== 0 ) {
-      valid = false
-      message = "Hard limit must be less than or equal to the Strides Credits amount."
+    } else if( row['strides-credits'] !== null ) {
+      let creditsAmt = parseInt(row['strides-credits'])
+      if(newValue > creditsAmt && creditsAmt !== 0) {
+        valid = false
+        message = "Hard limit must be less than or equal to the Strides Credits amount."
+      }
     }
 
     if( valid ) {
@@ -128,6 +135,8 @@ const WorkspaceAccounts = () => {
         'soft-limit': row['soft-limit']
       }
       limits[column['dataField']] = newValue
+      console.log("ROW:")
+      console.log(row)
       setWorkspaceLimits(row['bmh_workspace_id'], limits)
       
     }
@@ -139,7 +148,7 @@ const WorkspaceAccounts = () => {
         <h2>Workspace Accounts</h2>
       </div>
   
-      <div className="py-5 text-center">
+      <div className="pt-5 text-center">
         <BootstrapTable keyField='bmh_workspace_id' data={ workspaces } columns={ columns } noDataIndication={no_data_indication} 
           hover={true} cellEdit={ cellEdit } bordered={true}
           loading={loading} overlay={ overlayFactory({ spinner: true, background: 'rgba(192,192,192,0.1)' }) }
@@ -148,8 +157,11 @@ const WorkspaceAccounts = () => {
   
   /> */}
       </div>
+      <div className="my-2 p-5"><small><em className="font-weight-bold">Warning:</em> When a BRH Workspace reaches the STRIDES Credits limit (for STRIDES Credits Workspaces) 
+        or reaches the Hard Limit (for STRIDES Grant Workspaces), the Workspace will be automatically terminated. 
+        Please be sure to save any work before reaching the STRIDES Credit or Hard Limit.</small></div>
   
-      <Link to="/request-workspace" className="btn btn-primary btn-lg mb-6">Request New Workspace</Link>
+      <Link to="/request-workspace" className="btn btn-primary btn-lg my-6">Request New Workspace</Link>
     
     </div>
   )
