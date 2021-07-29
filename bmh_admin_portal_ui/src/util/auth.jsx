@@ -1,0 +1,97 @@
+// © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
+// 
+// This AWS Content is provided subject to the terms of the AWS Customer Agreement
+// available at http://aws.amazon.com/agreement or other written agreement between
+// Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
+
+/* auth.js
+   Contains utility functions which interact with arborist for authorization
+   purposes.
+*/
+
+import axios from 'axios';
+import { getAccessToken, refresh, logout } from './oidc';
+import config from '../config.json';
+
+const login_resource = config['authorization']['login_resource'];
+const login_service = config['authorization']['login_service']; 
+
+const credits_resource = config['authorization']['credits_resource'];
+const credits_service = config['authorization']['credits_service'];
+
+export const authorizeLogin = async () =>{
+    return authorize(login_resource, login_service);
+}
+
+export const authorizeCredits = async () => {
+    return authorize(credits_resource, credits_service);
+}
+
+const authorize = async (resource, serviceName) => {
+    const user_auth_mapping = await getUserAuthMapping();
+    
+    if( !user_auth_mapping || typeof( user_auth_mapping ) === 'undefined' ) {
+        console.log("User auth mapping was not defined");
+        return false;
+    }
+
+    if(resource in user_auth_mapping) {
+        // Looking for method = 'access' and service = 'workspace_admin'
+        const authorized = user_auth_mapping[resource].some(function(service) {
+            return service.method === 'access' && service.service ===  serviceName;
+        });
+        return authorized;
+    } else {
+        console.log("Resource " + resource + " did not exist in user auth mapping from Arborist.");
+        return false;
+    }
+
+    // We souldn't ever get here, but in case something changes.
+    return false;
+}
+
+const getUserAuthMapping = async () => {
+    // Get the access token. If undefined, log the user out
+    // because this means they're probably not authenticated.
+    let access_token = getAccessToken();
+    if( access_token === "" || typeof( access_token ) === 'undefined' ) {
+        console.log("Did not find access token in local storage, logging out.")
+        logout();
+    }
+
+    let user_auth_mapping = await uamApiCall(access_token);
+    if( !user_auth_mapping || typeof(user_auth_mapping) === 'undefined' ) {
+        // Try to refresh if it didn't work the first time.
+        console.log("Did not receive user auth mapping, trying to refresh.")
+        await refresh();
+        access_token = getAccessToken();
+        user_auth_mapping = await uamApiCall(access_token);
+    }
+
+    if( !user_auth_mapping || typeof(user_auth_mapping) === 'undefined' ) {
+        // If we still can't get it, log the user out.
+        console.log("Still on uam, logging out");
+        logout();
+    }
+
+    return user_auth_mapping;
+}
+
+const uamApiCall = async access_token => {
+    const api = `${process.env.REACT_APP_ARBORIST_URI}`
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${access_token}`
+	}
+
+    let user_auth_mapping;
+	try {
+		const resp = await axios.get(api, { headers: headers })
+        user_auth_mapping = resp.data
+	} catch (err) {
+        // This may mean that our token is valid, but expired. Refresh and try again.
+		console.log("Error getting user mapping from arborist: " + err);
+	}
+
+    return user_auth_mapping;
+}

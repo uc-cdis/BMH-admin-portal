@@ -1,6 +1,9 @@
 {
-  "authorized_emails": [
-    "kevingalens@gmail.com",
-    "qureshi@uchicago.edu"
-  ]
+  "authorization": {
+    "login_resource": "/workspace_admin",
+    "login_service": "workspace_admin",
+    "credits_resource": "/strides_credits",
+    "credits_service": "strides_credits"
+  },
+  "authentication": "ras"
 }

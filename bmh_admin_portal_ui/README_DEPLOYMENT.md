@@ -64,6 +64,19 @@ Once the deployment is complete, use your AWS console to verify that the CloudFr
 
 ## Preparing the React app static files for deployment
 
+### Create .env
+The react application expects certain environment variables to be present during the build step. Add these values to a file named `.env` in the top-level UI directory.
+
+* REACT_APP_OIDC_AUTH_URI: E.g. https://fence.planx-pla.net/user/oauth2/authorize
+* REACT_APP_OIDC_CLIENT_ID: Fence client ID
+* REACT_APP_OIDC_REDIRECT_URI: https://www.brh_domain.com/login/callback
+* REACT_APP_API_GW_ENDPOINT: API Gateway Endpoint deployed in backend (e.g. https://b6ojr32w.execute-api.us-east-1.amazonaws.com/api)
+* REACT_APP_API_KEY: API Key created when back end is deployed
+* REACT_APP_ARBORIST_URI: https://fence.planx-pla.net/authz/mapping
+* REACT_APP_HELP_EMAIL: help@brh.org
+
+### Build and deploy static files
+
 Navigate to the following directory:
 
 ```sh
