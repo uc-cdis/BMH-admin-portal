@@ -482,6 +482,7 @@ def _workspaces_get(path_params, email):
     # Use expression attributes because dashes are not
     # allowed.
     projection = ", ".join([
+        '#bmhworkspaceid',
         '#nihaward',
         '#requeststatus',
         '#workspacetype',
@@ -491,6 +492,7 @@ def _workspaces_get(path_params, email):
         '#hardlimit'
     ])
     expression_attribute_names = {
+        '#bmhworkspaceid': 'bmh_workspace_id',
         "#nihaward": 'nih_funded_award_number',
         '#requeststatus':'request_status',
         '#workspacetype':'workspace_type',
@@ -516,6 +518,7 @@ def _workspaces_get(path_params, email):
             status_code = 404
 
     else:
+
         response = table.query(
             KeyConditionExpression=Key('user_id').eq(email),
             ProjectionExpression=projection,
