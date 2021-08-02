@@ -8,7 +8,7 @@ import React, { useEffect, useState } from 'react';
 import { Redirect, Link } from 'react-router-dom';
 
 import { validateState, login, getName, removeTokens } from '../util/oidc';
-import config from '../config.json';
+import { authorizeLogin } from '../util/auth';
 
 const params = (new URL(document.location)).searchParams;
 const state = params.get('state');
@@ -26,15 +26,14 @@ const LoginCallback = ({setParentAuthenticated}) => {
 
 				await login(code);
 
-				// For development, check the list of users which can login.
-				const authorized_emails = config['authorized_emails']
-				const name = getName()
-				if( !authorized_emails.includes(name) ) {
-					removeTokens()
-					setUnauthorized(true);					
-				} else {				
+				const authorized_login = await authorizeLogin();
+				if( authorized_login ) {
 					setParentAuthenticated(true);
 					setToHome(true);
+				} else {
+					removeTokens();
+					setTimeout(() => setToHome(true), 10000)
+					setUnauthorized(true);
 				}
 				
 			} catch (err) {
@@ -57,7 +56,7 @@ const LoginCallback = ({setParentAuthenticated}) => {
 		return (
 			<div className="container">
 				<div className="mt-5 alert alert-danger" role="alert">
-					<h5>Unauthorized. This user is not authorized to access the site.</h5>
+					<h5>Unauthorized. Please contact <a href={"mailto:" + process.env.REACT_APP_HELP_EMAIL}>{process.env.REACT_APP_HELP_EMAIL}</a> for access. You will be redirected shortly.</h5>
 				</div>
 			</div>
 		)
@@ -65,7 +64,7 @@ const LoginCallback = ({setParentAuthenticated}) => {
 
 	return (	
 		<div className="container">
-			<div className="mt-5 alert alert-info" role="alert">
+			<div className="mt-5 pt-2 alert alert-info" role="alert">
 				<h5>Authenticating, you will be redirected shortly.</h5>
 			</div>
 		</div>

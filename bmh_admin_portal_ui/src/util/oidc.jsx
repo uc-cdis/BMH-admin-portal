@@ -11,6 +11,8 @@ import jwt_decode from 'jwt-decode';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 
+import config from '../config.json';
+
 export const isAuthenticated = () => {
   const id_token = getIdToken();
   if( id_token ) {
@@ -35,19 +37,20 @@ export const getName = () => {
 }
 
 export const loadLoginScreen = () => {
-    window.localStorage.removeItem('id_token');
-    window.localStorage.removeItem('refresh_token');
+    removeTokens();
     const state = uuidv4();
     const nonce = uuidv4();
     window.localStorage.setItem('state', state);
     window.localStorage.setItem('nonce', nonce);
+
+    const auth_service = config['authentication']
 
     const redirect_location = [process.env.REACT_APP_OIDC_AUTH_URI,
         `?state=${state}&nonce=${nonce}`,
         '&response_type=code',
         `&client_id=${process.env.REACT_APP_OIDC_CLIENT_ID}`,
         `&redirect_uri=${process.env.REACT_APP_OIDC_REDIRECT_URI}`,
-        `&idp=ras`,
+        `&idp=${auth_service}`,
         '&scope=openid%20user'
     ].join('');
 
@@ -77,20 +80,39 @@ export const getTokens = async code => {
     
 	let id_token;
 	let refresh_token;
+  let access_token;
 
 	try {
 		const resp = await axios.get(api, { headers: headers })
 		id_token = resp.data['id_token']
 		refresh_token = resp.data['refresh_token']
+    access_token = resp.data['access_token']
 	} catch (err) {
 		console.log("Error getting tokens: " + err);
 	}
 
-	return { id_token, refresh_token }
+	return { id_token, refresh_token, access_token }
+}
+
+export const getAccessToken = () => {
+  return getToken('access_token');
+}
+
+export const getIdToken = () => {
+  return getToken('id_token')
+}
+
+const getToken = tokenType => {
+  const token = window.localStorage.getItem(tokenType);
+  // In case an undefined value is stored
+  if( typeof( token ) === 'undefined' ) {
+    removeTokens();
+  }
+  return token;
 }
 
 export const login = async code => {
-	const { id_token, refresh_token } = await getTokens(code);
+	const { id_token, refresh_token, access_token } = await getTokens(code);
 	const decoded = jwt_decode(id_token);
 	const validNonce = validateNonce(decoded['nonce']);
 	if (!validNonce) {
@@ -99,23 +121,25 @@ export const login = async code => {
 	}
 	window.localStorage.setItem('id_token', id_token);
 	window.localStorage.setItem('refresh_token', refresh_token);
+  window.localStorage.setItem('access_token', access_token);
 }
 
 export const logout = () => {
-  removeTokens()
+  removeTokens();
   window.location.reload();
 }
 
 export const removeTokens = () => {
   window.localStorage.removeItem('id_token');
   window.localStorage.removeItem('refresh_token');
+  window.localStorage.removeItem('access_token');
 }
 
 export const refresh = async () => {
   const refresh_token = window.localStorage.getItem("refresh_token");
   if( refresh_token === null ) {
     console.log("Refresh token is null")
-    //logout()
+    logout()
   }
 
   const api = `${process.env.REACT_APP_API_GW_ENDPOINT}/auth/refresh-tokens`
@@ -133,6 +157,7 @@ export const refresh = async () => {
 		await axios.put(api, data, { headers: headers }).then((resp) => {
       window.localStorage.setItem('id_token', resp.data['id_token']);
 	    window.localStorage.setItem('refresh_token', resp.data['refresh_token']);
+	    window.localStorage.setItem('access_token', resp.data['access_token']);
     }).catch((error) => {
       console.log("Error refreshing tokens.")
     })
@@ -140,14 +165,4 @@ export const refresh = async () => {
     console.log("Catching error from axiox try");
     throw new Error();
 	}
-}
-
-export const getIdToken = () => {
-    const id_token = window.localStorage.getItem('id_token');
-    // In case an undefined value is stored
-    if( typeof( id_token ) === 'undefined' ) {
-      window.localStorage.removeItem('id_token')
-      window.localStorage.removeItem('refresh_token')
-    }
-    return id_token;
 }
