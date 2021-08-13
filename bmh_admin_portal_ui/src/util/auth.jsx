@@ -13,23 +13,29 @@ import axios from 'axios';
 import { getAccessToken, refresh, logout } from './oidc';
 import config from '../config.json';
 
-const login_resource = config['authorization']['login_resource'];
-const login_service = config['authorization']['login_service']; 
-
-const credits_resource = config['authorization']['credits_resource'];
-const credits_service = config['authorization']['credits_service'];
+const resources = config['authorization']['resources']
 
 export const authorizeLogin = async () =>{
-    return authorize(login_resource, login_service);
+    const user_auth_mapping = await getUserAuthMapping();
+    const credits_auth = await authorize(resources['CREDITS'], user_auth_mapping);
+    const grants_auth = await authorize(resources['GRANTS'], user_auth_mapping);
+    return (grants_auth || credits_auth);
 }
 
 export const authorizeCredits = async () => {
-    return authorize(credits_resource, credits_service);
+    const user_auth_mapping = await getUserAuthMapping();
+    return authorize(resources['CREDITS'], user_auth_mapping);
 }
 
-const authorize = async (resource, serviceName) => {
+export const authorizeGrants = async () => {
     const user_auth_mapping = await getUserAuthMapping();
-    
+    return authorize(resources['GRANTS'], user_auth_mapping);
+}
+
+const authorize = async (resourceMap, user_auth_mapping) => {
+    const resource = resourceMap['resource']
+    const serviceName = resourceMap['service']
+
     if( !user_auth_mapping || typeof( user_auth_mapping ) === 'undefined' ) {
         console.log("User auth mapping was not defined");
         return false;
@@ -70,7 +76,6 @@ const getUserAuthMapping = async () => {
 
     if( !user_auth_mapping || typeof(user_auth_mapping) === 'undefined' ) {
         // If we still can't get it, log the user out.
-        console.log("Still on uam, logging out");
         logout();
     }
 
