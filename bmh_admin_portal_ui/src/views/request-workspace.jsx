@@ -9,7 +9,7 @@ import { Redirect } from 'react-router-dom';
 
 import StridesGrantForm  from '../components/request-workspace/strides-grant-form';
 import StridesCreditForm from '../components/request-workspace/strides-credits-form';
-import { authorizeCredits } from '../util/auth';
+import { authorizeCredits, authorizeGrants } from '../util/auth';
 
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
@@ -23,15 +23,22 @@ const RequestWorkspace = () => {
     const [formToggle, setFormToggle] = useState(defaultForm)
 	const [redirectHome, setRedirectHome] = useState(false)
     const [creditsAuthorized, setCreditsAuthorized] = useState(false)
+    const [grantsAuthorized, setGrantsAuthorized] = useState(false)
 
     useEffect(() => {
         async function fetchAuthorized() {
             const authorized = await authorizeCredits();
-            console.log("Authorized: " + authorized);
             if( authorized ) {
                 setCreditsAuthorized(true);
             } else {
                 setCreditsAuthorized(false);
+            }
+
+            const gAuthorized = await authorizeGrants();
+            if( gAuthorized ) {
+                setGrantsAuthorized(true);
+            } else {
+                setGrantsAuthorized(false);
             }
         }
         fetchAuthorized();
@@ -46,9 +53,9 @@ const RequestWorkspace = () => {
     }
 
     let formToRender = ""
-    if( formToggle === "strides-grant" ) {
+    if( grantsAuthorized ) {
         formToRender = (<StridesGrantForm updateRedirectHome={setRedirectHome} />)
-    } else if( formToggle === "strides-credit" ) {
+    } else if( creditsAuthorized ) {
         formToRender = (<StridesCreditForm updateRedirectHome={setRedirectHome} />)
     }
 
@@ -59,7 +66,7 @@ const RequestWorkspace = () => {
                 <p className="lead">The form below is used to request a newly provisioned Gen3 Workspace Account.</p>
             </Row>
 
-            { creditsAuthorized && (
+            { creditsAuthorized && grantsAuthorized && (
                 <Row className="mb-5">
                     <ToggleButtonGroup type="radio" name="form-select" defaultValue={defaultForm} onChange={handleChange}>
                         <ToggleButton value="strides-grant">STRIDES Grant/Award Funded</ToggleButton>

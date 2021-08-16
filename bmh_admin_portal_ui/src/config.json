@@ -1,9 +1,15 @@
 {
   "authorization": {
-    "login_resource": "/workspace_admin",
-    "login_service": "workspace_admin",
-    "credits_resource": "/strides_credits",
-    "credits_service": "strides_credits"
+    "resources": {
+      "CREDITS": {
+        "resource": "/workspace_stride_credits",
+        "service": "workspace_stride_credits"
+      },
+      "GRANTS": {
+        "resource": "/workspace_stride_grants",
+        "service": "workspace_stride_grants"
+      }
+    }
   },
   "authentication": "ras"
 }
