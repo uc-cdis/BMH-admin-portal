@@ -1,8 +1,8 @@
 # BMH-admin-portal
-Shared Codebase for the Biomedical Research Hub Initiative
-
-# BMH Admin Portal Backend Infrastructure Diagram
-![BMH Admin Portal Backend Infrastructure Diagram](bmh_admin_portal_backend/images/bmh-backend-infra.png?raw=true "BMH Backend Infrastructure")
+Shared Codebase for the Biomedical Research Hub Initiative. This repository contains information realted to the BRH Admin Portal.
+# Developer Documentation
+An overview of the application and infrastructure (including architecture diagram) can be found:
+* [Developer Documentation](./docs/README.md)
 
 # Deployment Instructions
 
