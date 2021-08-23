@@ -32,7 +32,7 @@ Navigate to the following directory:
 cd nih-project/cloud-formation/cfn-template/
 ```
 
-In that directory, you will find the **cfn-deploy.sh** script. This script packages and deploys the CloudFormation stack. This is also where you will enter the parameters specific to your AWS account environemnt.
+In that directory, you will find the **cfn-deploy.sh** script. This script packages and deploys the CloudFormation stack. This is also where you will enter the parameters specific to your AWS account environment.
 
 Fill out the Deployment bucket and Parameters section of the script (note, these values will vary depending on your environment, e.g. the name of the Website bucket will be different):
 
