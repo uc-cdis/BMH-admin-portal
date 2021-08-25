@@ -1,5 +1,5 @@
 // © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-// 
+//
 // This AWS Content is provided subject to the terms of the AWS Customer Agreement
 // available at http://aws.amazon.com/agreement or other written agreement between
 // Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
@@ -74,14 +74,14 @@ const RequestWorkspace = () => {
                     </ToggleButtonGroup>
                 </Row>
             )}
-				
+
             <Row className="mb-3"><h4>Request Details</h4></Row>
             <Row className="justify-content-left"><Col>
                 {formToRender}
             </Col></Row>
 
 			<footer className="my-5 pt-5 text-muted text-center text-small">
-			  <p className="mb-1">&copy; 2021 Biomedical Hub</p>
+			  <p className="mb-1">&copy; 2021 STRIDES Portal</p>
 			</footer>
       </Container>
 	)

@@ -1,5 +1,5 @@
 // © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-// 
+//
 // This AWS Content is provided subject to the terms of the AWS Customer Agreement
 // available at http://aws.amazon.com/agreement or other written agreement between
 // Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
@@ -20,12 +20,12 @@ const NavBar = ({isAuthenticated}) => {
 				<LogoutButton />
 			</li>
 		)
-	} 
+	}
 
 	return (
 		<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
 		<div class="container">
-			  <Link className="navbar-brand" to="/">Biomedical Research Hub</Link>
+			  <Link className="navbar-brand" to="/">STRIDES Portal</Link>
 			  <ul class="navbar-nav mr-auto">
 				<li class="nav-item">
 					<NavLink exact activeStyle={{fontWeight:"bold"}} className="nav-link" to="/">Accounts</NavLink>
@@ -35,7 +35,7 @@ const NavBar = ({isAuthenticated}) => {
 				</li>
 				{auth_control}
 			</ul>
-		</div>  
+		</div>
 	  </nav>
 	)
 

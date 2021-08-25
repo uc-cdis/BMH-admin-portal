@@ -1,5 +1,5 @@
 // © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-// 
+//
 // This AWS Content is provided subject to the terms of the AWS Customer Agreement
 // available at http://aws.amazon.com/agreement or other written agreement between
 // Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
@@ -21,11 +21,11 @@ class LoginForm extends Component {
         <br/>
         <br/>
         <br/>
-        <h1>BRH Portal Login</h1>
+        <h1>STRIDES Portal Login</h1>
         <br/>
         <br/>
         <form onSubmit={this.handleSubmit}>
-          <LoginButton />       
+          <LoginButton />
         </form>
       </div>
     )

@@ -4,8 +4,8 @@
 # Carlos Ramos: @carrams
 
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CloudFront distribution for BRH. The source is the S3 bucket with the
-  web files for the BRH admin portal.
+Description: CloudFront distribution for STRIDES Portal. The source is the S3 bucket with the
+  web files for the STRIDES admin portal.
 
 Parameters:
   WebsiteBucketName:
@@ -151,7 +151,7 @@ Resources:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
     Properties:
       CloudFrontOriginAccessIdentityConfig:
-        Comment: CloudFront OAI for BRH Domain
+        Comment: CloudFront OAI for STRIDES Portal Domain
 
   # CLOUDFRONT DISTRIBUTION
   CloudFrontDistribution:
@@ -170,7 +170,7 @@ Resources:
           ResponsePagePath: /index.html
           ResponseCode: 403
           ErrorCachingMinTTL: 10
-        Comment: Cloudfront Distribution for BRH
+        Comment: Cloudfront Distribution for STRIDES Portal
         Origins:
         - DomainName:
             Fn::Sub: ${WebsiteBucketName}.s3.amazonaws.com

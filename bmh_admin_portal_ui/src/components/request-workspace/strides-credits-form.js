@@ -27,7 +27,7 @@ const StridesCreditForm = (props) => {
 	const handleChange = (e) => {
 
         if( e.target.name === "confirm_poc_email" ) {
-            if( e.target.value.trim() != formData['poc_email'] ) {
+            if( e.target.value.trim() !== formData['poc_email'] ) {
                 e.target.setCustomValidity("Must match email")
             } else {
                 e.target.setCustomValidity("")
@@ -77,11 +77,11 @@ const StridesCreditForm = (props) => {
                 <Col>
                     <Form.Label>Scientific POC Email <span data-tip data-for="poc_email"><BiHelpCircle /></span></Form.Label>
                     <ReactTooltip class="tooltip" id="poc_email" place="top" effect="solid" multiline={true}>
-                        Email address used for contact regarding the BRH Workspace.
+                        Email address used for contact regarding the Workspace.
                     </ReactTooltip>
-                    <Form.Control 
-                        type="email" onChange={handleChange} 
-                        name="poc_email" placeholder="user@email.org" 
+                    <Form.Control
+                        type="email" onChange={handleChange}
+                        name="poc_email" placeholder="user@email.org"
                         required
                     />
 
@@ -92,10 +92,10 @@ const StridesCreditForm = (props) => {
                 <Col>
                     <Form.Label>Confirm Scientific POC Email <span data-tip data-for="confirm_poc_email"><BiHelpCircle /></span></Form.Label>
                     <ReactTooltip class="tooltip" id="configm_poc_email" place="top" effect="solid" multiline={true}>
-                        Email address used for contact regarding the BRH Workspace.
+                        Email address used for contact regarding the Workspace.
                     </ReactTooltip>
-                    <Form.Control required type="email" onChange={handleChange} name="confirm_poc_email" placeholder="user@email.org" 
-                       feedback="Value must match Scientific POC Email" 
+                    <Form.Control required type="email" onChange={handleChange} name="confirm_poc_email" placeholder="user@email.org"
+                       feedback="Value must match Scientific POC Email"
                     />
 
                     <Form.Control.Feedback type="invalid">
@@ -117,8 +117,8 @@ const StridesCreditForm = (props) => {
             <Form.Row className="mt-4">
                 <Col xs={4}></Col>
                 <Col xs={4}>
-                    <Button className="btn btn-primary btn-lg btn-block mb-6" 
-                        type="submit" 
+                    <Button className="btn btn-primary btn-lg btn-block mb-6"
+                        type="submit"
                         id="request-form-submit-button"
                         disabled={buttonDisabled}>
                     Submit Request</Button>

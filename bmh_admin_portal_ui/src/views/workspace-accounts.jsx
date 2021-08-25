@@ -1,5 +1,5 @@
 // © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-// 
+//
 // This AWS Content is provided subject to the terms of the AWS Customer Agreement
 // available at http://aws.amazon.com/agreement or other written agreement between
 // Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
@@ -138,7 +138,7 @@ const WorkspaceAccounts = () => {
       console.log("ROW:")
       console.log(row)
       setWorkspaceLimits(row['bmh_workspace_id'], limits)
-      
+
     }
   })
 
@@ -147,22 +147,22 @@ const WorkspaceAccounts = () => {
       <div className="py-5 text-center">
         <h2>Workspace Accounts</h2>
       </div>
-  
+
       <div className="pt-5 text-center">
-        <BootstrapTable keyField='bmh_workspace_id' data={ workspaces } columns={ columns } noDataIndication={no_data_indication} 
+        <BootstrapTable keyField='bmh_workspace_id' data={ workspaces } columns={ columns } noDataIndication={no_data_indication}
           hover={true} cellEdit={ cellEdit } bordered={true}
           loading={loading} overlay={ overlayFactory({ spinner: true, background: 'rgba(192,192,192,0.1)' }) }
         />
-          {/*hover={true}  
-  
+          {/*hover={true}
+
   /> */}
       </div>
-      <div className="my-2 p-5"><small><em className="font-weight-bold">Warning:</em> When a BRH Workspace reaches the STRIDES Credits limit (for STRIDES Credits Workspaces) 
-        or reaches the Hard Limit (for STRIDES Grant Workspaces), the Workspace will be automatically terminated. 
+      <div className="my-2 p-5"><small><em className="font-weight-bold">Warning:</em> When a Workspace reaches the STRIDES Credits limit (for STRIDES Credits Workspaces)
+        or reaches the Hard Limit (for STRIDES Grant Workspaces), the Workspace will be automatically terminated.
         Please be sure to save any work before reaching the STRIDES Credit or Hard Limit.</small></div>
-  
+
       <Link to="/request-workspace" className="btn btn-primary btn-lg my-6">Request New Workspace</Link>
-    
+
     </div>
   )
 
