@@ -1,8 +1,8 @@
 # BMH-admin-portal
-Shared Codebase for the Biomedical Research Hub Initiative
-
-# BMH Admin Portal Backend Infrastructure Diagram
-![BMH Admin Portal Backend Infrastructure Diagram](bmh_admin_portal_backend/images/bmh-backend-infra.png?raw=true "BMH Backend Infrastructure")
+Shared Codebase for the Biomedical Research Hub Initiative. This repository contains information related to the BRH Admin Portal.
+# Developer Documentation
+An overview of the application and infrastructure (including architecture diagram) can be found:
+* [Developer Documentation](./docs/README.md)
 
 # Deployment Instructions
 
@@ -30,7 +30,7 @@ You should then be ready to deploy the CloudFormation template `AccountCreationL
    1.  AccountAdministrator - IAM arn for Admin (i.e `arn:aws:iam::<ACCOUNTID>:role/Admin`)
    2.  AccountVendingMachineName - Name to give the Vending Machine (ServiceCatalog)
    3.  AccountVendingMachineSupportEmail - Will be displayed as part of the Vending Machine product (any email address)
-   4.  ArtifactBucketName - The bucket name from above where deployment artifacts are located (i.e. occ-acccount-deploy, no `s3://` or `https://` prefixes)
+   4.  ArtifactBucketName - The bucket name from above where deployment artifacts are located (i.e. occ-account-deploy, no `s3://` or `https://` prefixes)
    5.  ServiceCatalogTag - Tag used for the service catalog infrastructure (not used for BRH, but required in the CloudFormation)
 
 ## Deploy BRH Admin Portal Backend
