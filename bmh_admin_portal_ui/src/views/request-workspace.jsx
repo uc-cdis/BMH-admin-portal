@@ -53,7 +53,7 @@ const RequestWorkspace = () => {
     }
 
     let formToRender = ""
-    if( grantsAuthorized ) {
+    if( grantsAuthorized && formToggle === 'strides-grant' ) {
         formToRender = (<StridesGrantForm updateRedirectHome={setRedirectHome} />)
     } else if( creditsAuthorized ) {
         formToRender = (<StridesCreditForm updateRedirectHome={setRedirectHome} />)
