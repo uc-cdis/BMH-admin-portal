@@ -81,7 +81,7 @@ const RequestWorkspace = () => {
             </Col></Row>
 
 			<footer className="my-5 pt-5 text-muted text-center text-small">
-			  <p className="mb-1">&copy; 2021 STRIDES Portal</p>
+			  <p className="mb-1">&copy; 2021 {(process.env.REACT_APP_DISPLAY_NAME) || 'Biomedical Research Hub'}</p>
 			</footer>
       </Container>
 	)

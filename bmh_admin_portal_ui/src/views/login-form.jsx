@@ -21,7 +21,7 @@ class LoginForm extends Component {
         <br/>
         <br/>
         <br/>
-        <h1>STRIDES Portal Login</h1>
+        <h1>{(process.env.REACT_APP_DISPLAY_NAME) || 'BRH Portal'} Login</h1>
         <br/>
         <br/>
         <form onSubmit={this.handleSubmit}>

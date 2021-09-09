@@ -25,7 +25,7 @@ const NavBar = ({isAuthenticated}) => {
 	return (
 		<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
 		<div class="container">
-			  <Link className="navbar-brand" to="/">STRIDES Portal</Link>
+			  <Link className="navbar-brand" to="/">{(process.env.REACT_APP_DISPLAY_NAME) || 'Biomedical Research Hub'}</Link>
 			  <ul class="navbar-nav mr-auto">
 				<li class="nav-item">
 					<NavLink exact activeStyle={{fontWeight:"bold"}} className="nav-link" to="/">Accounts</NavLink>

@@ -91,7 +91,7 @@ const StridesCreditForm = (props) => {
                 </Col>
                 <Col>
                     <Form.Label>Confirm Scientific POC Email <span data-tip data-for="confirm_poc_email"><BiHelpCircle /></span></Form.Label>
-                    <ReactTooltip class="tooltip" id="configm_poc_email" place="top" effect="solid" multiline={true}>
+                    <ReactTooltip class="tooltip" id="confirm_poc_email" place="top" effect="solid" multiline={true}>
                         Email address used for contact regarding the Workspace.
                     </ReactTooltip>
                     <Form.Control required type="email" onChange={handleChange} name="confirm_poc_email" placeholder="user@email.org"
