@@ -1,5 +1,5 @@
 // © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-// 
+//
 // This AWS Content is provided subject to the terms of the AWS Customer Agreement
 // available at http://aws.amazon.com/agreement or other written agreement between
 // Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
@@ -59,9 +59,9 @@ export const loadLoginScreen = () => {
 }
 
 export const validateState = checkState => {
-	const state = window.localStorage.getItem('state');
-	window.localStorage.removeItem('state');
-	return checkState === state;
+  const state = window.localStorage.getItem('state');
+  window.localStorage.removeItem('state');
+  return checkState === state;
 }
 
 /* Validates returned nonce against persisted nonce */
@@ -72,26 +72,26 @@ export const validateNonce = checkNonce => {
 }
 
 export const getTokens = async code => {
-	const api = `${process.env.REACT_APP_API_GW_ENDPOINT}/auth/get-tokens?code=${code}`
+  const api = `${process.env.REACT_APP_API_GW_ENDPOINT}/auth/get-tokens?code=${code}`
   const headers = {
     'Content-Type': 'application/json',
     'X-Api-Key': `${process.env.REACT_APP_API_KEY}`
-	}
-    
-	let id_token;
-	let refresh_token;
+  }
+
+  let id_token;
+  let refresh_token;
   let access_token;
 
-	try {
-		const resp = await axios.get(api, { headers: headers })
-		id_token = resp.data['id_token']
-		refresh_token = resp.data['refresh_token']
+  try {
+    const resp = await axios.get(api, { headers: headers })
+    id_token = resp.data['id_token']
+    refresh_token = resp.data['refresh_token']
     access_token = resp.data['access_token']
-	} catch (err) {
-		console.log("Error getting tokens: " + err);
-	}
+  } catch (err) {
+    console.log("Error getting tokens: " + err);
+  }
 
-	return { id_token, refresh_token, access_token }
+  return { id_token, refresh_token, access_token }
 }
 
 export const getAccessToken = () => {
@@ -112,15 +112,15 @@ const getToken = tokenType => {
 }
 
 export const login = async code => {
-	const { id_token, refresh_token, access_token } = await getTokens(code);
-	const decoded = jwt_decode(id_token);
-	const validNonce = validateNonce(decoded['nonce']);
-	if (!validNonce) {
-		console.log("nonce was not valid")
-		throw new Error()
-	}
-	window.localStorage.setItem('id_token', id_token);
-	window.localStorage.setItem('refresh_token', refresh_token);
+  const { id_token, refresh_token, access_token } = await getTokens(code);
+  const decoded = jwt_decode(id_token);
+  const validNonce = validateNonce(decoded['nonce']);
+  if (!validNonce) {
+    console.log("nonce was not valid")
+    throw new Error()
+  }
+  window.localStorage.setItem('id_token', id_token);
+  window.localStorage.setItem('refresh_token', refresh_token);
   window.localStorage.setItem('access_token', access_token);
 }
 
@@ -146,23 +146,23 @@ export const refresh = async () => {
   const headers = {
     'Content-Type': 'application/json',
     'X-Api-Key': `${process.env.REACT_APP_API_KEY}`
-	}
+  }
 
   const data = {
     'refresh_token': refresh_token
   }
-    
-	try {
+
+  try {
     console.log("Calling refresh tokens.")
-		await axios.put(api, data, { headers: headers }).then((resp) => {
+    await axios.put(api, data, { headers: headers }).then((resp) => {
       window.localStorage.setItem('id_token', resp.data['id_token']);
-	    window.localStorage.setItem('refresh_token', resp.data['refresh_token']);
-	    window.localStorage.setItem('access_token', resp.data['access_token']);
+      window.localStorage.setItem('refresh_token', resp.data['refresh_token']);
+      window.localStorage.setItem('access_token', resp.data['access_token']);
     }).catch((error) => {
       console.log("Error refreshing tokens.")
     })
-	} catch (err) {
+  } catch (err) {
     console.log("Catching error from axiox try");
     throw new Error();
-	}
+  }
 }
