@@ -1,5 +1,5 @@
-import React, { useState,useEffect } from 'react';
-import { Route, Switch, Redirect } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Route, Switch } from 'react-router-dom';
 
 import { isAuthenticated } from './util/oidc';
 import PrivateRoute from "./components/private-route"
@@ -18,13 +18,13 @@ export default function App() {
     <NavBar isAuthenticated={authenticated}/>
     <div className="container">
       <Switch>
-        
+
         {/* Public routes meant for login */}
         <Route exact path="/login/callback">
           <LoginCallback setParentAuthenticated={setAuthenticated} />
         </Route>
         <Route exact path="/login" component={LoginForm}/>
-        
+
         {/* React Router protected routes */}
         <PrivateRoute path="/request-workspace" component={RequestWorkspace} />
         <PrivateRoute path="/" component={WorkspaceAccounts} />
