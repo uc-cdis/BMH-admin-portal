@@ -145,7 +145,10 @@ const StridesGrantForm = (props) => {
           <ReactTooltip class="tooltip" id="nih_funded_award_number_help" place="top" effect="solid" multiline={true}>
             Derived from NIH Notice of Award, uniquely identifies NIH-funded research projects
           </ReactTooltip>
-          <Form.Control type="text" onChange={handleChange} name="nih_funded_award_number" placeholder="123456789" required />
+          <Form.Control type="text" onChange={handleChange} name="nih_funded_award_number" placeholder="1A23BC012345-01 or 1A23BC012345-01D6" required />
+          <Form.Control.Feedback type="invalid">
+            Must be a valid NIH Award/Grant number (format mismatch)
+          </Form.Control.Feedback>
         </Col>
         <Col>
           <Form.Label>Administering NIH Institute or Center <span data-tip data-for="administering_nih_institute_help"><BiHelpCircle /></span></Form.Label>
