@@ -1,20 +1,20 @@
 // © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-// 
+//
 // This AWS Content is provided subject to the terms of the AWS Customer Agreement
 // available at http://aws.amazon.com/agreement or other written agreement between
 // Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
 
 import React, { useEffect, useState } from 'react';
-import { Redirect, Link } from 'react-router-dom';
+import { Redirect } from 'react-router-dom';
 
-import { validateState, login, getName, removeTokens } from '../util/oidc';
+import { validateState, login, removeTokens } from '../util/oidc';
 import { authorizeLogin } from '../util/auth';
 
 const params = (new URL(document.location)).searchParams;
 const state = params.get('state');
-const code = params.get('code'); 
+const code = params.get('code');
 
-const LoginCallback = ({setParentAuthenticated}) => {
+const LoginCallback = ({ setParentAuthenticated }) => {
 	const [toHome, setToHome] = useState(false);
 	const [unauthorized, setUnauthorized] = useState(false);
 
@@ -27,7 +27,7 @@ const LoginCallback = ({setParentAuthenticated}) => {
 				await login(code);
 
 				const authorized_login = await authorizeLogin();
-				if( authorized_login ) {
+				if (authorized_login) {
 					setParentAuthenticated(true);
 					setToHome(true);
 				} else {
@@ -35,7 +35,7 @@ const LoginCallback = ({setParentAuthenticated}) => {
 					setTimeout(() => setToHome(true), 10000)
 					setUnauthorized(true);
 				}
-				
+
 			} catch (err) {
 				// Do NOTHING intentionally. Useful for debugging.
 				//console.log("Error validating state or logging in. " + err)
@@ -46,13 +46,13 @@ const LoginCallback = ({setParentAuthenticated}) => {
 		}
 	});
 
-	if(toHome) {
+	if (toHome) {
 		return (
 			<Redirect to="/" />
 		)
 	}
 
-	if(unauthorized) {
+	if (unauthorized) {
 		return (
 			<div className="container">
 				<div className="mt-5 alert alert-danger" role="alert">
@@ -62,7 +62,7 @@ const LoginCallback = ({setParentAuthenticated}) => {
 		)
 	}
 
-	return (	
+	return (
 		<div className="container">
 			<div className="mt-5 pt-2 alert alert-info" role="alert">
 				<h5>Authenticating, you will be redirected shortly.</h5>
