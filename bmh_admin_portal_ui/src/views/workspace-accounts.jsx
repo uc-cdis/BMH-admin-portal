@@ -41,15 +41,15 @@ const WorkspaceAccounts = () => {
     let message = ""
     let newValue = parseInt(newValueStr)
     let hardLimit = parseInt(row['hard-limit'])
-    if( newValue >= hardLimit ) {
+    if (newValue >= hardLimit) {
       valid = false
       message = "Soft limit must be less than hard limit."
-    } else if( newValue <= 0 ) {
+    } else if (newValue <= 0) {
       valid = false
       message = "Soft limit must be greater than 0 (zero)."
     }
 
-    if( valid ) {
+    if (valid) {
       return true
     } else {
       return {
@@ -64,21 +64,21 @@ const WorkspaceAccounts = () => {
     let message = ""
     let newValue = parseInt(newValueStr)
     let softLimit = parseInt(row['soft-limit'])
-    if( newValue <= softLimit ) {
+    if (newValue <= softLimit) {
       valid = false
       message = "Hard limit must be greater than soft limit."
-    } else if( newValue <= 0 ) {
+    } else if (newValue <= 0) {
       valid = false
       message = "Hard limit must be greater than 0 (zero)."
-    } else if( row['strides-credits'] !== null ) {
+    } else if (row['strides-credits'] !== null) {
       let creditsAmt = parseInt(row['strides-credits'])
-      if(newValue > creditsAmt && creditsAmt !== 0) {
+      if (newValue > creditsAmt && creditsAmt !== 0) {
         valid = false
         message = "Hard limit must be less than or equal to the Strides Credits amount."
       }
     }
 
-    if( valid ) {
+    if (valid) {
       return true
     } else {
       return {
@@ -92,33 +92,33 @@ const WorkspaceAccounts = () => {
     dataField: 'nih_funded_award_number',
     text: 'NIH Award/Grant ID',
     editable: false
-  },{
+  }, {
     dataField: 'request_status',
     text: 'Request Status',
     editable: false,
     formatter: capitalize_word_formatter
-  },{
+  }, {
     dataField: 'workspace_type',
     text: 'Workspace Type',
     editable: false
-  },{
+  }, {
     dataField: 'total-usage',
     text: 'Total Usage',
     editable: false,
     formatter: dollar_formatter
-  },{
+  }, {
     dataField: 'strides-credits',
     text: 'Strides Credits',
     editable: false,
     formatter: dollar_formatter
-  },{
+  }, {
     dataField: 'soft-limit',
     text: 'Soft Limit',
     editable: true,
     formatter: dollar_formatter,
     headerFormatter: editable_header_formatter,
     validator: soft_limit_validator
-  },{
+  }, {
     dataField: 'hard-limit',
     text: 'Hard Limit',
     editable: true,
@@ -149,20 +149,15 @@ const WorkspaceAccounts = () => {
       </div>
 
       <div className="pt-5 text-center">
-        <BootstrapTable keyField='bmh_workspace_id' data={ workspaces } columns={ columns } noDataIndication={no_data_indication}
-          hover={true} cellEdit={ cellEdit } bordered={true}
-          loading={loading} overlay={ overlayFactory({ spinner: true, background: 'rgba(192,192,192,0.1)' }) }
+        <BootstrapTable keyField='bmh_workspace_id' data={workspaces} columns={columns} noDataIndication={no_data_indication}
+          hover={true} cellEdit={cellEdit} bordered={true}
+          loading={loading} overlay={overlayFactory({ spinner: true, background: 'rgba(192,192,192,0.1)' })}
         />
-          {/*hover={true}
-
-  /> */}
       </div>
       <div className="my-2 p-5"><small><em className="font-weight-bold">Warning:</em> When a Workspace reaches the STRIDES Credits limit (for STRIDES Credits Workspaces)
         or reaches the Hard Limit (for STRIDES Grant Workspaces), the Workspace will be automatically terminated.
         Please be sure to save any work before reaching the STRIDES Credit or Hard Limit.</small></div>
-
       <Link to="/request-workspace" className="btn btn-primary btn-lg my-6">Request New Workspace</Link>
-
     </div>
   )
 

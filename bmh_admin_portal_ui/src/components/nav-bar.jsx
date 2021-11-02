@@ -8,11 +8,11 @@ import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import LogoutButton from './logout-button';
 
-const NavBar = ({isAuthenticated}) => {
+const NavBar = ({ isAuthenticated }) => {
 
-	let auth_control = (
-		<li class="nav-item logout-btn"></li>
-	)
+  let auth_control = (
+    <li className="nav-item logout-btn"></li>
+  )
 
 	if(isAuthenticated) {
 		auth_control = (
@@ -38,7 +38,6 @@ const NavBar = ({isAuthenticated}) => {
 		</div>
 	  </nav>
 	)
-
 };
 
 export default NavBar;
