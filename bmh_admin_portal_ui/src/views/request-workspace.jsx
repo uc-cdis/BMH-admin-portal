@@ -56,10 +56,10 @@ const RequestWorkspace = () => {
   let introToRender = ""
   if (grantsAuthorized && formToggle === 'strides-grant') {
     formToRender = (<StridesGrantForm updateRedirectHome={setRedirectHome} />)
-    introToRender = `If you have received NIH funding (e.g. a grant, contract, cooperative agreement, or other transaction agreement) and intend to use these funds for your ${(process.env.REACT_APP_DISPLAY_NAME_ABBREVIATION) || 'BRH'} account, please complete the form below. Please note that by choosing this option, your organization will be responsible for payment and therefore will need to provide Four Points Technology with a Purchase Order.`
+    introToRender = `If you have received NIH funding (e.g. a grant, contract, cooperative agreement, or other transaction agreement) and intend to use these funds for your ${(process.env.REACT_APP_DISPLAY_NAME_ABBREVIATION) || ''} account, please complete the form below. Please note that by choosing this option, your organization will be responsible for payment and therefore will need to provide Four Points Technology with a Purchase Order.`
   } else if (creditsAuthorized) {
     formToRender = (<StridesCreditForm updateRedirectHome={setRedirectHome} />)
-    introToRender = `If you are requesting credits from the NIH STRIDES Initiative for your ${(process.env.REACT_APP_DISPLAY_NAME_ABBREVIATION) || 'BRH'} account, please complete the form below. If your request is approved, then a new account with a spending limit of $XXX will be provisioned for usage.`
+    introToRender = `If you are requesting credits from the NIH STRIDES Initiative for your ${(process.env.REACT_APP_DISPLAY_NAME_ABBREVIATION) || ''} account, please complete the form below. If your request is approved, then a new account with a spending limit of $XXX will be provisioned for usage.`
   }
 
   return (
