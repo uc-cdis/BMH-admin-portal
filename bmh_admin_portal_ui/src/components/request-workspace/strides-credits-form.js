@@ -16,7 +16,7 @@ const initialFormData = Object.freeze({
   scientific_poc: "",
   poc_email: "",
   confirm_poc_email: "",
-  scientific_institution: "",
+  scientific_institution_domain_name: "",
   nih_funded_award_number: "",
   administering_nih_institute: "", keywords: "",
   summary_and_justification: "",
@@ -91,11 +91,11 @@ const StridesCreditForm = (props) => {
           <Form.Control onChange={handleChange} type="text" name="scientific_poc" placeholder="Jane Smith" required />
         </Col>
         <Col>
-          <Form.Label>Scientific Institution <span data-tip data-for="scientific_institution_help"><BiHelpCircle /></span></Form.Label>
-          <ReactTooltip class="tooltip" id="scientific_institution_help" place="top" effect="solid" multiline={true}>
-            Examples: Harvard Medical School, Mayo Clinic, University of Chicago, etc.
+          <Form.Label>Scientific Institution Domain Name<span data-tip data-for="scientific_institution_domain_name_help"><BiHelpCircle /></span></Form.Label>
+          <ReactTooltip class="tooltip" id="scientific_institution_domain_name_help" place="top" effect="solid" multiline={true}>
+            Examples: hms.harvard.edu, nih.gov, uchicago.edu, etc.
           </ReactTooltip>
-          <Form.Control type="text" onChange={handleChange} name="scientific_institution" placeholder="University or Institution" required />
+          <Form.Control required type="text" onChange={handleChange} name="scientific_institution_domain_name" placeholder="Domain Name of University or Institution" />
         </Col>
       </Form.Row>
 
