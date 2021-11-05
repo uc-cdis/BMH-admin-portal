@@ -27,7 +27,8 @@ const initialFormData = Object.freeze({
   short_title: "",
   rcdc: "",
   additional_poc_email: "",
-  additional_poc_job_title: ""
+  additional_poc_job_title: "",
+  attestation: false
 })
 
 const StridesGrantForm = (props) => {
@@ -37,7 +38,7 @@ const StridesGrantForm = (props) => {
   const [buttonDisabled, setButtonDisabled] = useState(false)
   const [validated, setValidated] = useState(false)
 
-  const formEl = useRef(null);
+  const pocConfirmEmailInputEl = useRef(null);
 
   const handleChange = (e) => {
     // validate email and confirm email
@@ -48,6 +49,13 @@ const StridesGrantForm = (props) => {
         e.target.setCustomValidity("")
       }
     }
+
+    if (e.target.name === "poc_email" && e.target.value.trim() !== formData['confirm_poc_email']) {
+
+        pocConfirmEmailInputEl.current.setCustomValidity("Must match email")
+      } else {
+        pocConfirmEmailInputEl.current.setCustomValidity("")
+      }
 
     // validate NIH IoC
     if (e.target.name === "administering_nih_institute") {
@@ -70,7 +78,7 @@ const StridesGrantForm = (props) => {
 
     updateFormData({
       ...formData,
-      [e.target.name]: e.target.value.trim()
+      [e.target.name]: (e.target.type === "checkbox") ? e.target.checked : e.target.value.trim()
     })
   }
 
@@ -89,7 +97,7 @@ const StridesGrantForm = (props) => {
   }
 
   return (
-    <Form noValidate validated={validated} onSubmit={handleSubmit} ref={formEl}>
+    <Form noValidate validated={validated} onSubmit={handleSubmit}>
       <Form.Row className="mb-3">
         <Col>
           <Form.Label>Scientific POC Name <span data-tip data-for="scientific_poc_help"><BiHelpCircle /></span></Form.Label>
@@ -130,7 +138,7 @@ const StridesGrantForm = (props) => {
             Email address used for contact regarding the BRH Workspace.
           </ReactTooltip>
           <Form.Control required type="email" onChange={handleChange} name="confirm_poc_email" placeholder="user@email.org"
-            feedback="Value must match Scientific POC Email"
+            feedback="Value must match Scientific POC Email" ref={pocConfirmEmailInputEl}
           />
 
           <Form.Control.Feedback type="invalid">
@@ -265,7 +273,7 @@ const StridesGrantForm = (props) => {
 
       <Form.Row className="mb-3">
         <Col>
-          <Form.Check type="checkbox" label="I acknowledge to submit this form" required />
+          <Form.Check type="checkbox" name="attestation" label="I acknowledge to submit this form" required />
         </Col>
       </Form.Row>
 
