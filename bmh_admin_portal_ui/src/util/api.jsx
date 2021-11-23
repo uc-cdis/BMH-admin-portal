@@ -135,7 +135,8 @@ export const preprocessFormData = (form_data) => {
   if (form_data.intramural) {
     suffix = "intramural"
   }
-  const root_email = prefix.concat('_', suffix)
-  form_data.root_email = root_email.slice(0, 64)
+  const root_email_domain = `@${process.env.REACT_APP_ROOT_EMAIL_DOMAIN}`
+  const root_email_prefix = prefix.concat("_", suffix).slice(0, 64)
+  form_data.root_email = root_email_prefix.concat(root_email_domain)
   return form_data
 }
