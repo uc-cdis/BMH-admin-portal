@@ -7,7 +7,7 @@ import Col from 'react-bootstrap/Col';
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
 
-import { requestWorkspace } from '../../util/api';
+import { requestWorkspace, preprocessFormData } from '../../util/api';
 
 const NIH_GRANT_NUMBER_REGEX = /^([0-9]{1})([A-Z0-9]{3})([A-Z]{2}[0-9]{6})-([A-Z0-9]{2}$|[A-Z0-9]{4}$)/gm
 
@@ -24,7 +24,7 @@ const initialFormData = Object.freeze({
   nih_program_official_email: "",
   keywords: "",
   summary_and_justification: "",
-  short_title: "",
+  project_short_title: "",
   rcdc: "",
   additional_poc_email: "",
   additional_poc_job_title: "",
@@ -88,7 +88,8 @@ const StridesGrantForm = (props) => {
     const form = e.currentTarget;
     if (form.checkValidity()) {
       setButtonDisabled(true)
-      requestWorkspace(formData, () => {
+      const processedFormData = preprocessFormData(formData)
+      requestWorkspace(processedFormData, () => {
         updateRedirectHome(true)
       })
     }
@@ -245,15 +246,15 @@ const StridesGrantForm = (props) => {
       </Form.Row>
       <Form.Row className="mb-3">
         <Col>
-          <Form.Label>Project Title</Form.Label>
-          <Form.Control required type="text" onChange={handleChange} name="short_title" placeholder="Project Title" />
+          <Form.Label>Project Short Title</Form.Label>
+          <Form.Control required type="text" onChange={handleChange} name="project_short_title" placeholder="Project Title" />
         </Col>
         <Col>
           <Form.Label>Research, Condition, and Disease Categorization (<a href="https://report.nih.gov/categorical_spending.aspx" target="_blank" rel="noreferrer">Detailed List</a>)</Form.Label>
           <ReactTooltip class="tooltip" id="rcdc" place="top" effect="solid" multiline={true}>
             See https://report.nih.gov/categorical_spending.aspx for detailed list
           </ReactTooltip>
-          <Form.Control type="text" onChange={handleChange} name="rcdc" />
+          <Form.Control required type="text" onChange={handleChange} name="rcdc" />
         </Col>
       </Form.Row>
 

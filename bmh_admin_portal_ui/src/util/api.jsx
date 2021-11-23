@@ -127,3 +127,15 @@ const callSetWorkspaceLimits = async (workspace_id, limits) => {
   })
   return response
 }
+
+/***************  preprocessFormData **************************/
+export const preprocessFormData = (form_data) => {
+  const prefix = form_data.scientific_poc.trim().replaceAll(" ", "_")
+  let suffix = form_data.nih_funded_award_number.trim()
+  if (form_data.intramural) {
+    suffix = "intramural"
+  }
+  const root_email = prefix.concat('_', suffix)
+  form_data.root_email = root_email.slice(0, 64)
+  return form_data
+}

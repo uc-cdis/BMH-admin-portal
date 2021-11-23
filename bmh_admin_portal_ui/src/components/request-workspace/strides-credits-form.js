@@ -7,7 +7,7 @@ import Col from 'react-bootstrap/Col';
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
 
-import { requestWorkspace } from '../../util/api';
+import { requestWorkspace, preprocessFormData } from '../../util/api';
 
 const NIH_GRANT_NUMBER_REGEX = /^([0-9]{1})([A-Z0-9]{3})([A-Z]{2}[0-9]{6})-([A-Z0-9]{2}$|[A-Z0-9]{4}$)/gm
 const NIH_EMAIL_REGEX = /^((?!-)[A-Za-z0-9-._]{1,63}(?<!-))+(\@)((?!-)[A-Za-z0-9-]{1,63}(?<!-)\.)*nih.gov$/gm
@@ -23,7 +23,7 @@ const initialFormData = Object.freeze({
   intramural: false,
   keywords: "",
   summary_and_justification: "",
-  short_title: "",
+  project_short_title: "",
   attestation: false
 })
 
@@ -106,7 +106,8 @@ const StridesCreditForm = (props) => {
     const form = e.currentTarget;
     if (form.checkValidity()) {
       setButtonDisabled(true)
-      requestWorkspace(formData, () => {
+      const processedFormData = preprocessFormData(formData)
+      requestWorkspace(processedFormData, () => {
         updateRedirectHome(true)
       })
     }
@@ -233,8 +234,8 @@ const StridesCreditForm = (props) => {
       </Form.Row>
       <Form.Row className="mb-3">
         <Col>
-          <Form.Label>Project Title</Form.Label>
-          <Form.Control required type="text" onChange={handleChange} name="short_title" placeholder="Project Title" />
+          <Form.Label>Project Short Title</Form.Label>
+          <Form.Control required type="text" onChange={handleChange} name="project_short_title" placeholder="Project Title" />
         </Col>
       </Form.Row>
 
