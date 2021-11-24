@@ -246,8 +246,11 @@ const StridesGrantForm = (props) => {
       </Form.Row>
       <Form.Row className="mb-3">
         <Col>
-          <Form.Label>Project Short Title</Form.Label>
-          <Form.Control required type="text" onChange={handleChange} name="project_short_title" placeholder="Project Title" />
+          <Form.Label>Project Short Title<span data-tip data-for="project_short_title"><BiHelpCircle /></span></Form.Label>
+          <ReactTooltip class="tooltip" id="project_short_title" place="top" effect="solid" multiline={true}>
+            A short title of the project (maximum 16 characters)
+          </ReactTooltip>
+          <Form.Control required type="text" onChange={handleChange} name="project_short_title" placeholder="Project Title" maxlength="16" />
         </Col>
         <Col>
           <Form.Label>Research, Condition, and Disease Categorization (<a href="https://report.nih.gov/categorical_spending.aspx" target="_blank" rel="noreferrer">Detailed List</a>)</Form.Label>
