@@ -10,7 +10,7 @@ import Form from 'react-bootstrap/Form'
 import { requestWorkspace, preprocessFormData } from '../../util/api';
 
 const NIH_GRANT_NUMBER_REGEX = /^([0-9]{1})([A-Z0-9]{3})([A-Z]{2}[0-9]{6})-([A-Z0-9]{2}$|[A-Z0-9]{4}$)/gm
-const NIH_EMAIL_REGEX = /^((?!-)[A-Za-z0-9-._]{1,63}(?<!-))+(\@)((?!-)[A-Za-z0-9-]{1,63}(?<!-)\.)*nih.gov$/gm
+const NIH_EMAIL_REGEX = /^((?!-)[A-Za-z0-9-._]{1,63}(?<!-))+(@)((?!-)[A-Za-z0-9-]{1,63}(?<!-)\.)*nih.gov$/gm
 
 const initialFormData = Object.freeze({
   workspace_type: "STRIDES Credits",
