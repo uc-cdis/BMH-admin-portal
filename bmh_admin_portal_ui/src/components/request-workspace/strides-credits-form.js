@@ -238,7 +238,7 @@ const StridesCreditForm = (props) => {
           <ReactTooltip class="tooltip" id="project_short_title" place="top" effect="solid" multiline={true}>
             A short title of the project (maximum 16 characters)
           </ReactTooltip>
-          <Form.Control required type="text" onChange={handleChange} name="project_short_title" placeholder="Project Title" maxlength="16" />
+          <Form.Control required type="text" onChange={handleChange} name="project_short_title" placeholder="Project Title" maxLength="16" />
         </Col>
       </Form.Row>
 

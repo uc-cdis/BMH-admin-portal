@@ -250,7 +250,7 @@ const StridesGrantForm = (props) => {
           <ReactTooltip class="tooltip" id="project_short_title" place="top" effect="solid" multiline={true}>
             A short title of the project (maximum 16 characters)
           </ReactTooltip>
-          <Form.Control required type="text" onChange={handleChange} name="project_short_title" placeholder="Project Title" maxlength="16" />
+          <Form.Control required type="text" onChange={handleChange} name="project_short_title" placeholder="Project Title" maxLength="16" />
         </Col>
         <Col>
           <Form.Label>Research, Condition, and Disease Categorization (<a href="https://report.nih.gov/categorical_spending.aspx" target="_blank" rel="noreferrer">Detailed List</a>)</Form.Label>
