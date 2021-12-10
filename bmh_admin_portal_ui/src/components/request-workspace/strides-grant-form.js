@@ -7,7 +7,7 @@ import Col from 'react-bootstrap/Col';
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
 
-import { requestWorkspace } from '../../util/api';
+import { requestWorkspace, preprocessFormData } from '../../util/api';
 
 const NIH_GRANT_NUMBER_REGEX = /^([0-9]{1})([A-Z0-9]{3})([A-Z]{2}[0-9]{6})-([A-Z0-9]{2}$|[A-Z0-9]{4}$)/gm
 
@@ -16,7 +16,7 @@ const initialFormData = Object.freeze({
   scientific_poc: "",
   poc_email: "",
   confirm_poc_email: "",
-  scientific_institution: "",
+  scientific_institution_domain_name: "",
   nih_funded_award_number: "",
   administering_nih_institute: "",
   program_officer_approval: "No",
@@ -24,10 +24,11 @@ const initialFormData = Object.freeze({
   nih_program_official_email: "",
   keywords: "",
   summary_and_justification: "",
-  short_title: "",
+  project_short_title: "",
   rcdc: "",
   additional_poc_email: "",
-  additional_poc_job_title: ""
+  additional_poc_job_title: "",
+  attestation: false
 })
 
 const StridesGrantForm = (props) => {
@@ -37,7 +38,7 @@ const StridesGrantForm = (props) => {
   const [buttonDisabled, setButtonDisabled] = useState(false)
   const [validated, setValidated] = useState(false)
 
-  const formEl = useRef(null);
+  const pocConfirmEmailInputEl = useRef(null);
 
   const handleChange = (e) => {
     // validate email and confirm email
@@ -48,6 +49,13 @@ const StridesGrantForm = (props) => {
         e.target.setCustomValidity("")
       }
     }
+
+    if (e.target.name === "poc_email" && e.target.value.trim() !== formData['confirm_poc_email']) {
+
+        pocConfirmEmailInputEl.current.setCustomValidity("Must match email")
+      } else {
+        pocConfirmEmailInputEl.current.setCustomValidity("")
+      }
 
     // validate NIH IoC
     if (e.target.name === "administering_nih_institute") {
@@ -70,7 +78,7 @@ const StridesGrantForm = (props) => {
 
     updateFormData({
       ...formData,
-      [e.target.name]: e.target.value.trim()
+      [e.target.name]: (e.target.type === "checkbox") ? e.target.checked : e.target.value.trim()
     })
   }
 
@@ -80,7 +88,8 @@ const StridesGrantForm = (props) => {
     const form = e.currentTarget;
     if (form.checkValidity()) {
       setButtonDisabled(true)
-      requestWorkspace(formData, () => {
+      const processedFormData = preprocessFormData(formData)
+      requestWorkspace(processedFormData, () => {
         updateRedirectHome(true)
       })
     }
@@ -89,7 +98,7 @@ const StridesGrantForm = (props) => {
   }
 
   return (
-    <Form noValidate validated={validated} onSubmit={handleSubmit} ref={formEl}>
+    <Form noValidate validated={validated} onSubmit={handleSubmit}>
       <Form.Row className="mb-3">
         <Col>
           <Form.Label>Scientific POC Name <span data-tip data-for="scientific_poc_help"><BiHelpCircle /></span></Form.Label>
@@ -100,11 +109,11 @@ const StridesGrantForm = (props) => {
           <Form.Control required onChange={handleChange} type="text" name="scientific_poc" placeholder="Jane Smith" />
         </Col>
         <Col>
-          <Form.Label>Scientific Institution <span data-tip data-for="scientific_institution_help"><BiHelpCircle /></span></Form.Label>
-          <ReactTooltip class="tooltip" id="scientific_institution_help" place="top" effect="solid" multiline={true}>
-            Examples: Harvard Medical School, Mayo Clinic, University of Chicago, etc.
+          <Form.Label>Scientific Institution Domain Name<span data-tip data-for="scientific_institution_domain_name_help"><BiHelpCircle /></span></Form.Label>
+          <ReactTooltip class="tooltip" id="scientific_institution_domain_name_help" place="top" effect="solid" multiline={true}>
+            Examples: hms.harvard.edu, nih.gov, uchicago.edu, etc.
           </ReactTooltip>
-          <Form.Control required type="text" onChange={handleChange} name="scientific_institution" placeholder="University or Institution" />
+          <Form.Control required type="text" onChange={handleChange} name="scientific_institution_domain_name" placeholder="Domain Name of University or Institution" />
         </Col>
       </Form.Row>
 
@@ -130,7 +139,7 @@ const StridesGrantForm = (props) => {
             Email address used for contact regarding the workspace.
           </ReactTooltip>
           <Form.Control required type="email" onChange={handleChange} name="confirm_poc_email" placeholder="user@email.org"
-            feedback="Value must match Scientific POC Email"
+            feedback="Value must match Scientific POC Email" ref={pocConfirmEmailInputEl}
           />
 
           <Form.Control.Feedback type="invalid">
@@ -237,15 +246,18 @@ const StridesGrantForm = (props) => {
       </Form.Row>
       <Form.Row className="mb-3">
         <Col>
-          <Form.Label>Project Title</Form.Label>
-          <Form.Control required type="text" onChange={handleChange} name="short_title" placeholder="Project Title" />
+          <Form.Label>Project Short Title<span data-tip data-for="project_short_title"><BiHelpCircle /></span></Form.Label>
+          <ReactTooltip class="tooltip" id="project_short_title" place="top" effect="solid" multiline={true}>
+            A short title of the project (maximum 16 characters)
+          </ReactTooltip>
+          <Form.Control required type="text" onChange={handleChange} name="project_short_title" placeholder="Project Title" maxLength="16" />
         </Col>
         <Col>
           <Form.Label>Research, Condition, and Disease Categorization (<a href="https://report.nih.gov/categorical_spending.aspx" target="_blank" rel="noreferrer">Detailed List</a>)</Form.Label>
           <ReactTooltip class="tooltip" id="rcdc" place="top" effect="solid" multiline={true}>
             See https://report.nih.gov/categorical_spending.aspx for detailed list
           </ReactTooltip>
-          <Form.Control type="text" onChange={handleChange} name="rcdc" />
+          <Form.Control required type="text" onChange={handleChange} name="rcdc" />
         </Col>
       </Form.Row>
 
@@ -265,7 +277,7 @@ const StridesGrantForm = (props) => {
 
       <Form.Row className="mb-3">
         <Col>
-          <Form.Check type="checkbox" label="I acknowledge to submit this form" required />
+          <Form.Check type="checkbox" name="attestation" label="I acknowledge to submit this form" required />
         </Col>
       </Form.Row>
 

@@ -74,6 +74,8 @@ The react application expects certain environment variables to be present during
 * REACT_APP_API_KEY: API Key created when back end is deployed
 * REACT_APP_ARBORIST_URI: https://fence.planx-pla.net/authz/mapping
 * REACT_APP_HELP_EMAIL: help@brh.org
+* REACT_APP_ROOT_EMAIL_DOMAIN: brh.org
+* REACT_APP_DISPLAY_NAME: "STRIDES Portal"
 
 ### Build and deploy static files
 

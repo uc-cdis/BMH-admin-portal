@@ -127,3 +127,16 @@ const callSetWorkspaceLimits = async (workspace_id, limits) => {
   })
   return response
 }
+
+/***************  preprocessFormData **************************/
+export const preprocessFormData = (form_data) => {
+  const prefix = form_data.scientific_poc.trim().replaceAll(" ", "_")
+  let suffix = form_data.nih_funded_award_number.trim()
+  if (form_data.intramural) {
+    suffix = "intramural"
+  }
+  const root_email_domain = `@${process.env.REACT_APP_ROOT_EMAIL_DOMAIN}`
+  const root_email_prefix = prefix.concat("_", suffix).slice(0, 64)
+  form_data.root_email = root_email_prefix.concat(root_email_domain)
+  return form_data
+}
