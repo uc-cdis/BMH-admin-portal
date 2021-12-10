@@ -1,5 +1,5 @@
 // © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-// 
+//
 // This AWS Content is provided subject to the terms of the AWS Customer Agreement
 // available at http://aws.amazon.com/agreement or other written agreement between
 // Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
@@ -13,117 +13,130 @@ import { getIdToken, logout, refresh } from "./oidc"
 const baseUrl = process.env.REACT_APP_API_GW_ENDPOINT
 
 const makeApiCall = async (apiCall, callback) => {
-    /* Helper method to handle API calls and refresh token if we receive a 
-    401 Unauthorized response from the API. This should be used to call all
-    backend API endpoints 
-        apiCall: async function used to make actual API Call to backend. 
-        callback: Success callback function used to handle response from API call.
-    */
+  /* Helper method to handle API calls and refresh token if we receive a
+  401 Unauthorized response from the API. This should be used to call all
+  backend API endpoints
+      apiCall: async function used to make actual API Call to backend.
+      callback: Success callback function used to handle response from API call.
+  */
 
-    const response = await apiCall();
-    if(response.ok ) {
-        callback(response)
-    } else if( response.status === 401) {
-        /* Invalid Token, refresh. If this fails,
-           the user logs out */
-        await refresh()
-        const retryResponse = await apiCall();
+  const response = await apiCall();
+  if (response.ok) {
+    callback(response)
+  } else if (response.status === 401) {
+    /* Invalid Token, refresh. If this fails,
+       the user logs out */
+    await refresh()
+    const retryResponse = await apiCall();
 
-        if(retryResponse.ok) {
-            callback(retryResponse)
-        } else if( retryResponse.status === 401) {
-            // The token is still no good. Logout.
-            logout();
-        } else {
-            console.log("Error calling API.")
-        }
+    if (retryResponse.ok) {
+      callback(retryResponse)
+    } else if (retryResponse.status === 401) {
+      // The token is still no good. Logout.
+      logout();
+    } else {
+      console.log("Error calling API.")
     }
+  }
 
 }
 
 /***************  getWorkspaces **************************/
 export const getWorkspaces = (callback) => {
-    makeApiCall(getWorkspacesResponse, async (resp) => {
-        let data = []
-        // 204 No Content
-        if( resp.status !== 204 ) {
-            console.log("Awaiting data, status: " + resp.status)
-            data = await resp.json()
-        } 
-        callback(data)
-    })
+  makeApiCall(getWorkspacesResponse, async (resp) => {
+    let data = []
+    // 204 No Content
+    if (resp.status !== 204) {
+      console.log("Awaiting data, status: " + resp.status)
+      data = await resp.json()
+    }
+    callback(data)
+  })
 }
 const getWorkspacesResponse = async () => {
-    const api = `${baseUrl}/workspaces`
-    const id_token = getIdToken()
-    if( id_token == null ) {
-        console.log("Error getting id token before getting workspaces")
-        logout();
-    }
+  const api = `${baseUrl}/workspaces`
+  const id_token = getIdToken()
+  if (id_token == null) {
+    console.log("Error getting id token before getting workspaces")
+    logout();
+  }
 
-    const headers = {
-		'Content-Type': 'application/json',
-        'Authorization': `Bearer ${id_token}`
-	}
-    const response = await fetch(api, {headers: headers})
-    return response
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${id_token}`
+  }
+  const response = await fetch(api, { headers: headers })
+  return response
 }
 
 /*************** requestWorkspace **************************/
 export const requestWorkspace = (form_data, callback) => {
-    makeApiCall(() => callRequestWorkspace(form_data), async (resp) => {
-        await resp.json()
-        callback()
-    })
+  makeApiCall(() => callRequestWorkspace(form_data), async (resp) => {
+    await resp.json()
+    callback()
+  })
 }
 
-const callRequestWorkspace = async (form_data) => { 
-    const api = `${baseUrl}/workspaces`
-    const id_token = getIdToken()
-    if( id_token == null ) {
-        console.log("Error getting id token before getting workspaces")
-        logout();
-    }
+const callRequestWorkspace = async (form_data) => {
+  const api = `${baseUrl}/workspaces`
+  const id_token = getIdToken()
+  if (id_token == null) {
+    console.log("Error getting id token before getting workspaces")
+    logout();
+  }
 
-    const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${id_token}`
-    }
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${id_token}`
+  }
 
-    const response = await fetch(api, {
-        method: 'POST',
-        body: JSON.stringify(form_data), 
-        headers: headers
-    })
-    return response
+  const response = await fetch(api, {
+    method: 'POST',
+    body: JSON.stringify(form_data),
+    headers: headers
+  })
+  return response
 }
 
 
 /***************  setWorkspaceLimits **************************/
 export const setWorkspaceLimits = (workspace_id, limits) => {
-    makeApiCall(() => callSetWorkspaceLimits(workspace_id, limits), async (resp) => {
-        await resp.json()
-    })
+  makeApiCall(() => callSetWorkspaceLimits(workspace_id, limits), async (resp) => {
+    await resp.json()
+  })
 }
 
 const callSetWorkspaceLimits = async (workspace_id, limits) => {
-    const api = `${baseUrl}/workspaces/${workspace_id}/limits`
-    const id_token = getIdToken()
-    if( id_token == null ) {
-        logout();
-    }
+  const api = `${baseUrl}/workspaces/${workspace_id}/limits`
+  const id_token = getIdToken()
+  if (id_token == null) {
+    logout();
+  }
 
-    const headers = {
-		'Content-Type': 'application/json',
-        'Authorization': `Bearer ${id_token}`
-    }
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${id_token}`
+  }
 
-    console.log("Setting limits");
+  console.log("Setting limits");
 
-    const response = await fetch(api, {
-        method: 'PUT',
-        body: JSON.stringify(limits), 
-        headers: headers
-    })
-    return response
+  const response = await fetch(api, {
+    method: 'PUT',
+    body: JSON.stringify(limits),
+    headers: headers
+  })
+  return response
+}
+
+/***************  preprocessFormData **************************/
+export const preprocessFormData = (form_data) => {
+  const prefix = form_data.scientific_poc.trim().replaceAll(" ", "_")
+  let suffix = form_data.nih_funded_award_number.trim()
+  if (form_data.intramural) {
+    suffix = "intramural"
+  }
+  const root_email_domain = `@${process.env.REACT_APP_ROOT_EMAIL_DOMAIN}`
+  const root_email_prefix = prefix.concat("_", suffix).slice(0, 64)
+  form_data.root_email = root_email_prefix.concat(root_email_domain)
+  return form_data
 }
