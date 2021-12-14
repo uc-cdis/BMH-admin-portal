@@ -127,10 +127,6 @@ const WorkspaceAccountsAdmin = () => {
             hover={true} cellEdit={cellEdit} bordered={true} classes='table-class'
             loading={loading} overlay={overlayFactory({ spinner: true, background: 'rgba(192,192,192,0.1)' })}
           />
-        <Button className="btn btn-primary btn-lg btn-block mb-6"
-              type="submit"
-              id="request-form-submit-button">
-              Approve Request</Button>
         </div>
       </div>
     </div>

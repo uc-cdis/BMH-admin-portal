@@ -136,9 +136,11 @@ const WorkspaceAccounts = () => {
     headerFormatter: editable_header_formatter,
     validator: hard_limit_validator
   }, {
-    dataField: 'data-commons',
-    text: 'Access link',
-    editable: false
+    dataField: 'access-link',
+    text: 'Workspaces',
+    formatter: (cell, row) => <a href={'https://' + process.env.REACT_APP_OIDC_AUTH_URI.split("/")[2]} target="_blank">Link </a> , // By passing row variable to values I got all the contents of my datafields
+    editable: false,
+    isDummyField: true,
   }]
 
   const cellEdit = cellEditFactory({
