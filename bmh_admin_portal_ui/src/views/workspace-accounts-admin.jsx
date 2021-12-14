@@ -12,7 +12,7 @@ import cellEditFactory from 'react-bootstrap-table2-editor';
 import overlayFactory from 'react-bootstrap-table2-overlay';
 import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
 
-import { getAdminWorkspaces, setWorkspaceLimits } from "../util/api"
+import { approveWorkspace, getAdminWorkspaces } from "../util/api"
 import { authorizeAdmin } from '../util/auth';
 
 const WorkspaceAccountsAdmin = () => {
@@ -43,57 +43,6 @@ const WorkspaceAccountsAdmin = () => {
     )
   }
 
-  const soft_limit_validator = (newValueStr, row, column) => {
-    let valid = true
-    let message = ""
-    let newValue = parseInt(newValueStr)
-    let hardLimit = parseInt(row['hard-limit'])
-    if (newValue >= hardLimit) {
-      valid = false
-      message = "Soft limit must be less than hard limit."
-    } else if (newValue <= 0) {
-      valid = false
-      message = "Soft limit must be greater than 0 (zero)."
-    }
-
-    if (valid) {
-      return true
-    } else {
-      return {
-        valid: false,
-        message: message
-      }
-    }
-  }
-
-  const hard_limit_validator = (newValueStr, row, column) => {
-    let valid = true
-    let message = ""
-    let newValue = parseInt(newValueStr)
-    let softLimit = parseInt(row['soft-limit'])
-    if (newValue <= softLimit) {
-      valid = false
-      message = "Hard limit must be greater than soft limit."
-    } else if (newValue <= 0) {
-      valid = false
-      message = "Hard limit must be greater than 0 (zero)."
-    } else if (row['strides-credits'] !== null) {
-      let creditsAmt = parseInt(row['strides-credits'])
-      if (newValue > creditsAmt && creditsAmt !== 0) {
-        valid = false
-        message = "Hard limit must be less than or equal to the Strides Credits amount."
-      }
-    }
-
-    if (valid) {
-      return true
-    } else {
-      return {
-        valid: false,
-        message: message
-      }
-    }
-  }
 
   const selectRow = {
     mode: 'radio',
@@ -129,23 +78,9 @@ const WorkspaceAccountsAdmin = () => {
     editable: false,
     formatter: dollar_formatter
   }, {
-    dataField: 'soft-limit',
-    text: 'Soft Limit',
-    editable: true,
-    formatter: dollar_formatter,
-    headerFormatter: editable_header_formatter,
-    validator: soft_limit_validator
-  }, {
-    dataField: 'hard-limit',
-    text: 'Hard Limit',
-    editable: true,
-    formatter: dollar_formatter,
-    headerFormatter: editable_header_formatter,
-    validator: hard_limit_validator
-  }, {
     dataField: 'root_account_email',
     text: 'Root Email',
-    editable: true,
+    editable: false,
   }, {
     dataField: 'account_id',
     text: 'AWS Account',
@@ -155,15 +90,27 @@ const WorkspaceAccountsAdmin = () => {
 
   const cellEdit = cellEditFactory({
     mode: 'click',
-    beforeSaveCell: (oldValue, newValue, row, column) => {
-      const limits = {
-        'hard-limit': row['hard-limit'],
-        'soft-limit': row['soft-limit']
-      }
-      limits[column['dataField']] = newValue
-      console.log("ROW:")
-      console.log(row)
-      setWorkspaceLimits(row['bmh_workspace_id'], limits)
+
+    beforeSaveCell: (oldValue, newValue, row, column, done) => {
+      setTimeout(() => {
+        if (window.confirm('Do you want to approve this workspace?')) {
+          console.log("oldValue: " + oldValue)
+          console.log("newValue: " + newValue)
+          console.log("column: ")
+          console.log(column)
+          const account = {
+            'account_id': newValue
+          }
+          account[column['dataField']] = newValue
+          console.log("ROW:")
+          console.log(row)
+          approveWorkspace(row['bmh_workspace_id'], account)
+          done(); // contine to save the changes
+        } else {
+          done(false); // reject the changes
+        }
+      }, 0);
+      return { async: true };
 
     }
   })
@@ -178,7 +125,7 @@ const WorkspaceAccountsAdmin = () => {
         <div className="pbt-5 text-center scroll">
           <BootstrapTable keyField='bmh_workspace_id' data={workspaces} columns={columns} noDataIndication={no_data_indication}
             hover={true} cellEdit={cellEdit} bordered={true} classes='table-class'
-            loading={loading} overlay={overlayFactory({ spinner: true, background: 'rgba(192,192,192,0.1)' })} selectRow={ selectRow }
+            loading={loading} overlay={overlayFactory({ spinner: true, background: 'rgba(192,192,192,0.1)' })}
           />
         <Button className="btn btn-primary btn-lg btn-block mb-6"
               type="submit"

@@ -135,12 +135,3 @@ The `/provision` endpoint on the `/workspace` resource will generate a unique em
 2. Ensure your mx records are correctly configured for the domain (for domains registered with Route53, tested with the MX record set to inbound-smtp.us-east-1.amazonaws.com). *Note* SMTP inbound endpoints only exist in us-east-1, us-west-2 and eu-west-1 at the moment. For up-to-date information see [this page](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/regions.html#region-endpoints)
 3. Setup a receipt rule. You can setup all emails to be written to S3 and setup SNS notifications when a new email is received.
 4. Send a test email to ensure everything is configured correctly.
-
-### Adding SSM Run Commands to Step Functions Workflow
-To add a run command SSM capability to the Provisioning Workflow, look at the current .bmh_admin_portal_backend.brh_provisioning.base_workflow. This module demonstrates adding a simple run command.
-
-The run command is actually deployed from the step_functions_handler lambda function. If parameters need to be included in the run command, they can be pulled from the Step Functions input (see example in `lambda.step_functions_handler.src.handlers.ssm_run_command_handler.py`)
-
-**Note:** Before the run command will work on a specific EC2 Instance, please ensure:
-1. The EC2 has the correct permissions to be managed by SSM (i.e. by adding the mananged policy `AmazonSSMManagedInstanceCore` to the instance profile). See the [docs](https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-instance-profile.html) for more detailed information. This isn't necessary if the EC2 instance has Admin privileges associated with the Instance Project (although, this should be avoided if possible).
-2. The VM is running an instance of SSM Agent running. For instructions on how to deploy this on Ubuntu, see the [docs](https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-ubuntu.html)

@@ -355,6 +355,8 @@ def _workspace_provision(body, path_params):
     )
 
     # Create the SNS topic for communication back to the user.
+    # TODO: Make this SNS topic a single SNS topic that notifies the admin instead
+    # instead of a topic per workspace.
     sns = boto3.client('sns')
     response = sns.create_topic(
         Name=f'bmh-workspace-topic-{workspace_id}',
@@ -363,10 +365,12 @@ def _workspace_provision(body, path_params):
         ]
     )
     topic_arn = response['TopicArn']
+    email_domain = os.environ.get("email_domain", None)
+    sns_email = f"request@{email_domain}"
     sns.subscribe(
         TopicArn=topic_arn,
         Protocol="email",
-        Endpoint=email
+        Endpoint=sns_email
     )
 
     # Get the dynamodb table name from SSM Parameter Store

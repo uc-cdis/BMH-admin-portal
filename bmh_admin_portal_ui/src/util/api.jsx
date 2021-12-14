@@ -160,6 +160,35 @@ const callSetWorkspaceLimits = async (workspace_id, limits) => {
   return response
 }
 
+/***************  ApproveWorkspace **************************/
+export const approveWorkspace = (workspace_id, account_id) => {
+  makeApiCall(() => callApproveWorkspace(workspace_id, account_id), async (resp) => {
+    await resp.json()
+  })
+}
+
+const callApproveWorkspace = async (workspace_id, account_id) => {
+  const api = `${baseUrl}/workspaces/${workspace_id}/provision`
+  const id_token = getIdToken()
+  if (id_token == null) {
+    logout();
+  }
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${id_token}`
+  }
+
+  console.log("Approving workspace");
+
+  const response = await fetch(api, {
+    method: 'POST',
+    body: JSON.stringify(account_id),
+    headers: headers
+  })
+  return response
+}
+
 /***************  preprocessFormData **************************/
 export const preprocessFormData = (form_data) => {
   const prefix = form_data.scientific_poc.trim().replaceAll(" ", "_")
