@@ -39,7 +39,7 @@ const WorkspaceAccounts = () => {
   const dollar_formatter = (cell, row) => "$" + cell
   const editable_header_formatter = (col, colIndex, components) => (<span>{col.text} <BiEditAlt /></span>)
   const capitalize_word_formatter = (cell, row) => cell.charAt(0).toUpperCase() + cell.slice(1)
-  const admin_link = (adminAuthorized) ? <Link to="/admin" className="btn btn-warning btn-lg my-6">Administrate Workspace</Link> : null
+  const admin_link = (adminAuthorized) ? <Link to="/admin" className="btn ml-5 btn-warning btn-lg my-6">Administrate Workspace</Link> : null
   const no_data_indication = () => {
     return (
       <p>No active workspaces to view.</p>
@@ -137,7 +137,7 @@ const WorkspaceAccounts = () => {
     validator: hard_limit_validator
   }, {
     dataField: 'access-link',
-    text: 'Workspaces',
+    text: 'Workspaces Link',
     formatter: (cell, row) => <a href={'https://' + process.env.REACT_APP_OIDC_AUTH_URI.split("/")[2]} target="_blank">Link </a> , // By passing row variable to values I got all the contents of my datafields
     editable: false,
     isDummyField: true,

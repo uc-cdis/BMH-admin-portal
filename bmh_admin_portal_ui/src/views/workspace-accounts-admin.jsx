@@ -120,6 +120,15 @@ const WorkspaceAccountsAdmin = () => {
       <div className="mx-5">
         <div className="text-center">
           <h2>Workspace Accounts Administration</h2>
+          <div className="my-2 p-5">
+            <small>
+              <em className="font-weight-bold">Warning: </em>
+              When you fill out the AWS Account Id for a pending request, a process is kicked off in the backend to deploy cost tracking infrastructure to that account. Make sure you don't have any typos in the account id and that it matches the request.
+              This will only work for pending, failed or erronous requests.
+              Requests that are in active or provisioning state will not have any effect.
+              To change the account id of an existing row please contact the platform team.
+            </small>
+          </div>
         </div>
 
         <div className="pbt-5 text-center scroll">
