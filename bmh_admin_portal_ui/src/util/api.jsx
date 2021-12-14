@@ -53,6 +53,7 @@ export const getWorkspaces = (callback) => {
     callback(data)
   })
 }
+
 const getWorkspacesResponse = async () => {
   const api = `${baseUrl}/workspaces`
   const id_token = getIdToken()
@@ -60,6 +61,37 @@ const getWorkspacesResponse = async () => {
     console.log("Error getting id token before getting workspaces")
     logout();
   }
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${id_token}`
+  }
+  const response = await fetch(api, { headers: headers })
+  return response
+}
+
+/***************  getAdminWorkspaces **************************/
+export const getAdminWorkspaces = (callback) => {
+  makeApiCall(getAdminWorkspacesResponse, async (resp) => {
+    let data = []
+    // 204 No Content
+    if (resp.status !== 204) {
+      console.log("Awaiting data, status: " + resp.status)
+      data = await resp.json()
+    }
+    callback(data)
+  })
+}
+
+const getAdminWorkspacesResponse = async () => {
+  const api = `${baseUrl}/workspaces/admin_all`
+  const id_token = getIdToken()
+  if (id_token == null) {
+    console.log("Error getting id token before getting workspaces")
+    logout();
+  }
+
+  // TODO: ADD ADMIN AUTHZ CHECK HERE TOO?
 
   const headers = {
     'Content-Type': 'application/json',

@@ -8,8 +8,12 @@
       "GRANTS": {
         "resource": "/workspace_stride_grants",
         "service": "workspace_stride_grants"
+      },
+      "ADMIN": {
+        "resource": "/workspace_stride_admin",
+        "service": "workspace_stride_admin"
       }
     }
   },
-  "authentication": "ras"
+  "authentication": "google"
 }

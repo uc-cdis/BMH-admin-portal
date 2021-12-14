@@ -19,7 +19,14 @@ export const authorizeLogin = async () => {
   const user_auth_mapping = await getUserAuthMapping();
   const credits_auth = await authorize(resources['CREDITS'], user_auth_mapping);
   const grants_auth = await authorize(resources['GRANTS'], user_auth_mapping);
-  return (grants_auth || credits_auth);
+  const admin_auth = await authorize(resources['ADMIN'], user_auth_mapping);
+  return (grants_auth || credits_auth || admin_auth );
+}
+
+export const authorizeAdmin = async () => {
+  const user_auth_mapping = await getUserAuthMapping();
+  console.log("authorizeAdmine: " + authorize(resources['ADMIN'], user_auth_mapping))
+  return authorize(resources['ADMIN'], user_auth_mapping);
 }
 
 export const authorizeCredits = async () => {
@@ -61,6 +68,7 @@ const getUserAuthMapping = async () => {
   // because this means they're probably not authenticated.
   let access_token = getAccessToken();
   if (access_token === "" || typeof (access_token) === 'undefined') {
+    // TODO: Show error page here? For better UX
     console.log("Did not find access token in local storage, logging out.")
     logout();
   }

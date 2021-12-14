@@ -5,6 +5,7 @@ import { isAuthenticated } from './util/oidc';
 import PrivateRoute from "./components/private-route"
 import NavBar from './components/nav-bar';
 import WorkspaceAccounts from './views/workspace-accounts';
+import WorkspaceAccountsAdmin from './views/workspace-accounts-admin';
 import RequestWorkspace from './views/request-workspace';
 import LoginForm from './views/login-form';
 import LoginCallback from './views/login-callback';
@@ -26,6 +27,7 @@ export default function App() {
         <Route exact path="/login" component={LoginForm}/>
 
         {/* React Router protected routes */}
+        <PrivateRoute path="/admin" component={WorkspaceAccountsAdmin} />
         <PrivateRoute path="/request-workspace" component={RequestWorkspace} />
         <PrivateRoute path="/" component={WorkspaceAccounts} />
 

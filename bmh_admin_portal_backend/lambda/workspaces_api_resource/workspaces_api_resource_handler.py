@@ -1,5 +1,5 @@
 # © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-# 
+#
 # This AWS Content is provided subject to the terms of the AWS Customer Agreement
 # available at http://aws.amazon.com/agreement or other written agreement between
 # Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
@@ -49,7 +49,7 @@ def handler(event, context):
     path_params = event['pathParameters']
     query_string_params = event['queryStringParameters']
     authorizer = event['requestContext'].get('authorizer',None)
-    
+
 
     user = None
     if authorizer is not None:
@@ -117,7 +117,7 @@ def handler(event, context):
             status_code=500,
             body={"message":f"{type(e).__name__}: {str(e)}"}
         )
-           
+
     return retval
 ################################################################################
 
@@ -125,7 +125,7 @@ def handler(event, context):
 def create_response(status_code=200, body=None, headers=None):
     """ Creates the response object to return through API Gateway as
     proxy. Should include Access-Control-Allow-Origin for CORS support:
-    https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html 
+    https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
     """
 
     if body is None:
@@ -155,8 +155,8 @@ def create_response(status_code=200, body=None, headers=None):
 #  Token Handling
 ################################################################################
 def _get_tokens(query_string_params, api_key):
-    """ This will take in a code (path_params) which was retrieved from the 
-    auth provider (Fence) and exchange it for access and id tokens using the client 
+    """ This will take in a code (path_params) which was retrieved from the
+    auth provider (Fence) and exchange it for access and id tokens using the client
     secret. """
 
     try:
@@ -194,7 +194,7 @@ def _get_tokens(query_string_params, api_key):
         logger.info(f"Response Status Code: {response.getcode()}")
         logger.info(f"Response read: {reponse.read()}")
         raise RuntimeError("Error when exchanging code for tokens")
-        
+
     content = json.loads(response.read())
 
     return create_response(
@@ -239,7 +239,7 @@ def _refresh_tokens(body, api_key):
         logger.info(f"Response Status Code: {response.getcode()}")
         logger.info(f"Response read: {reponse.read()}")
         raise RuntimeError("Error when exchanging code for tokens")
-        
+
     content = json.loads(response.read())
 
     # We discard the access token here because the application doesn't need it.
@@ -247,7 +247,7 @@ def _refresh_tokens(body, api_key):
         'id_token': content['id_token'],
         'refresh_token': content['refresh_token']
     }
-    
+
     return create_response(
         status_code=200,
         body=response_data
@@ -316,10 +316,10 @@ def _workspaces_post(body, email):
 def _workspace_provision(body, path_params):
     """ For now, this is a place holder for the actual process
     which will create a workpace. Currently, it performs the following:
-        1. Create API Key - used by Workspace accounts to communicate 
+        1. Create API Key - used by Workspace accounts to communicate
             back to the portal account.
         2. Create Workspace and Account IDs (randomly generated placeholders).
-        3. Create SNS topics and subscribe the user. 
+        3. Create SNS topics and subscribe the user.
         4. Store information in DynamoDB and set some Account
             defaults (soft limit, hard limit, strides credits)
     """
@@ -411,7 +411,7 @@ def _workspace_provision(body, path_params):
                 f"with id {workspace_id}")
         else:
             raise e
-    
+
 
     _start_sfn_workflow(workspace_id, api_key, account_id)
 
@@ -421,11 +421,11 @@ def _workspace_provision(body, path_params):
     )
 
 def _start_sfn_workflow(workspace_id, api_key, account_id):
-    
+
     # We'll need to change this to something representing a CTDS email address.
     email = "placeholder@email.com"
-    
-    # Much of this is not used as part of the lambda function, but is required to have 
+
+    # Much of this is not used as part of the lambda function, but is required to have
     # present in the payload to run without error.
     payload = {
         'ddi_lambda_input': {
@@ -436,7 +436,7 @@ def _start_sfn_workflow(workspace_id, api_key, account_id):
                 "AccountEmail": email,
                 "StackRegion": os.environ.get('AWS_REGION','us-east-1'),
                 "BaselineTemplate": "Accountbaseline-brh.yml", ## Parameterize
-                "AccountBilling": "BRH",         
+                "AccountBilling": "BRH",
                 "CloudTrailBucket": "",
                 "SourceBucket": os.environ['account_creation_asset_bucket_name'],
                 "CurBucket": "",
@@ -473,7 +473,7 @@ def _start_sfn_workflow(workspace_id, api_key, account_id):
 # GET workspaces
 # GET workspaces/{workspace_id}
 def _workspaces_get(path_params, email):
-    """ Will return a list of workspaces rows based the email 
+    """ Will return a list of workspaces rows based the email
     of the user """
     dynamodb_table_name = _get_dynamodb_table_name()
     dynamodb = boto3.resource('dynamodb')
@@ -491,6 +491,7 @@ def _workspaces_get(path_params, email):
         '#softlimit',
         '#hardlimit'
     ])
+
     expression_attribute_names = {
         '#bmhworkspaceid': 'bmh_workspace_id',
         "#nihaward": 'nih_funded_award_number',
@@ -504,18 +505,26 @@ def _workspaces_get(path_params, email):
 
     status_code = 200
     retval = []
+
+
     if path_params is not None and 'workspace_id' in path_params:
-        response = table.get_item(
-            Key={
-                'bmh_workspace_id':path_params['workspace_id'],
-                'user_id':email
-            },
-            ProjectExpression=projection,
-            ExpressionAttributeNames=expression_attribute_names
-        )
-        retval = response.get('Item', None)
-        if retval is None:
-            status_code = 404
+        if path_params['workspace_id'] == "admin_all":
+            response = table.scan()
+            retval = response.get('Items',[])
+            if len(retval) == 0:
+                status_code = 204 # No content, resource was found, but it's empty.
+        else:
+            response = table.get_item(
+                Key={
+                    'bmh_workspace_id':path_params['workspace_id'],
+                    'user_id':email
+                },
+                ProjectExpression=projection,
+                ExpressionAttributeNames=expression_attribute_names
+            )
+            retval = response.get('Item', None)
+            if retval is None:
+                status_code = 404
 
     else:
 
@@ -524,7 +533,7 @@ def _workspaces_get(path_params, email):
             ProjectionExpression=projection,
             ExpressionAttributeNames=expression_attribute_names
         )
-        
+
         retval = response.get('Items',[])
         if len(retval) == 0:
             status_code = 204 # No content, resource was found, but it's empty.
@@ -667,6 +676,7 @@ def _workspaces_set_total_usage(body, path_params, api_key):
         Soft Usage Limit: {soft_limit}
         Hard Usage Limit: {hard_limit}
         """
+        #  TODO: Publish to admin email instead of per user
         _publish_to_sns_topic(sns_topic_arn, subject, message)
 
     elif old_total_usage < soft_limit and formatted_total_usage >= soft_limit:
@@ -678,6 +688,7 @@ def _workspaces_set_total_usage(body, path_params, api_key):
         Soft Usage Limit: {soft_limit}
         Hard Usage Limit: {hard_limit}
         """
+        #  TODO: Publish to admin email instead of per user
         _publish_to_sns_topic(sns_topic_arn, subject, message)
 
     return create_response(
@@ -707,7 +718,12 @@ def _get_workspace_request_status_and_email(workspace_request_id):
 
     items = response.get('Items',[])
     assert len(items) == 1
-    email = items[0]['poc_email']
+    # TODO:
+    # This (poc_email) is the right way, but need more testing
+    # Need to add to dyanmodb INDEX?
+    # Needed for RAS integration.
+    # email = items[0]['poc_email']
+    email = items[0]['user_id']
 
     try:
         response = table.get_item(
@@ -721,8 +737,9 @@ def _get_workspace_request_status_and_email(workspace_request_id):
         raise ValueError()
 
     return response['Item']['request_status'], email
-    
 
+#  TODO: Publish to admin email instead of per user
+#  TODO: Create this admin SNS topic via CDK so we only subscribe to a single topic per environment.
 def _publish_to_sns_topic(topic_arn, subject, message):
     sns = boto3.client('sns')
     sns.publish(
@@ -734,13 +751,13 @@ def _publish_to_sns_topic(topic_arn, subject, message):
 def _get_dynamodb_index_name():
     return _get_param(os.environ['dynamodb_index_param_name'])
 def _get_dynamodb_table_name():
-    return _get_param(os.environ['dynamodb_table_param_name'])   
+    return _get_param(os.environ['dynamodb_table_param_name'])
 
 def _get_param(param_name):
     ssm = boto3.client('ssm')
     param_info = ssm.get_parameter(Name=param_name)
     return param_info['Parameter']['Value']
-    
+
 # Helper class to convert a DynamoDB item to JSON.
 class DecimalEncoder(json.JSONEncoder):
     # Usage explained here:
@@ -800,6 +817,6 @@ def get_secret(secret_name):
         secret = get_secret_value_response['SecretString']
 
     # Actually returned as a json string. So just get the value.
-    data = json.loads(secret) 
+    data = json.loads(secret)
     return data['fence_client_secret']
 ################################################################################

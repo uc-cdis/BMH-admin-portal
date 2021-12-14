@@ -5,41 +5,38 @@
 // Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { BiEditAlt } from 'react-icons/bi';
+import Button from 'react-bootstrap/Button'
 import BootstrapTable from 'react-bootstrap-table-next';
 import cellEditFactory from 'react-bootstrap-table2-editor';
 import overlayFactory from 'react-bootstrap-table2-overlay';
 import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
 
-import { getWorkspaces, setWorkspaceLimits } from "../util/api"
-import {
-  authorizeAdmin,
-} from '../util/auth';
+import { getAdminWorkspaces, setWorkspaceLimits } from "../util/api"
+import { authorizeAdmin } from '../util/auth';
 
-const WorkspaceAccounts = () => {
+const WorkspaceAccountsAdmin = () => {
   const [workspaces, setWorkspaces] = useState([])
   const [loading, setLoading] = useState(true)
   const [adminAuthorized, setAdminAuthorized] = useState(false)
 
   useEffect(() => {
-    setLoading(true);
     async function fetchAuthorized() {
       const adminAuthorized = await authorizeAdmin();
       setAdminAuthorized(adminAuthorized);
     }
+    setLoading(true);
     fetchAuthorized();
-    getWorkspaces((data) => {
+    getAdminWorkspaces((data) => {
       setLoading(false)
       setWorkspaces(data)
     })
   }, [])
-  console.log(workspaces)
 
   const dollar_formatter = (cell, row) => "$" + cell
   const editable_header_formatter = (col, colIndex, components) => (<span>{col.text} <BiEditAlt /></span>)
   const capitalize_word_formatter = (cell, row) => cell.charAt(0).toUpperCase() + cell.slice(1)
-  const admin_link = (adminAuthorized) ? <Link to="/admin" className="btn btn-warning btn-lg my-6">Administrate Workspace</Link> : null
+
   const no_data_indication = () => {
     return (
       <p>No active workspaces to view.</p>
@@ -98,9 +95,19 @@ const WorkspaceAccounts = () => {
     }
   }
 
+  const selectRow = {
+    mode: 'radio',
+    clickToSelect: true,
+    clickToExpand: true
+  };
+
   const columns = [{
-    dataField: 'nih_funded_award_number',
-    text: 'NIH Award/Grant ID',
+    dataField: 'scientific_poc',
+    text: 'Scientific POC',
+    editable: false
+  },{
+    dataField: 'user_id',
+    text: 'User Id',
     editable: false
   }, {
     dataField: 'request_status',
@@ -136,9 +143,13 @@ const WorkspaceAccounts = () => {
     headerFormatter: editable_header_formatter,
     validator: hard_limit_validator
   }, {
-    dataField: 'data-commons',
-    text: 'Access link',
-    editable: false
+    dataField: 'root_account_email',
+    text: 'Root Email',
+    editable: true,
+  }, {
+    dataField: 'aws_account_number',
+    text: 'AWS Account',
+    editable: true,
   }]
 
   const cellEdit = cellEditFactory({
@@ -157,24 +168,23 @@ const WorkspaceAccounts = () => {
   })
 
   return (
-    <div className="container">
+    <div className="scroll">
       <div className="py-5 text-center">
-        <h2>Workspace Accounts</h2>
+        <h2>Workspace Accounts Administration</h2>
       </div>
 
-      <div className="pt-5 text-center">
+      <div className="pbt-5 text-center scroll">
         <BootstrapTable keyField='bmh_workspace_id' data={workspaces} columns={columns} noDataIndication={no_data_indication}
-          hover={true} cellEdit={cellEdit} bordered={true}
-          loading={loading} overlay={overlayFactory({ spinner: true, background: 'rgba(192,192,192,0.1)' })}
+          hover={true} cellEdit={cellEdit} bordered={true} classes='table-class'
+          loading={loading} overlay={overlayFactory({ spinner: true, background: 'rgba(192,192,192,0.1)' })} selectRow={ selectRow }
         />
+      <Button className="btn btn-primary btn-lg btn-block mb-6"
+            type="submit"
+            id="request-form-submit-button">
+            Approve Request</Button>
       </div>
-      <div className="my-2 p-5"><small><em className="font-weight-bold">Warning:</em> When a BRH Workspace reaches the STRIDES Credits limit (for STRIDES Credits Workspaces)
-        or reaches the Hard Limit (for STRIDES Grant Workspaces), the Workspace will be automatically terminated.
-        Please be sure to save any work before reaching the STRIDES Credit or Hard Limit.</small></div>
-      <Link to="/request-workspace" className="btn btn-primary btn-lg my-6">Request New Workspace</Link>
-      {admin_link}
     </div>
   )
 
 }
-export default WorkspaceAccounts;
+export default WorkspaceAccountsAdmin;
