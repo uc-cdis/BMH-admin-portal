@@ -147,9 +147,10 @@ const WorkspaceAccountsAdmin = () => {
     text: 'Root Email',
     editable: true,
   }, {
-    dataField: 'aws_account_number',
+    dataField: 'account_id',
     text: 'AWS Account',
     editable: true,
+    headerFormatter: editable_header_formatter,
   }]
 
   const cellEdit = cellEditFactory({
@@ -168,20 +169,22 @@ const WorkspaceAccountsAdmin = () => {
   })
 
   return (
-    <div className="scroll">
-      <div className="py-5 text-center">
-        <h2>Workspace Accounts Administration</h2>
-      </div>
+    <div className="scroll width-full">
+      <div className="mx-5">
+        <div className="text-center">
+          <h2>Workspace Accounts Administration</h2>
+        </div>
 
-      <div className="pbt-5 text-center scroll">
-        <BootstrapTable keyField='bmh_workspace_id' data={workspaces} columns={columns} noDataIndication={no_data_indication}
-          hover={true} cellEdit={cellEdit} bordered={true} classes='table-class'
-          loading={loading} overlay={overlayFactory({ spinner: true, background: 'rgba(192,192,192,0.1)' })} selectRow={ selectRow }
-        />
-      <Button className="btn btn-primary btn-lg btn-block mb-6"
-            type="submit"
-            id="request-form-submit-button">
-            Approve Request</Button>
+        <div className="pbt-5 text-center scroll">
+          <BootstrapTable keyField='bmh_workspace_id' data={workspaces} columns={columns} noDataIndication={no_data_indication}
+            hover={true} cellEdit={cellEdit} bordered={true} classes='table-class'
+            loading={loading} overlay={overlayFactory({ spinner: true, background: 'rgba(192,192,192,0.1)' })} selectRow={ selectRow }
+          />
+        <Button className="btn btn-primary btn-lg btn-block mb-6"
+              type="submit"
+              id="request-form-submit-button">
+              Approve Request</Button>
+        </div>
       </div>
     </div>
   )
