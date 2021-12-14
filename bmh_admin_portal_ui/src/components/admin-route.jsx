@@ -11,7 +11,7 @@ import {
 } from '../util/auth';
 import { isAuthenticated } from "../util/oidc"
 
-const AdmineRoute = ({ component: Component, ...rest }) => {
+const AdminRoute = ({ component: Component, ...rest }) => {
 
   // Add your own authentication on the below line.
   const isAdmin = authorizeAdmin()
