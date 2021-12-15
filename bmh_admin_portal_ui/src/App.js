@@ -16,15 +16,14 @@ export default function App() {
 
   return (
     <div className="App">
-    <NavBar isAuthenticated={authenticated}/>
-    <div className="container">
+      <NavBar isAuthenticated={authenticated} />
       <Switch>
 
         {/* Public routes meant for login */}
         <Route exact path="/login/callback">
           <LoginCallback setParentAuthenticated={setAuthenticated} />
         </Route>
-        <Route exact path="/login" component={LoginForm}/>
+        <Route exact path="/login" component={LoginForm} />
 
         {/* React Router protected routes */}
         <PrivateRoute path="/admin" component={WorkspaceAccountsAdmin} />
@@ -33,6 +32,5 @@ export default function App() {
 
       </Switch>
     </div>
-  </div>
   )
 }

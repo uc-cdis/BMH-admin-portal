@@ -21,9 +21,8 @@ body {
 }
 
 .width-full {
-  width: 100vw;
-  margin:1em -100%; /* old browsers fallback */
-  margin:1em calc(50% - 50vw);
+  width: 90%;
+  margin: 1em auto
 }
 
 /*body {

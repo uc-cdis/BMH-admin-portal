@@ -80,27 +80,29 @@ const RequestWorkspace = () => {
   }
 
   return (
-    <Container>
-      <div>
-        <Row className="justify-content-md-center my-5">
-          <h2>Workspace Account Request Form</h2>
-          <p className="lead">The form below is used to request a newly provisioned Gen3 Workspace Account.</p>
-        </Row>
+    <div className="container">
+      <Container>
         <div>
-          <Row className="mb-5">
-            <ToggleButtonGroup key={formToggle} type="radio" name="form-select" defaultValue={formToggle} onChange={handleChange}>
-              <ToggleButton variant="outline-primary" value={FORM_OPTIONS.stridesGrant}>STRIDES Grant/Award Funded</ToggleButton>
-              {(creditsAuthorized) ? <ToggleButton variant="outline-primary" value={FORM_OPTIONS.stridesCredits}>STRIDES Credits</ToggleButton> : null}
-            </ToggleButtonGroup>
+          <Row className="justify-content-md-center my-5">
+            <h2>Workspace Account Request Form</h2>
+            <p className="lead">The form below is used to request a newly provisioned Gen3 Workspace Account.</p>
           </Row>
+          <div>
+            <Row className="mb-5">
+              <ToggleButtonGroup key={formToggle} type="radio" name="form-select" defaultValue={formToggle} onChange={handleChange}>
+                <ToggleButton variant="outline-primary" value={FORM_OPTIONS.stridesGrant}>STRIDES Grant/Award Funded</ToggleButton>
+                {(creditsAuthorized) ? <ToggleButton variant="outline-primary" value={FORM_OPTIONS.stridesCredits}>STRIDES Credits</ToggleButton> : null}
+              </ToggleButtonGroup>
+            </Row>
+          </div>
+          {componentToRender}
         </div>
-        {componentToRender}
-      </div>
 
-      <footer className="my-5 pt-5 text-muted text-center text-small">
-        <p className="mb-1">&copy; 2021 Biomedical Hub</p>
-      </footer>
-    </Container>
+        <footer className="my-5 pt-5 text-muted text-center text-small">
+          <p className="mb-1">&copy; 2021 Biomedical Hub</p>
+        </footer>
+      </Container>
+    </div>
   )
 }
 
