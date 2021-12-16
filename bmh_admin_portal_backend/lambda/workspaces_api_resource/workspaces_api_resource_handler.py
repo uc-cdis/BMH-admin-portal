@@ -1,5 +1,5 @@
 # © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-# 
+#
 # This AWS Content is provided subject to the terms of the AWS Customer Agreement
 # available at http://aws.amazon.com/agreement or other written agreement between
 # Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
@@ -49,13 +49,13 @@ def handler(event, context):
     path_params = event['pathParameters']
     query_string_params = event['queryStringParameters']
     authorizer = event['requestContext'].get('authorizer',None)
-    
+
 
     user = None
     if authorizer is not None:
         user = event['requestContext']['authorizer'].get('user', None)
 
-    # For API Key enpoints
+    # For API Key endpoints
     api_key = event['requestContext']['identity'].get('apiKey',None)
 
     body = event.get("body", "{}")
@@ -117,7 +117,7 @@ def handler(event, context):
             status_code=500,
             body={"message":f"{type(e).__name__}: {str(e)}"}
         )
-           
+
     return retval
 ################################################################################
 
@@ -125,7 +125,7 @@ def handler(event, context):
 def create_response(status_code=200, body=None, headers=None):
     """ Creates the response object to return through API Gateway as
     proxy. Should include Access-Control-Allow-Origin for CORS support:
-    https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html 
+    https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
     """
 
     if body is None:
@@ -155,8 +155,8 @@ def create_response(status_code=200, body=None, headers=None):
 #  Token Handling
 ################################################################################
 def _get_tokens(query_string_params, api_key):
-    """ This will take in a code (path_params) which was retrieved from the 
-    auth provider (Fence) and exchange it for access and id tokens using the client 
+    """ This will take in a code (path_params) which was retrieved from the
+    auth provider (Fence) and exchange it for access and id tokens using the client
     secret. """
 
     try:
@@ -194,7 +194,7 @@ def _get_tokens(query_string_params, api_key):
         logger.info(f"Response Status Code: {response.getcode()}")
         logger.info(f"Response read: {reponse.read()}")
         raise RuntimeError("Error when exchanging code for tokens")
-        
+
     content = json.loads(response.read())
 
     return create_response(
@@ -237,9 +237,9 @@ def _refresh_tokens(body, api_key):
 
     if response.getcode() != 200:
         logger.info(f"Response Status Code: {response.getcode()}")
-        logger.info(f"Response read: {reponse.read()}")
+        logger.info(f"Response read: {response.read()}")
         raise RuntimeError("Error when exchanging code for tokens")
-        
+
     content = json.loads(response.read())
 
     # We discard the access token here because the application doesn't need it.
@@ -247,7 +247,7 @@ def _refresh_tokens(body, api_key):
         'id_token': content['id_token'],
         'refresh_token': content['refresh_token']
     }
-    
+
     return create_response(
         status_code=200,
         body=response_data
@@ -316,10 +316,10 @@ def _workspaces_post(body, email):
 def _workspace_provision(body, path_params):
     """ For now, this is a place holder for the actual process
     which will create a workpace. Currently, it performs the following:
-        1. Create API Key - used by Workspace accounts to communicate 
+        1. Create API Key - used by Workspace accounts to communicate
             back to the portal account.
         2. Create Workspace and Account IDs (randomly generated placeholders).
-        3. Create SNS topics and subscribe the user. 
+        3. Create SNS topics and subscribe the user.
         4. Store information in DynamoDB and set some Account
             defaults (soft limit, hard limit, strides credits)
     """
@@ -407,11 +407,11 @@ def _workspace_provision(body, path_params):
         )
     except ClientError as e:
         if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
-            raise Exception("Could not find BMH Workspace "
+            raise Exception("Could not find Workspace "
                 f"with id {workspace_id}")
         else:
             raise e
-    
+
 
     _start_sfn_workflow(workspace_id, api_key, account_id)
 
@@ -421,11 +421,11 @@ def _workspace_provision(body, path_params):
     )
 
 def _start_sfn_workflow(workspace_id, api_key, account_id):
-    
+
     # We'll need to change this to something representing a CTDS email address.
     email = "placeholder@email.com"
-    
-    # Much of this is not used as part of the lambda function, but is required to have 
+
+    # Much of this is not used as part of the lambda function, but is required to have
     # present in the payload to run without error.
     payload = {
         'ddi_lambda_input': {
@@ -436,7 +436,7 @@ def _start_sfn_workflow(workspace_id, api_key, account_id):
                 "AccountEmail": email,
                 "StackRegion": os.environ.get('AWS_REGION','us-east-1'),
                 "BaselineTemplate": "Accountbaseline-brh.yml", ## Parameterize
-                "AccountBilling": "BRH",         
+                "AccountBilling": "BRH",
                 "CloudTrailBucket": "",
                 "SourceBucket": os.environ['account_creation_asset_bucket_name'],
                 "CurBucket": "",
@@ -473,7 +473,7 @@ def _start_sfn_workflow(workspace_id, api_key, account_id):
 # GET workspaces
 # GET workspaces/{workspace_id}
 def _workspaces_get(path_params, email):
-    """ Will return a list of workspaces rows based the email 
+    """ Will return a list of workspaces rows based the email
     of the user """
     dynamodb_table_name = _get_dynamodb_table_name()
     dynamodb = boto3.resource('dynamodb')
@@ -524,7 +524,7 @@ def _workspaces_get(path_params, email):
             ProjectionExpression=projection,
             ExpressionAttributeNames=expression_attribute_names
         )
-        
+
         retval = response.get('Items',[])
         if len(retval) == 0:
             status_code = 204 # No content, resource was found, but it's empty.
@@ -614,12 +614,12 @@ def _workspaces_set_total_usage(body, path_params, api_key):
             return create_response(
                 status_code=400,
                 body={
-                    "message":f"Could not find BMH Workspace with id {workspace_id}"}
+                    "message":f"Could not find Workspace with id {workspace_id}"}
             )
         else:
             raise e
 
-    ## TODO: Confirm that the API key matches the BMH Workspace ID
+    ## TODO: Confirm that the API key matches the Workspace ID
 
     # And now update the row.
     items = index_response.get('Items',[])
@@ -647,7 +647,7 @@ def _workspaces_set_total_usage(body, path_params, api_key):
         logger.info(f"Table response: {json.dumps(table_response, cls=DecimalEncoder)}")
     except ClientError as e:
         if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
-            raise Exception("Could not find BMH Workspace "
+            raise Exception("Could not find Workspace "
                 f"with id {workspace_id}")
         else:
             raise e
@@ -661,8 +661,8 @@ def _workspaces_set_total_usage(body, path_params, api_key):
     if old_total_usage < hard_limit and formatted_total_usage >= hard_limit:
         logger.info(f"Surpassed the hard limit: {old_total_usage=} {formatted_total_usage=} {hard_limit=}")
 
-        subject = f"Biomedical Hub Workspace {workspace_id}: exceeded usage hard limit"
-        message = f"""The Biomedial Hub Workspace ({workspace_id}) has exceeded the usage hard limit.
+        subject = f"Workspace {workspace_id}: exceeded usage hard limit"
+        message = f"""The Workspace ({workspace_id}) has exceeded the usage hard limit.
         Total Usage: {formatted_total_usage}
         Soft Usage Limit: {soft_limit}
         Hard Usage Limit: {hard_limit}
@@ -672,8 +672,8 @@ def _workspaces_set_total_usage(body, path_params, api_key):
     elif old_total_usage < soft_limit and formatted_total_usage >= soft_limit:
         logger.info(f"Surpassed the hard limit: {old_total_usage=} {formatted_total_usage=} {soft_limit=}")
 
-        subject = f"Biomedical Hub Workspace {workspace_id}: exceeded usage soft limit"
-        message = f"""The Biomedial Hub Workspace ({workspace_id}) has exceeded the usage soft limit.
+        subject = f"Workspace {workspace_id}: exceeded usage soft limit"
+        message = f"""The Workspace ({workspace_id}) has exceeded the usage soft limit.
         Total Usage: {formatted_total_usage}
         Soft Usage Limit: {soft_limit}
         Hard Usage Limit: {hard_limit}
@@ -721,7 +721,7 @@ def _get_workspace_request_status_and_email(workspace_request_id):
         raise ValueError()
 
     return response['Item']['request_status'], email
-    
+
 
 def _publish_to_sns_topic(topic_arn, subject, message):
     sns = boto3.client('sns')
@@ -734,13 +734,13 @@ def _publish_to_sns_topic(topic_arn, subject, message):
 def _get_dynamodb_index_name():
     return _get_param(os.environ['dynamodb_index_param_name'])
 def _get_dynamodb_table_name():
-    return _get_param(os.environ['dynamodb_table_param_name'])   
+    return _get_param(os.environ['dynamodb_table_param_name'])
 
 def _get_param(param_name):
     ssm = boto3.client('ssm')
     param_info = ssm.get_parameter(Name=param_name)
     return param_info['Parameter']['Value']
-    
+
 # Helper class to convert a DynamoDB item to JSON.
 class DecimalEncoder(json.JSONEncoder):
     # Usage explained here:
@@ -800,6 +800,6 @@ def get_secret(secret_name):
         secret = get_secret_value_response['SecretString']
 
     # Actually returned as a json string. So just get the value.
-    data = json.loads(secret) 
+    data = json.loads(secret)
     return data['fence_client_secret']
 ################################################################################

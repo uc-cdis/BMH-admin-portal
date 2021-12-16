@@ -139,7 +139,7 @@ const StridesCreditForm = (props) => {
         <Col>
           <Form.Label>Scientific POC Email <span data-tip data-for="poc_email"><BiHelpCircle /></span></Form.Label>
           <ReactTooltip class="tooltip" id="poc_email" place="top" effect="solid" multiline={true}>
-            Email address used for contact regarding the BRH Workspace.
+            Email address used for contact regarding the workspace.
           </ReactTooltip>
           <Form.Control
             type="email" onChange={handleChange}
@@ -155,7 +155,7 @@ const StridesCreditForm = (props) => {
         <Col>
           <Form.Label>Confirm Scientific POC Email <span data-tip data-for="confirm_poc_email"><BiHelpCircle /></span></Form.Label>
           <ReactTooltip class="tooltip" id="confirm_poc_email" place="top" effect="solid" multiline={true}>
-            Email address used for contact regarding the BRH Workspace.
+            Email address used for contact regarding the workspace.
           </ReactTooltip>
           <Form.Control required type="email" onChange={handleChange} name="confirm_poc_email" placeholder="user@email.org"
             feedback="Value must match Scientific POC Email" ref={pocConfirmEmailInputEl}

@@ -154,7 +154,7 @@ const WorkspaceAccounts = () => {
           loading={loading} overlay={overlayFactory({ spinner: true, background: 'rgba(192,192,192,0.1)' })}
         />
       </div>
-      <div className="my-2 p-5"><small><em className="font-weight-bold">Warning:</em> When a BRH Workspace reaches the STRIDES Credits limit (for STRIDES Credits Workspaces)
+      <div className="my-2 p-5"><small><em className="font-weight-bold">Warning:</em> When a Workspace reaches the STRIDES Credits limit (for STRIDES Credits Workspaces)
         or reaches the Hard Limit (for STRIDES Grant Workspaces), the Workspace will be automatically terminated.
         Please be sure to save any work before reaching the STRIDES Credit or Hard Limit.</small></div>
       <Link to="/request-workspace" className="btn btn-primary btn-lg my-6">Request New Workspace</Link>
