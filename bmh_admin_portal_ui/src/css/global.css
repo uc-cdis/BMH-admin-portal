@@ -11,6 +11,20 @@ body {
   width: 300px;
 }
 
+.scroll {
+  overflow-x: auto
+}
+
+.table-class {
+  table-layout: auto !important;
+  width: auto !important;
+}
+
+.width-full {
+  width: 90%;
+  margin: 1em auto
+}
+
 /*body {
   */
   /*display: -ms-flexbox;*/

@@ -1,3 +1,4 @@
+
 # Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Builders
@@ -6,8 +7,10 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: CloudFront distribution for BRH admin Portal. The source is the S3 bucket with the
   web files for the BRH admin portal.
-
 Parameters:
+  AcmCertificate:
+    Type: String
+    Description: ARN of ACM Certificate
   WebsiteBucketName:
     Description: Name of the bucket where the website files will live
     Type: String
@@ -59,75 +62,6 @@ Parameters:
     Default: 600
 
 Resources:
-  #ROUTE 53 HOSTED ZONE
-  Route53HostedZone:
-    Type: AWS::Route53::HostedZone
-    Properties:
-      Name:
-
-  #ROUTE 53 RECORD SETS
-        Ref: DomainName
-  Route53RecordSetGroup:
-    Type: AWS::Route53::RecordSetGroup
-    DependsOn: CloudFrontDistribution
-    Properties:
-      HostedZoneName:
-        Fn::Sub: ${DomainName}.
-      RecordSets:
-      - Name:
-          Fn::Sub: ${AlternateDomainName}
-        Type: A
-        AliasTarget:
-          DNSName:
-            Fn::GetAtt:
-            - CloudFrontDistribution
-            - DomainName
-          EvaluateTargetHealth: false
-            # The  following HosteZoneId is always used for alias records pointing to CF.
-          HostedZoneId: Z2FDTNDATAQYW2
-
-  ApexRoute53RecordSetGroup:
-    Type: AWS::Route53::RecordSetGroup
-    DependsOn: CloudFrontDistribution
-    Properties:
-      HostedZoneName:
-        Fn::Sub: ${DomainName}.
-      RecordSets:
-      - Name:
-          Ref: DomainName
-        Type: A
-        AliasTarget:
-          DNSName:
-            Fn::GetAtt:
-            - CloudFrontDistribution
-            - DomainName
-          EvaluateTargetHealth: false
-            # The  following HosteZoneId is always used for alias records pointing to CF.
-          HostedZoneId: Z2FDTNDATAQYW2
-
-  #ACM CERTIFICATE
-  AcmCertificate:
-    Type: AWS::CertificateManager::Certificate
-    DependsOn: Route53HostedZone
-    Properties:
-      DomainName:
-        Fn::Sub: '*.${DomainName}'
-      ValidationMethod: DNS
-      DomainValidationOptions:
-      - DomainName:
-          Ref: DomainName
-        HostedZoneId:
-
-  #S3 WEBSITE BUCKET
-          Ref: Route53HostedZone
-  S3WebsiteBucket:
-    Type: AWS::S3::Bucket
-    DependsOn: CloudFrontOAI
-    Properties:
-      BucketName:
-
-  #S3 WEBSITE BUCKET POLICY
-        Ref: WebsiteBucketName
   S3WebsiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
@@ -183,7 +117,7 @@ Resources:
         Enabled: true
         HttpVersion: http2
         Aliases:
-        - Ref: AlternateDomainName
+        - Ref: DomainName
         DefaultRootObject: index.html
         DefaultCacheBehavior:
           AllowedMethods:

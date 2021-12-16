@@ -4,14 +4,15 @@
 # Carlos Ramos: @carrams
 
 #This shell scripts provides parameters, packages and deploys the CloudFormation template
-  
-#Deployment bucket
-DeploymentBucket="cfn-deployment-artifacts"
 
-#Parameters  
-WebsiteBucketName="nih-site-4122021"
-DomainName="tls-endpoint.com"
-AlternateDomainName="www.tls-endpoint.com"
+#Deployment bucket
+DeploymentBucket="ctds-brh-website-cloudfront"
+
+#Parameters
+AcmCertificate="arn:aws:acm:us-east-1:707767160287:certificate/520ede2f-fc82-4bb9-af96-4b4af7deabbd"
+WebsiteBucketName="ctds-brh-website"
+DomainName="brh-test.planx-pla.net"
+AlternateDomainName="www.brh-test.planx-pla.net"
 Compress="false"
 DefaultTTL="0"
 MaxTTL="0"
@@ -20,16 +21,17 @@ PriceClass="PriceClass_All"
 TTL=600
 
 #Packaging
-aws cloudformation package --profile nih \
+aws cloudformation package  \
     --template-file CloudFront.yaml \
     --s3-bucket ${DeploymentBucket} \
     --output-template-file packaged.yaml
 
 #Deployment
-aws cloudformation deploy --profile nih \
+aws cloudformation deploy  \
     --stack-name BRHStack \
     --template-file packaged.yaml \
     --parameter-overrides \
+        AcmCertificate=${AcmCertificate} \
         WebsiteBucketName=${WebsiteBucketName} \
         DomainName=${DomainName} \
         AlternateDomainName=${AlternateDomainName} \

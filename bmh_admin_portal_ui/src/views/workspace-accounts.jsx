@@ -13,13 +13,22 @@ import overlayFactory from 'react-bootstrap-table2-overlay';
 import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
 
 import { getWorkspaces, setWorkspaceLimits } from "../util/api"
+import {
+  authorizeAdmin,
+} from '../util/auth';
 
 const WorkspaceAccounts = () => {
   const [workspaces, setWorkspaces] = useState([])
   const [loading, setLoading] = useState(true)
+  const [adminAuthorized, setAdminAuthorized] = useState(false)
 
   useEffect(() => {
     setLoading(true);
+    async function fetchAuthorized() {
+      const adminAuthorized = await authorizeAdmin();
+      setAdminAuthorized(adminAuthorized);
+    }
+    fetchAuthorized();
     getWorkspaces((data) => {
       setLoading(false)
       setWorkspaces(data)
@@ -29,7 +38,7 @@ const WorkspaceAccounts = () => {
   const dollar_formatter = (cell, row) => "$" + cell
   const editable_header_formatter = (col, colIndex, components) => (<span>{col.text} <BiEditAlt /></span>)
   const capitalize_word_formatter = (cell, row) => cell.charAt(0).toUpperCase() + cell.slice(1)
-
+  const admin_link = (adminAuthorized) ? <Link to="/admin" className="btn ml-5 btn-warning btn-lg my-6">Administrate Workspace</Link> : null
   const no_data_indication = () => {
     return (
       <p>No active workspaces to view.</p>
@@ -125,6 +134,12 @@ const WorkspaceAccounts = () => {
     formatter: dollar_formatter,
     headerFormatter: editable_header_formatter,
     validator: hard_limit_validator
+  }, {
+    dataField: 'access-link',
+    text: 'Workspaces Link',
+    formatter: (cell, row) => <a href={'https://' + process.env.REACT_APP_OIDC_AUTH_URI.split("/")[2]} target="_blank" rel="noreferrer">Link </a> , // By passing row variable to values I got all the contents of my datafields
+    editable: false,
+    isDummyField: true,
   }]
 
   const cellEdit = cellEditFactory({
@@ -135,8 +150,6 @@ const WorkspaceAccounts = () => {
         'soft-limit': row['soft-limit']
       }
       limits[column['dataField']] = newValue
-      console.log("ROW:")
-      console.log(row)
       setWorkspaceLimits(row['bmh_workspace_id'], limits)
 
     }
@@ -158,6 +171,7 @@ const WorkspaceAccounts = () => {
         or reaches the Hard Limit (for STRIDES Grant Workspaces), the Workspace will be automatically terminated.
         Please be sure to save any work before reaching the STRIDES Credit or Hard Limit.</small></div>
       <Link to="/request-workspace" className="btn btn-primary btn-lg my-6">Request New Workspace</Link>
+      {admin_link}
     </div>
   )
 

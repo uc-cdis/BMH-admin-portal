@@ -47,12 +47,12 @@ export const getWorkspaces = (callback) => {
     let data = []
     // 204 No Content
     if (resp.status !== 204) {
-      console.log("Awaiting data, status: " + resp.status)
       data = await resp.json()
     }
     callback(data)
   })
 }
+
 const getWorkspacesResponse = async () => {
   const api = `${baseUrl}/workspaces`
   const id_token = getIdToken()
@@ -60,6 +60,37 @@ const getWorkspacesResponse = async () => {
     console.log("Error getting id token before getting workspaces")
     logout();
   }
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${id_token}`
+  }
+  const response = await fetch(api, { headers: headers })
+  return response
+}
+
+/***************  getAdminWorkspaces **************************/
+export const getAdminWorkspaces = (callback) => {
+  makeApiCall(getAdminWorkspacesResponse, async (resp) => {
+    let data = []
+    // 204 No Content
+    if (resp.status !== 204) {
+      console.log("Awaiting data, status: " + resp.status)
+      data = await resp.json()
+    }
+    callback(data)
+  })
+}
+
+const getAdminWorkspacesResponse = async () => {
+  const api = `${baseUrl}/workspaces/admin_all`
+  const id_token = getIdToken()
+  if (id_token == null) {
+    console.log("Error getting id token before getting workspaces")
+    logout();
+  }
+
+  // TODO: ADD ADMIN AUTHZ CHECK HERE TOO?
 
   const headers = {
     'Content-Type': 'application/json',
@@ -118,7 +149,6 @@ const callSetWorkspaceLimits = async (workspace_id, limits) => {
     'Authorization': `Bearer ${id_token}`
   }
 
-  console.log("Setting limits");
 
   const response = await fetch(api, {
     method: 'PUT',
@@ -128,15 +158,29 @@ const callSetWorkspaceLimits = async (workspace_id, limits) => {
   return response
 }
 
-/***************  preprocessFormData **************************/
-export const preprocessFormData = (form_data) => {
-  const prefix = form_data.scientific_poc.trim().replaceAll(" ", "_")
-  let suffix = form_data.nih_funded_award_number.trim()
-  if (form_data.intramural) {
-    suffix = "intramural"
+/***************  ApproveWorkspace **************************/
+export const approveWorkspace = (workspace_id, account_id) => {
+  makeApiCall(() => callApproveWorkspace(workspace_id, account_id), async (resp) => {
+    await resp.json()
+  })
+}
+
+const callApproveWorkspace = async (workspace_id, account_id) => {
+  const api = `${baseUrl}/workspaces/${workspace_id}/provision`
+  const id_token = getIdToken()
+  if (id_token == null) {
+    logout();
   }
-  const root_email_domain = `@${process.env.REACT_APP_ROOT_EMAIL_DOMAIN}`
-  const root_email_prefix = prefix.concat("_", suffix).slice(0, 64)
-  form_data.root_email = root_email_prefix.concat(root_email_domain)
-  return form_data
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${id_token}`
+  }
+
+  const response = await fetch(api, {
+    method: 'POST',
+    body: JSON.stringify(account_id),
+    headers: headers
+  })
+  return response
 }

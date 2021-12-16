@@ -18,7 +18,7 @@ from aws_cdk.aws_lambda_python import PythonFunction
 
 from .bmh_admin_portal_config import BMHAdminPortalBackendConfig
 from .brh_provisioning.base_workflow import ProvisioningWorkflow
-from .brh_provisioning.adminvm import AdminVM
+
 
 class BmhAdminPortalBackendStack(core.Stack):
     def __init__(self, scope: core.Construct, construct_id: str, **kwargs) -> None:
@@ -76,7 +76,7 @@ class BmhAdminPortalBackendStack(core.Stack):
             }
         )
 
-        # Store the API URL in SSM parameter store 
+        # Store the API URL in SSM parameter store
         api_url_param = ssm.StringParameter(
             self, "workspaces-api-url-parameter",
             description="API URL for workspace request API",
@@ -128,7 +128,7 @@ class BmhAdminPortalBackendStack(core.Stack):
             self, "brh-workspace-assets",
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL
         )
-        
+
         deployment = s3_deployment.BucketDeployment(
             self, "brh-workspace-assets-deployment",
             sources=[s3_deployment.Source.asset(brh_workspace_builddir)],
@@ -148,7 +148,7 @@ class BmhAdminPortalBackendStack(core.Stack):
         ########################################################################################
         ##### Admin VM
         ########################################################################################
-        admin_vm = AdminVM(self, 'brh-admin-vm')
+        #admin_vm = AdminVM(self, 'brh-admin-vm')
 
         ########################################################################################
         ##### Step Functions Workflow
@@ -163,7 +163,7 @@ class BmhAdminPortalBackendStack(core.Stack):
 
         ## Secret for Authorization Client secret. If an non-default encryption key was
         ## used, we'll need to add it here so that we can grant read permissions to the lambda.
-        ## See from_secret_attributes() here: 
+        ## See from_secret_attributes() here:
         ## https://docs.aws.amazon.com/cdk/api/latest/python/aws_cdk.aws_secretsmanager/Secret.html
         auth_client_secret_param = secretsmanager.Secret.from_secret_complete_arn(
             self, 'auth_client_secret',
@@ -211,7 +211,7 @@ class BmhAdminPortalBackendStack(core.Stack):
             resources=[f"arn:aws:ssm:{self.region}:{self.account}:parameter/bmh/*"]
         ))
 
-        ## Also give the lambda permission to create API Keys and add them to 
+        ## Also give the lambda permission to create API Keys and add them to
         ## a usage plan. Unfortunately, we allow this lambda to POST to all usage plans,
         ## which avoids creating a circular dependency.
         workspaces_resource_lambda.add_to_role_policy(iam.PolicyStatement(
@@ -242,7 +242,7 @@ class BmhAdminPortalBackendStack(core.Stack):
             ]
         ))
 
-        # Allow lambda to read the dynamodb table 
+        # Allow lambda to read the dynamodb table
         dynamodb_table.grant_read_write_data(workspaces_resource_lambda)
 
         workspaces_resource_lambda_integration = apigateway.LambdaIntegration(
@@ -267,7 +267,7 @@ class BmhAdminPortalBackendStack(core.Stack):
         ####################################################################################
 
         workspaces_resource = api.root.add_resource("workspaces")
-        
+
         ################################ GET workspaces/ ####################################
         get_method = workspaces_resource.add_method(
             "GET", workspaces_resource_lambda_integration,
@@ -295,7 +295,7 @@ class BmhAdminPortalBackendStack(core.Stack):
         ws_provision_resource = workspace_resource.add_resource("provision")
         workspace_provision = ws_provision_resource.add_method(
             "POST", workspaces_resource_lambda_integration,
-            api_key_required=True
+            authorizer=token_authorizer
         )
         ######################################################################################
 

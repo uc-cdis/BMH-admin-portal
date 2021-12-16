@@ -355,6 +355,8 @@ def _workspace_provision(body, path_params):
     )
 
     # Create the SNS topic for communication back to the user.
+    # TODO: Make this SNS topic a single SNS topic that notifies the admin instead
+    # instead of a topic per workspace.
     sns = boto3.client('sns')
     response = sns.create_topic(
         Name=f'bmh-workspace-topic-{workspace_id}',
@@ -363,10 +365,12 @@ def _workspace_provision(body, path_params):
         ]
     )
     topic_arn = response['TopicArn']
+    email_domain = os.environ.get("email_domain", None)
+    sns_email = f"request@{email_domain}"
     sns.subscribe(
         TopicArn=topic_arn,
         Protocol="email",
-        Endpoint=email
+        Endpoint=sns_email
     )
 
     # Get the dynamodb table name from SSM Parameter Store
@@ -491,6 +495,7 @@ def _workspaces_get(path_params, email):
         '#softlimit',
         '#hardlimit'
     ])
+
     expression_attribute_names = {
         '#bmhworkspaceid': 'bmh_workspace_id',
         "#nihaward": 'nih_funded_award_number',
@@ -504,18 +509,26 @@ def _workspaces_get(path_params, email):
 
     status_code = 200
     retval = []
+
+
     if path_params is not None and 'workspace_id' in path_params:
-        response = table.get_item(
-            Key={
-                'bmh_workspace_id':path_params['workspace_id'],
-                'user_id':email
-            },
-            ProjectExpression=projection,
-            ExpressionAttributeNames=expression_attribute_names
-        )
-        retval = response.get('Item', None)
-        if retval is None:
-            status_code = 404
+        if path_params['workspace_id'] == "admin_all":
+            response = table.scan()
+            retval = response.get('Items',[])
+            if len(retval) == 0:
+                status_code = 204 # No content, resource was found, but it's empty.
+        else:
+            response = table.get_item(
+                Key={
+                    'bmh_workspace_id':path_params['workspace_id'],
+                    'user_id':email
+                },
+                ProjectExpression=projection,
+                ExpressionAttributeNames=expression_attribute_names
+            )
+            retval = response.get('Item', None)
+            if retval is None:
+                status_code = 404
 
     else:
 
@@ -667,6 +680,7 @@ def _workspaces_set_total_usage(body, path_params, api_key):
         Soft Usage Limit: {soft_limit}
         Hard Usage Limit: {hard_limit}
         """
+        #  TODO: Publish to admin email instead of per user
         _publish_to_sns_topic(sns_topic_arn, subject, message)
 
     elif old_total_usage < soft_limit and formatted_total_usage >= soft_limit:
@@ -678,6 +692,7 @@ def _workspaces_set_total_usage(body, path_params, api_key):
         Soft Usage Limit: {soft_limit}
         Hard Usage Limit: {hard_limit}
         """
+        #  TODO: Publish to admin email instead of per user
         _publish_to_sns_topic(sns_topic_arn, subject, message)
 
     return create_response(
@@ -707,7 +722,12 @@ def _get_workspace_request_status_and_email(workspace_request_id):
 
     items = response.get('Items',[])
     assert len(items) == 1
-    email = items[0]['poc_email']
+    # TODO:
+    # This (poc_email) is the right way, but need more testing
+    # Need to add to dyanmodb INDEX?
+    # Needed for RAS integration.
+    # email = items[0]['poc_email']
+    email = items[0]['user_id']
 
     try:
         response = table.get_item(
@@ -722,7 +742,8 @@ def _get_workspace_request_status_and_email(workspace_request_id):
 
     return response['Item']['request_status'], email
 
-
+#  TODO: Publish to admin email instead of per user
+#  TODO: Create this admin SNS topic via CDK so we only subscribe to a single topic per environment.
 def _publish_to_sns_topic(topic_arn, subject, message):
     sns = boto3.client('sns')
     sns.publish(

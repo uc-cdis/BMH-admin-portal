@@ -1,5 +1,5 @@
 # © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-# 
+#
 # This AWS Content is provided subject to the terms of the AWS Customer Agreement
 # available at http://aws.amazon.com/agreement or other written agreement between
 # Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
@@ -51,7 +51,7 @@ class ProvisionBRHHandler():
 
             # We already ave a policy
             policy = json.loads(response["Policy"])
-            
+
         except botocore.exceptions.ClientError as err:
             policy = {
                 'Version': '2012-10-17',
@@ -62,14 +62,16 @@ class ProvisionBRHHandler():
         matches = [x for x in policy['Statement'] if x.get('Sid', None) == sid]
         if len(matches) == 0:
             statement = {
-                'Sid': sid,
-                'Effect': 'Allow',
-                'Principal': {"AWS":f'arn:aws:iam::{account_id}:role/{target_account_role}'},
-                'Action': ['s3:GetObject'],
-                'Resource': f'arn:aws:s3:::{orig_bucket_name}/*'
+                "Sid": sid,
+                "Effect": "Allow",
+                "Principal": {"AWS":f"arn:aws:iam::{account_id}:role/{target_account_role}"},
+                "Action": ["s3:GetObject"],
+                "Resource": f"arn:aws:s3:::{orig_bucket_name}/*"
             }
 
             policy['Statement'].append(statement)
+            print(json.dumps(policy))
+            print(orig_bucket_name)
             response = s3.put_bucket_policy(
                 Bucket=orig_bucket_name,
                 Policy=json.dumps(policy)

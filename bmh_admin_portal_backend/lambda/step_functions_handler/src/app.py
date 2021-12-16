@@ -1,5 +1,5 @@
 # © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-# 
+#
 # This AWS Content is provided subject to the terms of the AWS Customer Agreement
 # available at http://aws.amazon.com/agreement or other written agreement between
 # Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
@@ -7,11 +7,9 @@ import json
 from enum import Enum
 
 from .handlers import (
-    ProvisionBRHHandler, 
-    FailureHandler, 
+    ProvisionBRHHandler,
+    FailureHandler,
     SuccessHandler,
-    SSMRunCommandHandler,
-    SSMCommandStatus
 )
 
 import logging
@@ -26,8 +24,6 @@ def handler(event, context):
         Actions.BRH_PROVISION.value: ProvisionBRHHandler,
         Actions.SUCCESS.value: SuccessHandler,
         Actions.FAILURE.value: FailureHandler,
-        Actions.SSM_RUN_COMMAND.value: SSMRunCommandHandler,
-        Actions.SSM_COMMAND_STATUS.value: SSMCommandStatus
     }
 
     action = event.get('action', None)
@@ -53,7 +49,5 @@ class InvalidActionException(Exception):
 
 class Actions(Enum):
     BRH_PROVISION = 'provision_brh'
-    SSM_RUN_COMMAND = 'ssm_run_command'
-    SSM_COMMAND_STATUS = 'ssm_command_status'
     SUCCESS = 'success'
     FAILURE = 'failure'

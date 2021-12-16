@@ -8,7 +8,6 @@ from aws_cdk import (
     aws_logs as logs,
 )
 from ..bmh_admin_portal_config import BMHAdminPortalBackendConfig
-from .run_command_workflow_step import RunCommandWorkflowStep
 
 
 class ProvisioningWorkflow(core.Construct):
@@ -25,12 +24,12 @@ class ProvisioningWorkflow(core.Construct):
         #    SNS Topic for notifications.                                           #
         #    Lambda function to handle actions.                                     #
         #############################################################################
-        
+
         # Create SNS topic which will be used for notifications of status changes.
-        self.stepfn_event_topic = sns.Topic(
-            self, "stepfn-topic",
-            display_name="Provision Workspace StepFunction SNS Topic",
-        )
+        # self.stepfn_event_topic = sns.Topic(
+        #     self, "stepfn-topic",
+        #     display_name="Provision Workspace StepFunction SNS Topic",
+        # )
 
         # Create Lambda function to handle events.
         self.stepfn_lambda = self.create_stepfn_lambda(config, brh_asset_bucket, dynamodb_table)
@@ -44,18 +43,10 @@ class ProvisioningWorkflow(core.Construct):
         ###################################################################################
         self.occ_lambda_task = self.create_occ_lambda_task(config)
         self.brh_provision_task = self.create_brh_provision_task()
-        self.run_command_task = self.create_run_command_task()
 
         self.workflow = self.create_step_functions_workflow()
 
-    def create_run_command_task(self):
-        run_command_task = RunCommandWorkflowStep(
-            self, 'test-run-command',
-            step_fn_lambda=self.stepfn_lambda,
-            working_directory="",
-            commands=["pwd","ls -la","sleep 45"]
-        )
-        return run_command_task
+
 
     def create_stepfn_lambda(self, config, brh_asset_bucket, dynamodb_table):
         """ Creates the lambda (and necessary permissions) which handles step function tasks """
@@ -73,10 +64,11 @@ class ProvisioningWorkflow(core.Construct):
                 "dynamodb_index_param_name": config['dynamodb_index_param_name'],
                 "dynamodb_table_param_name": config['dynamodb_table_param_name'],
                 "cross_account_role_name": config['cross_account_role_name'],
-                "provision_workspace_sns_topic": self.stepfn_event_topic.topic_arn
+                #  TODO: Add admin email SNS here to notify admins for each request.
+                # "provision_workspace_sns_topic": self.stepfn_event_topic.topic_arn
             }
         )
-        self.stepfn_event_topic.grant_publish(stepfn_lambda)
+        # self.stepfn_event_topic.grant_publish(stepfn_lambda)
         dynamodb_table.grant_read_write_data(stepfn_lambda)
 
         stepfn_lambda.add_to_role_policy(iam.PolicyStatement(
@@ -135,7 +127,7 @@ class ProvisioningWorkflow(core.Construct):
             result_path="$.error"
         )
         return create_workspace_task
-    
+
     def get_handle_error_task(self):
         if self.handle_error_task == None:
             self.handle_error_task = sfn_tasks.LambdaInvoke(
@@ -147,7 +139,7 @@ class ProvisioningWorkflow(core.Construct):
                     'input.$':'$'
                 })
             )
-        return self.handle_error_task    
+        return self.handle_error_task
 
     def create_brh_provision_task(self):
         brh_provision_task = sfn_tasks.LambdaInvoke(
@@ -182,9 +174,10 @@ class ProvisioningWorkflow(core.Construct):
         chain = (
             self.occ_lambda_task
             .next(self.brh_provision_task)
+            .next(finish_task)
         )
-        chain = chain.next(self.run_command_task.first_task)
-        self.run_command_task.last_task.next(finish_task)
+
+
 
         ## Add logging
         log_group = logs.LogGroup(self, "sfn-loggroup")
