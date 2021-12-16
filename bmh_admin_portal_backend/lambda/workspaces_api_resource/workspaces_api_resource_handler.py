@@ -55,7 +55,7 @@ def handler(event, context):
     if authorizer is not None:
         user = event['requestContext']['authorizer'].get('user', None)
 
-    # For API Key enpoints
+    # For API Key endpoints
     api_key = event['requestContext']['identity'].get('apiKey',None)
 
     body = event.get("body", "{}")
@@ -237,7 +237,7 @@ def _refresh_tokens(body, api_key):
 
     if response.getcode() != 200:
         logger.info(f"Response Status Code: {response.getcode()}")
-        logger.info(f"Response read: {reponse.read()}")
+        logger.info(f"Response read: {response.read()}")
         raise RuntimeError("Error when exchanging code for tokens")
 
     content = json.loads(response.read())
@@ -411,7 +411,7 @@ def _workspace_provision(body, path_params):
         )
     except ClientError as e:
         if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
-            raise Exception("Could not find BMH Workspace "
+            raise Exception("Could not find Workspace "
                 f"with id {workspace_id}")
         else:
             raise e
@@ -627,12 +627,12 @@ def _workspaces_set_total_usage(body, path_params, api_key):
             return create_response(
                 status_code=400,
                 body={
-                    "message":f"Could not find BMH Workspace with id {workspace_id}"}
+                    "message":f"Could not find Workspace with id {workspace_id}"}
             )
         else:
             raise e
 
-    ## TODO: Confirm that the API key matches the BMH Workspace ID
+    ## TODO: Confirm that the API key matches the Workspace ID
 
     # And now update the row.
     items = index_response.get('Items',[])
@@ -660,7 +660,7 @@ def _workspaces_set_total_usage(body, path_params, api_key):
         logger.info(f"Table response: {json.dumps(table_response, cls=DecimalEncoder)}")
     except ClientError as e:
         if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
-            raise Exception("Could not find BMH Workspace "
+            raise Exception("Could not find Workspace "
                 f"with id {workspace_id}")
         else:
             raise e
@@ -674,8 +674,8 @@ def _workspaces_set_total_usage(body, path_params, api_key):
     if old_total_usage < hard_limit and formatted_total_usage >= hard_limit:
         logger.info(f"Surpassed the hard limit: {old_total_usage=} {formatted_total_usage=} {hard_limit=}")
 
-        subject = f"Biomedical Hub Workspace {workspace_id}: exceeded usage hard limit"
-        message = f"""The Biomedial Hub Workspace ({workspace_id}) has exceeded the usage hard limit.
+        subject = f"Workspace {workspace_id}: exceeded usage hard limit"
+        message = f"""The Workspace ({workspace_id}) has exceeded the usage hard limit.
         Total Usage: {formatted_total_usage}
         Soft Usage Limit: {soft_limit}
         Hard Usage Limit: {hard_limit}
@@ -686,8 +686,8 @@ def _workspaces_set_total_usage(body, path_params, api_key):
     elif old_total_usage < soft_limit and formatted_total_usage >= soft_limit:
         logger.info(f"Surpassed the hard limit: {old_total_usage=} {formatted_total_usage=} {soft_limit=}")
 
-        subject = f"Biomedical Hub Workspace {workspace_id}: exceeded usage soft limit"
-        message = f"""The Biomedial Hub Workspace ({workspace_id}) has exceeded the usage soft limit.
+        subject = f"Workspace {workspace_id}: exceeded usage soft limit"
+        message = f"""The Workspace ({workspace_id}) has exceeded the usage soft limit.
         Total Usage: {formatted_total_usage}
         Soft Usage Limit: {soft_limit}
         Hard Usage Limit: {hard_limit}

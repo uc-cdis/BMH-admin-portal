@@ -36,12 +36,11 @@ class SuccessHandler():
         else:
             self.db_client.set_status(workspace_request_id, 'active')
 
-        # Send something to an SNS topic for notificaitons
-        # TODO: Send to admin SNS TOPIC
+        # Send something to an SNS topic for notifications
         sns_topic_arn = os.environ.get('provision_workspace_sns_topic',None)
         if sns_topic_arn is not None:
             message = f"Successfully provisioned workspace account for request {workspace_request_id}"
-            subject = f"Successfully provisioned BRH Workspace {workspace_request_id}"
+            subject = f"Successfully provisioned workspace {workspace_request_id}"
 
             client = boto3.client('sns')
             client.publish(

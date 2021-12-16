@@ -9,11 +9,11 @@ class EmailHelper():
             raise ValueError("Could not find root account email domain.")
 
         from_addr = f"request@{email_domain}"
-        
+
         to_addr = os.environ.get("strides_credits_request_email", None)
         if to_addr is None:
             raise ValueError("Could not find strides credits request email")
-        
+
         cls.send_workspace_request_email(to_addr, from_addr, data)
 
     @classmethod
@@ -23,11 +23,11 @@ class EmailHelper():
             raise ValueError("Could not find root account email domain.")
 
         from_addr = f"request@{email_domain}"
-        
+
         to_addr = os.environ.get("strides_grant_request_email", None)
         if to_addr is None:
             raise ValueError("Could not find strides credits request email")
-        
+
         cls.send_workspace_request_email(to_addr, from_addr, data)
 
     @classmethod
@@ -45,7 +45,7 @@ class EmailHelper():
             },
             Message={
                 'Subject': {
-                    'Data': "BRH Workspace Request"
+                    'Data': "Workspace Request"
                 },
                 'Body': {
                     'Text': {
