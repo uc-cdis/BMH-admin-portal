@@ -47,7 +47,6 @@ export const getWorkspaces = (callback) => {
     let data = []
     // 204 No Content
     if (resp.status !== 204) {
-      console.log("Awaiting data, status: " + resp.status)
       data = await resp.json()
     }
     callback(data)
