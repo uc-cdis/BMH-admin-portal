@@ -151,8 +151,6 @@ const WorkspaceAccounts = () => {
         'soft-limit': row['soft-limit']
       }
       limits[column['dataField']] = newValue
-      console.log("ROW:")
-      console.log(row)
       setWorkspaceLimits(row['bmh_workspace_id'], limits)
 
     }

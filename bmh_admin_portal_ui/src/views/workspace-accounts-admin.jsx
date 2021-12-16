@@ -102,8 +102,6 @@ const WorkspaceAccountsAdmin = () => {
             'account_id': newValue
           }
           account[column['dataField']] = newValue
-          console.log("ROW:")
-          console.log(row)
           approveWorkspace(row['bmh_workspace_id'], account)
           done(); // contine to save the changes
         } else {
