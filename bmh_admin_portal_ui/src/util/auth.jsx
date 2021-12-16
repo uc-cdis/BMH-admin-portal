@@ -25,7 +25,6 @@ export const authorizeLogin = async () => {
 
 export const authorizeAdmin = async () => {
   const user_auth_mapping = await getUserAuthMapping();
-  console.log("authorizeAdmine: " + authorize(resources['ADMIN'], user_auth_mapping))
   return authorize(resources['ADMIN'], user_auth_mapping);
 }
 

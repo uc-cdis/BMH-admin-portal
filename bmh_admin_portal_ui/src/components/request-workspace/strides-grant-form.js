@@ -7,7 +7,7 @@ import Col from 'react-bootstrap/Col';
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
 
-import { requestWorkspace, preprocessFormData } from '../../util/api';
+import { requestWorkspace } from '../../util/api';
 
 const NIH_GRANT_NUMBER_REGEX = /^([0-9]{1})([A-Z0-9]{3})([A-Z]{2}[0-9]{6})-([A-Z0-9]{2}$|[A-Z0-9]{4}$)/gm
 
@@ -88,8 +88,7 @@ const StridesGrantForm = (props) => {
     const form = e.currentTarget;
     if (form.checkValidity()) {
       setButtonDisabled(true)
-      const processedFormData = preprocessFormData(formData)
-      requestWorkspace(processedFormData, () => {
+      requestWorkspace(formData, () => {
         updateRedirectHome(true)
       })
     }

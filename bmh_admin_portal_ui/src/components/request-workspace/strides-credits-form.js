@@ -7,7 +7,7 @@ import Col from 'react-bootstrap/Col';
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
 
-import { requestWorkspace, preprocessFormData } from '../../util/api';
+import { requestWorkspace } from '../../util/api';
 
 const NIH_GRANT_NUMBER_REGEX = /^([0-9]{1})([A-Z0-9]{3})([A-Z]{2}[0-9]{6})-([A-Z0-9]{2}$|[A-Z0-9]{4}$)/gm
 const NIH_EMAIL_REGEX = /^((?!-)[A-Za-z0-9-._]{1,63}(?<!-))+(@)((?!-)[A-Za-z0-9-]{1,63}(?<!-)\.)*nih.gov$/gm
@@ -85,7 +85,7 @@ const StridesCreditForm = (props) => {
 
     if (e.target.name === "intramural") {
       const isIntramuralChecked = e.target.checked
-      console.log(pocEmailInputEl.current.value.match(NIH_EMAIL_REGEX))
+
       if (isIntramuralChecked && !pocEmailInputEl.current.value.match(NIH_EMAIL_REGEX)) {
         pocEmailInputEl.current.setCustomValidity("Intramural user must their NIH email to request account")
         setInvalidEmailFeedback("Intramural user must their NIH email to request account")
@@ -106,8 +106,7 @@ const StridesCreditForm = (props) => {
     const form = e.currentTarget;
     if (form.checkValidity()) {
       setButtonDisabled(true)
-      const processedFormData = preprocessFormData(formData)
-      requestWorkspace(processedFormData, () => {
+      requestWorkspace(formData, () => {
         updateRedirectHome(true)
       })
     }
