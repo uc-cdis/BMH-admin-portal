@@ -34,7 +34,6 @@ const WorkspaceAccounts = () => {
       setWorkspaces(data)
     })
   }, [])
-  console.log(workspaces)
 
   const dollar_formatter = (cell, row) => "$" + cell
   const editable_header_formatter = (col, colIndex, components) => (<span>{col.text} <BiEditAlt /></span>)
