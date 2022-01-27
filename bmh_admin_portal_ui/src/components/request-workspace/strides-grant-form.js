@@ -14,8 +14,8 @@ const NIH_GRANT_NUMBER_REGEX = /^([0-9]{1})([A-Z0-9]{3})([A-Z]{2}[0-9]{6})-([A-Z
 const initialFormData = Object.freeze({
   workspace_type: "STRIDES Grant",
   scientific_poc: "",
-  poc_email: "",
-  confirm_poc_email: "",
+  poc_email: "accounts@" + process.env.REACT_APP_ROOT_EMAIL_DOMAIN,
+  confirm_poc_email: "accounts@" + process.env.REACT_APP_ROOT_EMAIL_DOMAIN,
   scientific_institution_domain_name: "",
   nih_funded_award_number: "",
   administering_nih_institute: "",
@@ -42,15 +42,15 @@ const StridesGrantForm = (props) => {
 
   const handleChange = (e) => {
     // validate email and confirm email
-    if (e.target.name === "confirm_poc_email") {
-      if (e.target.value.trim() !== formData['poc_email']) {
+    if (e.target.name === "confirm_internal_poc_email") {
+      if (e.target.value.trim() !== formData['internal_poc_email']) {
         e.target.setCustomValidity("Must match email")
       } else {
         e.target.setCustomValidity("")
       }
     }
 
-    if (e.target.name === "poc_email" && e.target.value.trim() !== formData['confirm_poc_email']) {
+    if (e.target.name === "internal_poc_email" && e.target.value.trim() !== formData['confirm_internal_poc_email']) {
 
         pocConfirmEmailInputEl.current.setCustomValidity("Must match email")
       } else {
@@ -118,13 +118,13 @@ const StridesGrantForm = (props) => {
 
       <Form.Row className="mb-3">
         <Col>
-          <Form.Label>Scientific POC Email <span data-tip data-for="poc_email"><BiHelpCircle /></span></Form.Label>
-          <ReactTooltip class="tooltip" id="poc_email" place="top" effect="solid" multiline={true}>
+          <Form.Label>Scientific POC Email <span data-tip data-for="internal_poc_email"><BiHelpCircle /></span></Form.Label>
+          <ReactTooltip class="tooltip" id="internal_poc_email" place="top" effect="solid" multiline={true}>
             Email address used for contact regarding the workspace.
           </ReactTooltip>
           <Form.Control
             type="email" onChange={handleChange}
-            name="poc_email" placeholder="user@email.org"
+            name="internal_poc_email" placeholder="user@email.org"
             required
           />
 
@@ -133,11 +133,11 @@ const StridesGrantForm = (props) => {
           </Form.Control.Feedback>
         </Col>
         <Col>
-          <Form.Label>Confirm Scientific POC Email <span data-tip data-for="confirm_poc_email"><BiHelpCircle /></span></Form.Label>
-          <ReactTooltip class="tooltip" id="confirm_poc_email" place="top" effect="solid" multiline={true}>
+          <Form.Label>Confirm Scientific POC Email <span data-tip data-for="confirm_internal_poc_email"><BiHelpCircle /></span></Form.Label>
+          <ReactTooltip class="tooltip" id="confirm_internal_poc_email" place="top" effect="solid" multiline={true}>
             Email address used for contact regarding the workspace.
           </ReactTooltip>
-          <Form.Control required type="email" onChange={handleChange} name="confirm_poc_email" placeholder="user@email.org"
+          <Form.Control required type="email" onChange={handleChange} name="confirm_internal_poc_email" placeholder="user@email.org"
             feedback="Value must match Scientific POC Email" ref={pocConfirmEmailInputEl}
           />
 
