@@ -10,6 +10,7 @@ from .handlers import (
     ProvisionBRHHandler,
     FailureHandler,
     SuccessHandler,
+    EmailHandler,
 )
 
 import logging
@@ -24,6 +25,7 @@ def handler(event, context):
         Actions.BRH_PROVISION.value: ProvisionBRHHandler,
         Actions.SUCCESS.value: SuccessHandler,
         Actions.FAILURE.value: FailureHandler,
+        Actions.EMAIL.value: EmailHandler,
     }
 
     action = event.get('action', None)
@@ -51,3 +53,4 @@ class Actions(Enum):
     BRH_PROVISION = 'provision_brh'
     SUCCESS = 'success'
     FAILURE = 'failure'
+    EMAIL = 'email'

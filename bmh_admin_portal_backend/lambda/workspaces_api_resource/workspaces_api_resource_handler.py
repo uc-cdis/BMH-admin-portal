@@ -365,13 +365,15 @@ def _workspace_provision(body, path_params):
         ]
     )
     topic_arn = response['TopicArn']
-    email_domain = os.environ.get("email_domain", None)
-    sns_email = f"request@{email_domain}"
-    sns.subscribe(
-        TopicArn=topic_arn,
-        Protocol="email",
-        Endpoint=sns_email
-    )
+    # Commenting this out since we don't want to use this as notification.
+    # TODO: Remove this once we are confident
+    # email_domain = os.environ.get("email_domain", None)
+    # # sns_email = f"request@{email_domain}"
+    # sns.subscribe(
+    #     TopicArn=topic_arn,
+    #     Protocol="email",
+    #     Endpoint=sns_email
+    # )
 
     # Get the dynamodb table name from SSM Parameter Store
     dynamodb_table_name = _get_dynamodb_table_name()

@@ -70,7 +70,6 @@ class ProvisionBRHHandler():
             }
 
             policy['Statement'].append(statement)
-            print(json.dumps(policy))
             print(orig_bucket_name)
             response = s3.put_bucket_policy(
                 Bucket=orig_bucket_name,

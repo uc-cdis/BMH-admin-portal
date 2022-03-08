@@ -236,7 +236,7 @@ class BmhAdminPortalBackendStack(core.Stack):
 
         ## The lambda will need to send emails using SES
         workspaces_resource_lambda.add_to_role_policy(iam.PolicyStatement(
-            actions=["ses:SendEmail"],
+            actions=["ses:*"],
             resources=[
                 "*"
             ]

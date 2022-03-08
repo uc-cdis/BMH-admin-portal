@@ -36,7 +36,7 @@ setuptools.setup(
         "aws-cdk.aws-s3-deployment",
         "aws-cdk.aws-lambda-python",
         "aws-cdk.aws-secretsmanager",
-        "aws-cdk.aws-sns"
+        "aws-cdk.aws-sns",
         "warrant"
     ],
 

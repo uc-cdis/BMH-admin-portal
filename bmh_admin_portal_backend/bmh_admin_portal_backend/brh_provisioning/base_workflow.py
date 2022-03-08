@@ -43,7 +43,7 @@ class ProvisioningWorkflow(core.Construct):
         ###################################################################################
         self.occ_lambda_task = self.create_occ_lambda_task(config)
         self.brh_provision_task = self.create_brh_provision_task()
-
+        self.email_task = self.create_email_task()
         self.workflow = self.create_step_functions_workflow()
 
 
@@ -64,6 +64,7 @@ class ProvisioningWorkflow(core.Construct):
                 "dynamodb_index_param_name": config['dynamodb_index_param_name'],
                 "dynamodb_table_param_name": config['dynamodb_table_param_name'],
                 "cross_account_role_name": config['cross_account_role_name'],
+                'email_domain': config['email_domain'],
                 #  TODO: Add admin email SNS here to notify admins for each request.
                 # "provision_workspace_sns_topic": self.stepfn_event_topic.topic_arn
             }
@@ -106,6 +107,14 @@ class ProvisioningWorkflow(core.Construct):
             resources=["*"]
         ))
 
+        ## Grant permissions to send emails using SES
+        stepfn_lambda.add_to_role_policy(iam.PolicyStatement(
+            actions=[
+                "ses:*"
+            ],
+            resources=["*"]
+        ))
+
         return stepfn_lambda
 
     def create_occ_lambda_task(self, config):
@@ -141,6 +150,24 @@ class ProvisioningWorkflow(core.Construct):
             )
         return self.handle_error_task
 
+    def create_email_task(self):
+        email_task = sfn_tasks.LambdaInvoke(
+            self, 'email_task',
+            lambda_function=self.stepfn_lambda,
+            payload_response_only=True,
+            payload=stepfunctions.TaskInput.from_object({
+                'action':'email',
+                'input.$':'$'
+            }),
+            result_path="$.send_email"
+        )
+
+        email_task.add_catch(
+            self.get_handle_error_task(),
+            result_path="$.error"
+        )
+        return email_task
+
     def create_brh_provision_task(self):
         brh_provision_task = sfn_tasks.LambdaInvoke(
             self, 'deploy_brh_infra_task',
@@ -174,6 +201,7 @@ class ProvisioningWorkflow(core.Construct):
         chain = (
             self.occ_lambda_task
             .next(self.brh_provision_task)
+            .next(self.email_task)
             .next(finish_task)
         )
 
