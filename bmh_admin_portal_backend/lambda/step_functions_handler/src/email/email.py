@@ -63,7 +63,7 @@ class EmailClient():
     def get_site_data(self):
         email_domain = os.environ.get("email_domain", None)
         if email_domain == "planx-pla.net":
-            return {"site": "QA-BRH", "url": "https://qa-brh.planx-pla.net", "doc_link":"https://qa-brh.planx-pla.net/dashboard/Public/index.html#Workspaces"}
+            return {"site": "Gen3 QA", "url": "https://qa-heal.planx-pla.net", "doc_link":"https://qa-heal.planx-pla.net/dashboard/Public/documentation/index.html#Workspaces"}
         elif email_domain == "brh-portal.org":
             return {"site": "BRH", "url": "https://brh.data-commons.org", "doc_link":"https://brh.data-commons.org/dashboard/Public/index.html#Workspaces"}
         elif email_domain == "healportal.org":

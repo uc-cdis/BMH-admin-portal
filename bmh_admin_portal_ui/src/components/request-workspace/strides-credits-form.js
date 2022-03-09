@@ -21,6 +21,7 @@ const initialFormData = Object.freeze({
   nih_funded_award_number: "",
   administering_nih_institute: "",
   intramural: false,
+  ecs: "true",
   keywords: "",
   summary_and_justification: "",
   project_short_title: "",
