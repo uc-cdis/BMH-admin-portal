@@ -1,5 +1,5 @@
 {
-  "name": "nih-ui",
+  "name": "brh-portal-ui",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -12,12 +12,12 @@
     "jwt-decode": "^3.1.2",
     "lint-staged": "^10.5.4",
     "prettier": "^2.2.1",
-    "react": "^17.0.1",
+    "react": "^16.0.0",
     "react-bootstrap": "^1.6.0",
     "react-bootstrap-table-next": "^4.0.3",
     "react-bootstrap-table2-editor": "^1.4.0",
     "react-bootstrap-table2-overlay": "^2.0.0",
-    "react-dom": "^17.0.1",
+    "react-dom": "^16.0.0",
     "react-icons": "^4.2.0",
     "react-router-dom": "^5.2.0",
     "react-scripts": "5.0.0",
@@ -58,5 +58,11 @@
     "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
       "prettier --write"
     ]
+  },
+  "devDependencies": {
+    "@svgr/webpack": "^6.2.1"
+  },
+  "overrides": {
+    "@svgr/webpack": "$@svgr/webpack"
   }
 }
