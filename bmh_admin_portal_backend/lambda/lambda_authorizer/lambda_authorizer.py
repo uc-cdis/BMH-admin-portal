@@ -1,5 +1,5 @@
 # © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-# 
+#
 # This AWS Content is provided subject to the terms of the AWS Customer Agreement
 # available at http://aws.amazon.com/agreement or other written agreement between
 # Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
@@ -23,7 +23,7 @@ def lambda_handler(event, context):
     """validate the incoming token"""
     """and produce the principal user identifier associated with the token"""
 
-    try: 
+    try:
         token = event['authorizationToken'].split(" ")[1]
         res = validate_token(token)
     except Exception as e:
@@ -31,14 +31,28 @@ def lambda_handler(event, context):
         logger.exception(e)
         raise Exception("Unauthorized")
 
-    logger.info("Grabbing name")
-    name = res['context']['user']['name']
+    if res['context']:
+        logger.info("Grabbing name")
+        name = res['context']['user']['name']
+        # new! -- add additional key-value pairs associated with the authenticated principal
+        # these are made available by APIGW like so: $context.authorizer.<key>
+        # additional context is cached
+        context = {
+            "user": name
+        }
+        """this could be accomplished in a number of ways:"""
+        """1. Call out to OAuth provider"""
+        """2. Decode a JWT token inline"""
+        """3. Lookup in a self-managed DB"""
+        principalId = f"user|{name}"
 
-    """this could be accomplished in a number of ways:"""
-    """1. Call out to OAuth provider"""
-    """2. Decode a JWT token inline"""
-    """3. Lookup in a self-managed DB"""
-    principalId = f"user|{name}"
+    else:
+        logger.info("Hardcoding app name")
+        name = 'hardcoded_name' #TODO: Find a way to get this information from the token
+        # additional context is cached
+        context = {}
+        principalId = f"app|{name}"
+
 
     """you can send a 401 Unauthorized response to the client by failing like so:"""
     """raise Exception('Unauthorized')"""
@@ -55,7 +69,7 @@ def lambda_handler(event, context):
     """and will apply to subsequent calls to any method/resource in the RestApi"""
     """made with the same token"""
 
-    """the example policy below denies access to all resources in the RestApi"""
+    """the example policy below allows access to all resources in the RestApi"""
     tmp = event['methodArn'].split(':')
     apiGatewayArnTmp = tmp[5].split('/')
     awsAccountId = tmp[4]
@@ -64,20 +78,15 @@ def lambda_handler(event, context):
     policy.restApiId = apiGatewayArnTmp[0]
     policy.region = tmp[3]
     policy.stage = apiGatewayArnTmp[1]
-    policy.allowAllMethods()
+    if res['context']:
+        policy.allowAllMethods()
+    else:
+        policy.allowMethod('PUT','/workspaces/*/limits' )
+        policy.allowMethod('GET','/workspaces/admin_all' )
+
 
     # Finally, build the policy
     authResponse = policy.build()
- 
-    # new! -- add additional key-value pairs associated with the authenticated principal
-    # these are made available by APIGW like so: $context.authorizer.<key>
-    # additional context is cached
-    context = {
-        "user": name
-    }
-    # context['arr'] = ['foo'] <- this is invalid, APIGW will not accept it
-    # context['obj'] = {'foo':'bar'} <- also invalid
- 
     authResponse['context'] = context
     return authResponse
 
@@ -101,7 +110,7 @@ def validate_token(token):
 
     # This should fail if the token has expire or if there's an audience mismatch.
     payload = jwt.decode(token, key=public_key, algorithms=[key_info[0]['alg']], audience=client_id)
-    
+
     return payload
 
 
