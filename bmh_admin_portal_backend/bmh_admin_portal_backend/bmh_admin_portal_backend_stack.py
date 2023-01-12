@@ -87,7 +87,7 @@ class BmhAdminPortalBackendStack(core.Stack):
         auth_fn = PythonFunction(
             self, "workspaces-auth-lambda",
             runtime=lambda_.Runtime.PYTHON_3_8,
-            entry="lambda/lambda_authorizer",
+            entry="lambdas/lambda_authorizer",
             index="lambda_authorizer.py",
             handler="lambda_handler",
             description="Lambda token authorizer function",
@@ -174,7 +174,7 @@ class BmhAdminPortalBackendStack(core.Stack):
         workspaces_resource_lambda = lambda_.Function(
             self, 'workspaces-resource-function',
             runtime=lambda_.Runtime.PYTHON_3_8,
-            code=lambda_.Code.asset('lambda/workspaces_api_resource'),
+            code=lambda_.Code.asset('lambdas/workspaces_api_resource'),
             handler='workspaces_api_resource_handler.handler',
             timeout=core.Duration.seconds(600),
             description="Function which handles API Gateway requests for BRH Admin Portal",

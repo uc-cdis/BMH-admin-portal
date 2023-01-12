@@ -1,5 +1,5 @@
 # © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-# 
+#
 # This AWS Content is provided subject to the terms of the AWS Customer Agreement
 # available at http://aws.amazon.com/agreement or other written agreement between
 # Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
@@ -23,7 +23,7 @@ class FailureHandler():
 
     def handle(self, event):
         """ Handles a failure event by publishing the error to an SNS topic.
-        
+
             Expects the data to be included with key 'input'.
         """
 
@@ -33,7 +33,7 @@ class FailureHandler():
             workspace_request_id = event['input']['brh_infrastructure']['workspace_id']
         except KeyError as e:
             logger.info("Could not find workspace request id. Not updating database.")
-        else: 
+        else:
             self.db_client.set_status(workspace_request_id, 'failed')
 
         # Send something to an SNS topic for notificaitons

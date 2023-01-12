@@ -1,5 +1,5 @@
 # © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-# 
+#
 # This AWS Content is provided subject to the terms of the AWS Customer Agreement
 # available at http://aws.amazon.com/agreement or other written agreement between
 # Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
@@ -23,7 +23,7 @@ def lambda_handler(event, context):
     """validate the incoming token"""
     """and produce the principal user identifier associated with the token"""
 
-    try: 
+    try:
         token = event['authorizationToken'].split(" ")[1]
         res = validate_token(token)
     except Exception as e:
@@ -68,7 +68,7 @@ def lambda_handler(event, context):
 
     # Finally, build the policy
     authResponse = policy.build()
- 
+
     # new! -- add additional key-value pairs associated with the authenticated principal
     # these are made available by APIGW like so: $context.authorizer.<key>
     # additional context is cached
@@ -77,7 +77,7 @@ def lambda_handler(event, context):
     }
     # context['arr'] = ['foo'] <- this is invalid, APIGW will not accept it
     # context['obj'] = {'foo':'bar'} <- also invalid
- 
+
     authResponse['context'] = context
     return authResponse
 
@@ -101,7 +101,7 @@ def validate_token(token):
 
     # This should fail if the token has expire or if there's an audience mismatch.
     payload = jwt.decode(token, key=public_key, algorithms=[key_info[0]['alg']], audience=client_id)
-    
+
     return payload
 
 

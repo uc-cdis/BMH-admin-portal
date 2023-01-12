@@ -55,7 +55,7 @@ class ProvisioningWorkflow(core.Construct):
             self, 'stepfn-handler',
             runtime=lambda_.Runtime.PYTHON_3_8,
             timeout=core.Duration.seconds(600),
-            code=lambda_.Code.asset('lambda/step_functions_handler'),
+            code=lambda_.Code.asset('lambdas/step_functions_handler'),
             handler='src.app.handler',
             description='Function which deploys BRH specific infrastructure (cost and usage, etc.) to member accounts.',
             environment={

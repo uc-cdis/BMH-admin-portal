@@ -19,7 +19,6 @@ import botocore
 from botocore.exceptions import ClientError
 from boto3.dynamodb.conditions import Key
 from boto3.session import Session
-
 from email_helper.email_helper import EmailHelper
 
 
@@ -179,6 +178,8 @@ def _get_tokens(query_string_params, api_key):
     url = "{}/oauth2/token?grant_type={}&code={}&redirect_uri={}".format(
         base_url, grant_type, code, redirect_uri
     )
+
+    # url = f"{base_url}/oauth2/token?grant_type={grant_type}"
     logger.info(f"Requesting tokens: {url}")
     req = Request(url, data={})
     req.add_header('Content-Type', 'application/x-www-form-urlencoded')
@@ -192,7 +193,7 @@ def _get_tokens(query_string_params, api_key):
 
     if response.getcode() != 200:
         logger.info(f"Response Status Code: {response.getcode()}")
-        logger.info(f"Response read: {reponse.read()}")
+        logger.info(f"Response read: {response.read()}")
         raise RuntimeError("Error when exchanging code for tokens")
 
     content = json.loads(response.read())
@@ -355,7 +356,7 @@ def _workspace_provision(body, path_params):
     )
 
     # Create the SNS topic for communication back to the user.
-    # TODO: Make this SNS topic a single SNS topic that notifies the admin instead
+    # TODO: Make this SNS topic a single SNS topic that notifies the admin
     # instead of a topic per workspace.
     sns = boto3.client('sns')
     response = sns.create_topic(
