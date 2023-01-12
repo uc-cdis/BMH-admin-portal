@@ -530,7 +530,7 @@ def _workspaces_get(path_params, email, query_string_params=None):
                     'bmh_workspace_id':path_params['workspace_id'],
                     'user_id':email
                 },
-                ProjectExpression=projection,
+                ProjectionExpression=projection,
                 ExpressionAttributeNames=expression_attribute_names
             )
             retval = response.get('Item', None)
