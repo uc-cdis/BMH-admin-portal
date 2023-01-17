@@ -674,7 +674,7 @@ def _workspaces_set_total_usage(body, path_params, api_key):
 
     sns_topic_arn = table_response['Attributes']['sns-topic']
     message = "Success"
-    if old_total_usage < hard_limit and formatted_total_usage >= hard_limit:
+    if old_total_usage < hard_limit <= formatted_total_usage:
         logger.info(f"Surpassed the hard limit: {old_total_usage=} {formatted_total_usage=} {hard_limit=}")
 
         subject = f"Workspace {workspace_id}: exceeded usage hard limit"
@@ -686,8 +686,8 @@ def _workspaces_set_total_usage(body, path_params, api_key):
         #  TODO: Publish to admin email instead of per user
         _publish_to_sns_topic(sns_topic_arn, subject, message)
 
-    elif old_total_usage < soft_limit and formatted_total_usage >= soft_limit:
-        logger.info(f"Surpassed the hard limit: {old_total_usage=} {formatted_total_usage=} {soft_limit=}")
+    elif old_total_usage < soft_limit <= formatted_total_usage:
+        logger.info(f"Surpassed the soft limit: {old_total_usage=} {formatted_total_usage=} {soft_limit=}")
 
         subject = f"Workspace {workspace_id}: exceeded usage soft limit"
         message = f"""The Workspace ({workspace_id}) has exceeded the usage soft limit.
