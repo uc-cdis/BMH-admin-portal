@@ -111,3 +111,49 @@ def test_workspaces_get():
 
     # Verify the mocked response is returned from the function
     assert True
+
+def test_workspaces_set_limits():
+    #TODO:
+    # AWS services to mock
+    #   1. boto3.resource('dynamodb')
+
+    #Failure responses#
+    # Send path_params without workspace_id -- verify for AssertionError
+    # Send body without soft-limit (also hard-limit) -- verify for AssertionError
+    # Send body without soft-limit >= hard-limit -- verify for ValueError
+    # Mock table.update_item to throw an exception and verify the caught exception
+
+    #Success Response
+    # Add mock environment variables as needed.
+    # Hardcode the `updated_row` and ensure the mock dynamo table consists it as a record
+    # Verify a success response is returned from the function
+    assert True
+
+
+def test_workspaces_set_total_usage():
+    #TODO:
+    # AWS services to mock
+    #   1. boto3.resource('dynamodb')
+
+    #Failure responses#
+    # Send path_params without workspace_id -- verify for AssertionError
+    # Send body without total-usage -- verify for AssertionError
+    # Invoke the method without an `api_key` -- verify for ValueError
+    # #FIXME: Need to find out when do we implement the TODO in the function
+    # Mock table.query to throw an exception and verify the caught exception
+    # Mock the Dynamodb table with multiple records with the given workspace_id -- verify for AssertionError
+
+
+    #Success Response#
+    # Add mock environment variables as needed.
+    # Mock the Dynamodb table with a record with the given workspace_id
+
+    #Scenario 1:
+    # In the mock db record, set hard limit greater than total_usage but less than the one in body
+    # Mock the _publish_to_sns_topic with appropriate params
+
+    #Scenario 2:
+    # In the mock db record, set soft limit greater than total_usage but less than the one in body
+    # Mock the _publish_to_sns_topic with appropriate params
+
+    assert True
