@@ -19,6 +19,7 @@ import {
 
 const WorkspaceAccounts = () => {
   const [workspaces, setWorkspaces] = useState([])
+  const [occworkspaces, setOCCWorkspaces] = useState([])
   const [loading, setLoading] = useState(true)
   const [adminAuthorized, setAdminAuthorized] = useState(false)
 
@@ -30,11 +31,25 @@ const WorkspaceAccounts = () => {
     }
     fetchAuthorized();
     getWorkspaces((data) => {
-      setLoading(false)
-      setWorkspaces(data)
+      let occData = [];
+      let stridesData = [];
+      let i = 0;
+      while (i < data.length){
+        if(data[i].workspace_type == "Direct Pay"){
+            occData.push(data[i]);
+        }
+        else{
+          stridesData.push(data[i]);
+        }
+      
+       i++;
+      }
+      setLoading(false);
+      setWorkspaces(stridesData);
+      setOCCWorkspaces(occData);
     })
   }, [])
-
+  
   const dollar_formatter = (cell, row) => "$" + cell
   const editable_header_formatter = (col, colIndex, components) => (<span>{col.text} <BiEditAlt /></span>)
   const capitalize_word_formatter = (cell, row) => cell.charAt(0).toUpperCase() + cell.slice(1)
@@ -141,6 +156,47 @@ const WorkspaceAccounts = () => {
     editable: false,
     isDummyField: true,
   }]
+  
+  const columnsdirectpay = [{
+    dataField: 'bmh_workspace_id',
+    text: 'OCC Request ID',
+    editable: false
+  }, {
+    dataField: 'request_status',
+    text: 'Request Status',
+    editable: false,
+    formatter: capitalize_word_formatter
+  }, {
+    dataField: 'workspace_type',
+    text: 'Workspace Type',
+    editable: false
+  }, {
+    dataField: 'total-usage',
+    text: 'Total Usage',
+    editable: false,
+    formatter: dollar_formatter
+  }, {
+    dataField: 'direct_pay_limit',
+    text: 'Compute Purchased',
+    editable: false,
+    formatter: dollar_formatter
+  }, {
+    dataField: 'soft-limit',
+    text: 'Soft Limit',
+    editable: false,
+    formatter: dollar_formatter,
+  }, {
+    dataField: 'hard-limit',
+    text: 'Hard Limit',
+    editable: false,
+    formatter: dollar_formatter,
+  }, {
+    dataField: 'access-link',
+    text: 'Workspaces Link',
+    formatter: (cell, row) => <a href={'https://' + process.env.REACT_APP_OIDC_AUTH_URI.split("/")[2]} target="_blank" rel="noreferrer">Link </a> , // By passing row variable to values I got all the contents of my datafields
+    editable: false,
+    isDummyField: true,
+  }]
 
   const cellEdit = cellEditFactory({
     mode: 'click',
@@ -158,7 +214,7 @@ const WorkspaceAccounts = () => {
   return (
     <div className="container">
       <div className="py-5 text-center">
-        <h2>Workspace Accounts</h2>
+        <h2>STRIDES Credit Workspace Accounts</h2>
       </div>
 
       <div className="pt-5 text-center">
@@ -170,6 +226,16 @@ const WorkspaceAccounts = () => {
       <div className="my-2 p-5"><small><em className="font-weight-bold">Warning:</em> When a Workspace reaches the STRIDES Credits limit (for STRIDES Credits Workspaces)
         or reaches the Hard Limit (for STRIDES Grant Workspaces), the Workspace will be automatically terminated.
         Please be sure to save any work before reaching the STRIDES Credit or Hard Limit.</small></div>
+       <div className="py-5 text-center">
+        <h2>OCC Direct Pay Workspace Accounts</h2>
+      </div>
+      <div className="pt-5 text-center">
+        <BootstrapTable keyField='directpay_workspace_id' data={occworkspaces} columns={columnsdirectpay} noDataIndication={no_data_indication}
+          hover={true} cellEdit={cellEdit} bordered={true}
+          loading={loading} overlay={overlayFactory({ spinner: true, background: 'rgba(192,192,192,0.1)' })}
+        />
+        <div className="my-2 p-5"><small><em className="font-weight-bold">Warning:</em> When a Workspace reaches the soft limit, OCC will send an email requesting more funds be added to your account. If it reaches the hard limit and further payment is not processed, the workspace will automatically be terminated. Please be sure to save any work before reaching the Hard Limit.</small></div>
+      </div>
       <Link to="/request-workspace" className="btn btn-primary btn-lg my-6">Request New Workspace</Link>
       {admin_link}
     </div>

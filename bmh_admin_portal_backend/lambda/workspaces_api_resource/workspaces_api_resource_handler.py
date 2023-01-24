@@ -31,7 +31,8 @@ logger.setLevel(logging.INFO)
 DEFAULT_STRIDES_CREDITS_AMOUNT = 250
 STRIDES_CREDITS_WORKSPACE_TYPE="STRIDES Credits"
 STRIDES_GRANT_WORKSPACE_TYPE="STRIDES Grant"
-VALID_WORKSPACE_TYPES = [STRIDES_CREDITS_WORKSPACE_TYPE, STRIDES_GRANT_WORKSPACE_TYPE]
+DIRECT_PAY_WORKSPACE_TYPE="Direct Pay"
+VALID_WORKSPACE_TYPES = [STRIDES_CREDITS_WORKSPACE_TYPE, STRIDES_GRANT_WORKSPACE_TYPE, DIRECT_PAY_WORKSPACE_TYPE]
 
 def handler(event, context):
     """ Handles all API requests for the BMH Portal Backend
@@ -269,7 +270,10 @@ def _workspaces_post(body, email):
     if email_domain is None:
         raise ValueError("Could not find root account email domain.")
 
-    root_email = f"root_{workspace_request_id}@{email_domain}"
+    if workspace_type == DIRECT_PAY_WORKSPACE_TYPE:
+        root_email = f"root_{workspace_request_id}@{occ_email_domain}"
+    else:
+        root_email = f"root_{workspace_request_id}@{email_domain}"
 
     item = {}
     if body is not None:
@@ -288,9 +292,13 @@ def _workspaces_post(body, email):
         item['strides-credits'] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT)
     else:
         item['strides-credits'] = decimal.Decimal(0)
-
-    item['soft-limit'] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * .5)
-    item['hard-limit'] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * .9)
+    
+    if workspace_type == DIRECT_PAY_WORKSPACE_TYPE:
+        item['soft-limit'] = 0
+        item['hard-limit'] = 0
+    else:
+        item['soft-limit'] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * .5)
+        item['hard-limit'] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * .9)
     item['total-usage'] = 0
 
     # Get the dynamodb table name from SSM Parameter Store
@@ -307,11 +315,18 @@ def _workspaces_post(body, email):
         EmailHelper.send_credits_workspace_request_email(item)
     elif workspace_type == 'STRIDES Grant':
         EmailHelper.send_grant_workspace_request_email(item)
-
-    return create_response(
-        status_code=200,
-        body={"message":"success"}
-    )
+    elif workspace_type == 'Direct Pay':
+        EmailHelper.send_occworkspace_request_email(item)
+    if workspace_type == 'Direct Pay':
+        return create_response(
+            status_code=200,
+            body={"message":workspace_request_id}
+        )
+    else:
+        return create_response(
+            status_code=200,
+            body={"message":"success"}
+        )
 
 def _workspace_provision(body, path_params):
     """ For now, this is a place holder for the actual process
@@ -495,7 +510,8 @@ def _workspaces_get(path_params, email):
         '#totalusage',
         '#stridescredits',
         '#softlimit',
-        '#hardlimit'
+        '#hardlimit',
+        '#directpaylimit'
     ])
 
     expression_attribute_names = {
@@ -506,7 +522,8 @@ def _workspaces_get(path_params, email):
         '#totalusage': 'total-usage',
         '#stridescredits': 'strides-credits',
         '#softlimit': 'soft-limit',
-        '#hardlimit': 'hard-limit'
+        '#hardlimit': 'hard-limit',
+        '#directpaylimit': 'direct_pay_limit'
     }
 
     status_code = 200

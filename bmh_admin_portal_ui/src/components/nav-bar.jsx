@@ -16,21 +16,21 @@ const NavBar = ({ isAuthenticated }) => {
 
 	if(isAuthenticated) {
 		auth_control = (
-			<li class="nav-item logout-btn">
+			<li className="nav-item logout-btn">
 				<LogoutButton />
 			</li>
 		)
 	}
 
 	return (
-		<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-		<div class="container">
+		<nav className="navbar navbar-expand-lg navbar-dark bg-dark">
+		<div className="container">
 			  <Link className="navbar-brand" to="/">{(process.env.REACT_APP_DISPLAY_NAME) || 'Biomedical Research Hub'}</Link>
-			  <ul class="navbar-nav mr-auto">
-				<li class="nav-item">
+			  <ul className="navbar-nav mr-auto">
+				<li className="nav-item">
 					<NavLink exact activeStyle={{fontWeight:"bold"}} className="nav-link" to="/">Accounts</NavLink>
 				</li>
-				<li class="nav-item">
+				<li className="nav-item">
 					<NavLink exact activeStyle={{fontWeight:"bold"}} className="nav-link" to="/request-workspace">Request Workspace</NavLink>
 				</li>
 				{auth_control}

@@ -44,6 +44,8 @@ export const loadLoginScreen = () => {
     window.localStorage.setItem('nonce', nonce);
 
     const auth_service = config['authentication']
+    
+    console.log(process.env);
 
     const redirect_location = [process.env.REACT_APP_OIDC_AUTH_URI,
         `?state=${state}&nonce=${nonce}`,
@@ -77,6 +79,9 @@ export const getTokens = async code => {
     'Content-Type': 'application/json',
     'X-Api-Key': `${process.env.REACT_APP_API_KEY}`
   }
+  
+  console.log(`${process.env.REACT_APP_API_GW_ENDPOINT}`);
+  console.log(`${process.env.REACT_APP_API_KEY}`);
 
   let id_token;
   let refresh_token;
