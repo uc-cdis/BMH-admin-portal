@@ -47,7 +47,7 @@ def lambda_handler(event, context):
         principalId = f"user|{name}"
 
     else:
-        logger.info("Hardcoding app name")
+        logger.info("Fetching client_id for client_credentials access_token")
         client_id = res['azp'] #returns the client id of the decoded token
         context = {"client_id": client_id}
         principalId = f"app|{client_id}"
