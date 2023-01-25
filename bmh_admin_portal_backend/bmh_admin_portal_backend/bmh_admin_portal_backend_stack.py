@@ -93,6 +93,7 @@ class BmhAdminPortalBackendStack(core.Stack):
             description="Lambda token authorizer function",
             environment={
                 'auth_client_id': config['auth_client_id'],
+                'allowed_client_id_audience': config['allowed_client_id_audience'],
                 'auth_base_url': config['auth_oidc_uri']
             }
         )

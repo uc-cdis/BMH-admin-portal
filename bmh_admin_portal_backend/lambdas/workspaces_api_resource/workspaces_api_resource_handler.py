@@ -512,9 +512,12 @@ def _workspaces_get(path_params, email, query_string_params=None):
 
     status_code = 200
     retval = []
-
-    if email == 'occ_direct_pay' and query_string_params and 'user' in query_string_params:
-        email = query_string_params['user']
+    # Email is None for requests made by an application using client_credentials.
+    if not email :
+        if query_string_params and 'user' in query_string_params:
+            email = query_string_params['user']
+        else:
+            pass #TODO: Raise err.
 
     if path_params is not None and 'workspace_id' in path_params:
         if path_params['workspace_id'] == "admin_all":
@@ -560,8 +563,12 @@ def _workspaces_set_limits(body, path_params, user):
     assert 'soft-limit' in body
     assert 'hard-limit' in body
 
-    if user == 'occ_direct_pay' and 'user' in body:
-        user = body['user']
+    # User is None for requests made by an application using client_credentials.
+    if not user:
+        if 'user' in body:
+            user = body['user']
+        else:
+            pass #TODO: Raise Error
 
     # Get the dynamodb table name from SSM Parameter Store
     workspace_id = path_params['workspace_id']
