@@ -26,6 +26,7 @@ region and account).
    * cross_account_role_name - Name of the role to be used when provisioning BRH workspaces in target account.
    * auth_redirect_uri - Callback URL for Auth server (Fence)
    * auth_client_id - Client Id provided from Auth provider (Fence)
+   * allowed_client_id_audience - A `|` seperated string of client_ids of valid API audience.
    * auth_oidc_uri - base url for communicating with auth provider (i.e. https://fence.url/user)
    * auth_client_secret_arn and auth_client_secret_name - The backend lambda uses the client secret to communicate to Fence. An AWS SecretManager secret needs to be created manually. The arn and name are required here. This will work with default encryption. If a CMK is used to encrypt the secret, that will need to be added to the CDK application so that the Lambda can be granted permissions to use the Key.
    * account_creation_lambda_arn - The arn of the OCC/DDI deployed lambda function.
