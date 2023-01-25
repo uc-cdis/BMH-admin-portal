@@ -48,10 +48,9 @@ def lambda_handler(event, context):
 
     else:
         logger.info("Hardcoding app name")
-        name = 'occ_direct_pay' #TODO: Find a way to get this information from the token
-        # additional context is cached
-        context = {"user": name}
-        principalId = f"app|{name}"
+        client_id = res['azp'] #returns the client id of the decoded token
+        context = {"client_id": client_id}
+        principalId = f"app|{client_id}"
 
 
     """you can send a 401 Unauthorized response to the client by failing like so:"""
@@ -99,13 +98,14 @@ def validate_token(token):
     public_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(key_info[0]))
 
     #logger.info(f"ID Token: {token}")
-
-    client_id = os.environ.get('auth_client_id', None)
-    if client_id is None:
-        raise KeyError("Expected auth_client_id in environment.")
+    # We fallback to "auth_client_id" to preserve backwards compatibility.
+    aud = os.environ.get('allowed_client_id_audience', os.environ.get('auth_client_id', None))
+    if not aud:
+        raise KeyError("Expected  `allowed_client_id_audience` or `auth_client_id` in environment.")
+    aud = [client_id.trim() for client_id in aud.split("|")]
 
     # This should fail if the token has expire or if there's an audience mismatch.
-    payload = jwt.decode(token, key=public_key, algorithms=[key_info[0]['alg']], audience=client_id)
+    payload = jwt.decode(token, key=public_key, algorithms=[key_info[0]['alg']], audience=aud)
 
     return payload
 
