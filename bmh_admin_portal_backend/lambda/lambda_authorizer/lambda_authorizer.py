@@ -48,9 +48,9 @@ def lambda_handler(event, context):
 
     else:
         logger.info("Hardcoding app name")
-        name = 'hardcoded_name' #TODO: Find a way to get this information from the token
+        name = 'occ_direct_pay' #TODO: Find a way to get this information from the token
         # additional context is cached
-        context = {}
+        context = {"user": name}
         principalId = f"app|{name}"
 
 
@@ -78,11 +78,7 @@ def lambda_handler(event, context):
     policy.restApiId = apiGatewayArnTmp[0]
     policy.region = tmp[3]
     policy.stage = apiGatewayArnTmp[1]
-    if res['context']:
-        policy.allowAllMethods()
-    else:
-        policy.allowMethod('PUT','/workspaces/*/limits' )
-        policy.allowMethod('GET','/workspaces/admin_all' )
+    policy.allowAllMethods() #TODO: Add more granular access later
 
 
     # Finally, build the policy
