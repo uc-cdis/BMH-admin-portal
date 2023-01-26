@@ -30,8 +30,9 @@ def lambda_handler(event, context):
         logger.info("Raising unauthorized exception due to error.")
         logger.exception(e)
         raise Exception("Unauthorized")
+    request_type  = "user_request" if res['context'] is not None else "application_request"
 
-    if res['context']:
+    if request_type == "user_request":
         logger.info("Grabbing name")
         name = res['context']['user']['name']
         # new! -- add additional key-value pairs associated with the authenticated principal
@@ -77,7 +78,7 @@ def lambda_handler(event, context):
     policy.restApiId = apiGatewayArnTmp[0]
     policy.region = tmp[3]
     policy.stage = apiGatewayArnTmp[1]
-    if res['context']:
+    if request_type == "user_request":
         policy.allowAllMethods()
     else:
         policy.allowMethod('PUT','/workspaces/*/limits')
@@ -106,7 +107,7 @@ def validate_token(token):
     aud = os.environ.get('allowed_client_id_audience', os.environ.get('auth_client_id', None))
     if not aud:
         raise KeyError("Expected  `allowed_client_id_audience` or `auth_client_id` in environment.")
-    aud = [client_id.trim() for client_id in aud.split("|")]
+    aud = [client_id.strip() for client_id in aud.split("|")]
 
     # This should fail if the token has expire or if there's an audience mismatch.
     payload = jwt.decode(token, key=public_key, algorithms=[key_info[0]['alg']], audience=aud)
