@@ -77,7 +77,11 @@ def lambda_handler(event, context):
     policy.restApiId = apiGatewayArnTmp[0]
     policy.region = tmp[3]
     policy.stage = apiGatewayArnTmp[1]
-    policy.allowAllMethods() #TODO: Add more granular access later
+    if res['context']:
+        policy.allowAllMethods()
+    else:
+        policy.allowMethod('PUT','/workspaces/*/limits')
+        policy.allowMethod('GET','/workspaces/*')
 
 
     # Finally, build the policy

@@ -511,12 +511,6 @@ def _workspaces_get(path_params, email, query_string_params=None):
 
     status_code = 200
     retval = []
-    # Email is None for requests made by an application using client_credentials.
-    if not email :
-        if query_string_params and 'user' in query_string_params:
-            email = query_string_params['user']
-        else:
-            pass #TODO: Raise err.
 
     if path_params is not None and 'workspace_id' in path_params:
         if path_params['workspace_id'] == "admin_all":
@@ -525,6 +519,12 @@ def _workspaces_get(path_params, email, query_string_params=None):
             if len(retval) == 0:
                 status_code = 204 # No content, resource was found, but it's empty.
         else:
+            # Email is None for requests made by an application using client_credentials.
+            if not email :
+                if query_string_params and 'user' in query_string_params:
+                    email = query_string_params['user']
+                else:
+                    raise Exception("Required `user` query parameter")
             response = table.get_item(
                 Key={
                     'bmh_workspace_id':path_params['workspace_id'],
@@ -538,7 +538,6 @@ def _workspaces_get(path_params, email, query_string_params=None):
                 status_code = 404
 
     else:
-
         response = table.query(
             KeyConditionExpression=Key('user_id').eq(email),
             ProjectionExpression=projection,
@@ -567,7 +566,7 @@ def _workspaces_set_limits(body, path_params, user):
         if 'user' in body:
             user = body['user']
         else:
-            pass #TODO: Raise Error
+            raise Exception("Required `user` parameter in request body")
 
     # Get the dynamodb table name from SSM Parameter Store
     workspace_id = path_params['workspace_id']
