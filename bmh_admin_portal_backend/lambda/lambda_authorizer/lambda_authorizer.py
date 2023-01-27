@@ -32,8 +32,10 @@ def lambda_handler(event, context):
         logger.info("Raising unauthorized exception due to error.")
         logger.exception(e)
         raise Exception("Unauthorized")
+    
+    username = res.get("context", {}).get("user", {}).get("name")
     request_type = (
-        "user_request" if res["context"] is not None else "application_request"
+        "user_request" if username  is not None else "application_request"
     )
 
     if request_type == "user_request":
