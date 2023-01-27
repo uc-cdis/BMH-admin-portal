@@ -60,18 +60,21 @@ const handleSubmit = event =>{
   
   axios(config)
   .then(function (response) {
-    console.log(response.data.body[0])
-    console.log(response.data.body[0]["Message"]["statusCode"])
-    if(response.data.body[0]["Message"]["statusCode"] === 200){
-        console.log("made it");
-        setRequestApproved("true");
-        setDirectPayLimit(response.data.body[0]["Message"]["body"]);
-        setButtonDisabledtoo(true)
-      }
-      else{
-        console.log("handle error");
-        setRequestApproved("false");
-      }
+    if(response.data['statusCode'] !== 400){
+      if(response.data.body[0]["Message"]["statusCode"] === 200){
+          setRequestApproved("true");
+          setDirectPayLimit(response.data.body[0]["Message"]["body"]);
+          setButtonDisabledtoo(true)
+        }
+        else{
+          console.log("handle error");
+          setRequestApproved("false");
+        }
+    }
+    else{
+      console.log("handle error");
+      setRequestApproved("false");
+    }
   })
   .catch(function (error) {
     console.log(error);
@@ -186,13 +189,13 @@ if(requestApproved === "true"){
           <ReactTooltip class="tooltip" id="project_short_title" place="top" effect="solid" multiline={true}>
             Please enter a brief title for your project
           </ReactTooltip>
-          <Form.Control type="text" name="project_short_title" onChange={handleChange} placeholder="Enter Project Brief Title" />
+          <Form.Control type="text" name="project_short_title" onChange={handleChange} placeholder="Enter Project Brief Title" required/>
           <br></br>
           <Form.Label> Brief Project Summary and Justification? <span data-tip data-for="summary_and_justification"><BiHelpCircle /></span></Form.Label>
           <ReactTooltip class="tooltip" id="summary_and_justification" place="top" effect="solid" multiline={true}>
             Please enter a brief summary and justification for your project.
           </ReactTooltip>
-          <Form.Control type="text" name="summary_and_justification" onChange={handleChange} placeholder="Enter Brief Summary and Justification" />
+          <Form.Control type="text" name="summary_and_justification" onChange={handleChange} placeholder="Enter Brief Summary and Justification" required/>
           <br></br>
           <Form.Label> Workspace Use <span data-tip data-for="workspace_use"><BiHelpCircle /></span></Form.Label>
           <ReactTooltip class="tooltip" id="workspace_use" place="top" effect="solid" multiline={true}>
