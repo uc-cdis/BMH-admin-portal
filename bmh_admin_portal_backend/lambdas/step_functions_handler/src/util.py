@@ -10,17 +10,18 @@
 import os
 import boto3
 
-class Util():
+
+class Util:
     @classmethod
     def get_dynamodb_index_name(cls):
-        return cls.get_param(os.environ['dynamodb_index_param_name'])
+        return cls.get_param(os.environ["dynamodb_index_param_name"])
 
     @classmethod
     def get_dynamodb_table_name(cls):
-        return cls.get_param(os.environ['dynamodb_table_param_name'])
+        return cls.get_param(os.environ["dynamodb_table_param_name"])
 
     @classmethod
     def get_param(cls, param_name):
-        ssm = boto3.client('ssm')
+        ssm = boto3.client("ssm")
         param_info = ssm.get_parameter(Name=param_name)
-        return param_info['Parameter']['Value']
+        return param_info["Parameter"]["Value"]
