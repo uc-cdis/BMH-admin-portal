@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger.setLevel(logging.INFO)
 
-
 def lambda_handler(event, context):
     """Do not print the auth token unless absolutely necessary"""
     # logger.info(json.dumps(event))
@@ -32,10 +31,9 @@ def lambda_handler(event, context):
         logger.info("Raising unauthorized exception due to error.")
         logger.exception(e)
         raise Exception("Unauthorized")
-    
     username = res.get("context", {}).get("user", {}).get("name")
     request_type = (
-        "user_request" if username  is not None else "application_request"
+        "user_request" if username is not None else "application_request"
     )
 
     if request_type == "user_request":
