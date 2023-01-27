@@ -80,7 +80,7 @@ def handler(event, context):
             'GET': lambda: _workspaces_get(path_params, user)
         },
         '/workspaces/{workspace_id}':{
-            'GET': lambda: _workspaces_get(path_params, user)
+            'GET': lambda: _workspaces_get(path_params, user, query_string_params)
         },
         '/workspaces/{workspace_id}/limits':{
             'PUT': lambda: _workspaces_set_limits(body, path_params, user)
@@ -192,7 +192,7 @@ def _get_tokens(query_string_params, api_key):
 
     if response.getcode() != 200:
         logger.info(f"Response Status Code: {response.getcode()}")
-        logger.info(f"Response read: {reponse.read()}")
+        logger.info(f"Response read: {response.read()}")
         raise RuntimeError("Error when exchanging code for tokens")
 
     content = json.loads(response.read())
@@ -478,7 +478,7 @@ def _start_sfn_workflow(workspace_id, api_key, account_id):
 
 # GET workspaces
 # GET workspaces/{workspace_id}
-def _workspaces_get(path_params, email):
+def _workspaces_get(path_params, email, query_string_params=None):
     """ Will return a list of workspaces rows based the email
     of the user """
     dynamodb_table_name = _get_dynamodb_table_name()
@@ -512,7 +512,6 @@ def _workspaces_get(path_params, email):
     status_code = 200
     retval = []
 
-
     if path_params is not None and 'workspace_id' in path_params:
         if path_params['workspace_id'] == "admin_all":
             response = table.scan()
@@ -520,6 +519,12 @@ def _workspaces_get(path_params, email):
             if len(retval) == 0:
                 status_code = 204 # No content, resource was found, but it's empty.
         else:
+            # Email is None for requests made by an application using client_credentials.
+            if not email :
+                if query_string_params and 'user' in query_string_params:
+                    email = query_string_params['user']
+                else:
+                    raise Exception("Required `user` query parameter")
             response = table.get_item(
                 Key={
                     'bmh_workspace_id':path_params['workspace_id'],
@@ -533,7 +538,6 @@ def _workspaces_get(path_params, email):
                 status_code = 404
 
     else:
-
         response = table.query(
             KeyConditionExpression=Key('user_id').eq(email),
             ProjectionExpression=projection,
@@ -556,6 +560,13 @@ def _workspaces_set_limits(body, path_params, user):
     assert 'workspace_id' in path_params
     assert 'soft-limit' in body
     assert 'hard-limit' in body
+
+    # User is None for requests made by an application using client_credentials.
+    if not user:
+        if 'user' in body:
+            user = body['user']
+        else:
+            raise Exception("Required `user` parameter in request body")
 
     # Get the dynamodb table name from SSM Parameter Store
     workspace_id = path_params['workspace_id']

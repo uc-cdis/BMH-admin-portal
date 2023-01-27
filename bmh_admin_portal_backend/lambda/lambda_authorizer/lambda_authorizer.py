@@ -1,5 +1,5 @@
 # © 2021 Amazon Web Services, Inc. or its affiliates. All Rights Reserved.
-# 
+#
 # This AWS Content is provided subject to the terms of the AWS Customer Agreement
 # available at http://aws.amazon.com/agreement or other written agreement between
 # Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
@@ -23,22 +23,38 @@ def lambda_handler(event, context):
     """validate the incoming token"""
     """and produce the principal user identifier associated with the token"""
 
-    try: 
+    try:
         token = event['authorizationToken'].split(" ")[1]
         res = validate_token(token)
     except Exception as e:
         logger.info("Raising unauthorized exception due to error.")
         logger.exception(e)
         raise Exception("Unauthorized")
+    
+    username = res.get("context", {}).get("user", {}).get("name")
+    request_type = "user_request" if username is not None else "application_request"
 
-    logger.info("Grabbing name")
-    name = res['context']['user']['name']
+    if request_type == "user_request":
+        logger.info("Grabbing name")
+        name = res['context']['user']['name']
+        # new! -- add additional key-value pairs associated with the authenticated principal
+        # these are made available by APIGW like so: $context.authorizer.<key>
+        # additional context is cached
+        context = {
+            "user": name
+        }
+        """this could be accomplished in a number of ways:"""
+        """1. Call out to OAuth provider"""
+        """2. Decode a JWT token inline"""
+        """3. Lookup in a self-managed DB"""
+        principalId = f"user|{name}"
 
-    """this could be accomplished in a number of ways:"""
-    """1. Call out to OAuth provider"""
-    """2. Decode a JWT token inline"""
-    """3. Lookup in a self-managed DB"""
-    principalId = f"user|{name}"
+    else:
+        logger.info("Fetching client_id from client_credentials access_token")
+        client_id = res['azp'] #returns the client id of the decoded token
+        context = {"client_id": client_id}
+        principalId = f"app|{client_id}"
+
 
     """you can send a 401 Unauthorized response to the client by failing like so:"""
     """raise Exception('Unauthorized')"""
@@ -55,7 +71,7 @@ def lambda_handler(event, context):
     """and will apply to subsequent calls to any method/resource in the RestApi"""
     """made with the same token"""
 
-    """the example policy below denies access to all resources in the RestApi"""
+    """the example policy below allows access to all resources in the RestApi"""
     tmp = event['methodArn'].split(':')
     apiGatewayArnTmp = tmp[5].split('/')
     awsAccountId = tmp[4]
@@ -64,20 +80,15 @@ def lambda_handler(event, context):
     policy.restApiId = apiGatewayArnTmp[0]
     policy.region = tmp[3]
     policy.stage = apiGatewayArnTmp[1]
-    policy.allowAllMethods()
+    if request_type == "user_request":
+        policy.allowAllMethods()
+    else:
+        policy.allowMethod('PUT','/workspaces/*/limits')
+        policy.allowMethod('GET','/workspaces/*')
+
 
     # Finally, build the policy
     authResponse = policy.build()
- 
-    # new! -- add additional key-value pairs associated with the authenticated principal
-    # these are made available by APIGW like so: $context.authorizer.<key>
-    # additional context is cached
-    context = {
-        "user": name
-    }
-    # context['arr'] = ['foo'] <- this is invalid, APIGW will not accept it
-    # context['obj'] = {'foo':'bar'} <- also invalid
- 
     authResponse['context'] = context
     return authResponse
 
@@ -94,14 +105,15 @@ def validate_token(token):
     public_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(key_info[0]))
 
     #logger.info(f"ID Token: {token}")
-
-    client_id = os.environ.get('auth_client_id', None)
-    if client_id is None:
-        raise KeyError("Expected auth_client_id in environment.")
+    # We fallback to "auth_client_id" to preserve backwards compatibility.
+    aud = os.environ.get('allowed_client_id_audience', os.environ.get('auth_client_id', None))
+    if not aud:
+        raise KeyError("Expected  `allowed_client_id_audience` or `auth_client_id` in environment.")
+    aud = [client_id.strip() for client_id in aud.split("|")]
 
     # This should fail if the token has expire or if there's an audience mismatch.
-    payload = jwt.decode(token, key=public_key, algorithms=[key_info[0]['alg']], audience=client_id)
-    
+    payload = jwt.decode(token, key=public_key, algorithms=[key_info[0]['alg']], audience=aud)
+
     return payload
 
 
