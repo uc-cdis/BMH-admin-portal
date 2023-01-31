@@ -1,6 +1,8 @@
-import { mount} from 'enzyme';
+import { mount } from 'enzyme';
+import { waitFor } from '@testing-library/react';
 import WorkspaceAccounts from './views/workspace-accounts';
 import * as apiUtils from './util/api';
+import * as authUtils from './util/auth';
 import { BrowserRouter } from 'react-router-dom';
 
 const tableData = [
@@ -26,15 +28,14 @@ const tableData = [
     }
 ];
 const formattedData = {
-        "hard-limit": "$225",
-        "nih_funded_award_number": "1U2CDA050098-01",
-        "bmh_workspace_id": "13f9765f-e515-4349-909c-14223418132a",
-        "total-usage": "$0",
-        "request_status": "Failed",
-        "soft-limit": "$130",
-        "strides-credits": "$250",
-        "workspace_type": "STRIDES Credits"
-    }
+    "hard-limit": "$225",
+    "nih_funded_award_number": "1U2CDA050098-01",
+    "total-usage": "$0",
+    "request_status": "Failed",
+    "soft-limit": "$130",
+    "strides-credits": "$250",
+    "workspace_type": "STRIDES Credits"
+}
 
 const columns = [
     {
@@ -82,62 +83,104 @@ const columns = [
 const NUMBER_OF_COLUMNS = 8
 process.env.REACT_APP_OIDC_AUTH_URI = "https://fence.planx-pla.net/user/oauth2/authorize"
 
-const mountAccountsWrapper = () =>
-    mount(
+const mountAccountsWrapper = (tableData) => {
+    jest.spyOn(apiUtils, 'getWorkspaces').mockImplementation((callback) => { callback(tableData) });
+    jest.spyOn(authUtils, 'authorizeAdmin').mockResolvedValue(true);
+    return mount(
         <BrowserRouter>
             <WorkspaceAccounts />
         </BrowserRouter>
     );
+}
 
-
-it('renders WorkspaceAccounts table with no data', () => {
-    const workspaceAccountsWrapper = mountAccountsWrapper();
-    // console.log(workspaceAccountsWrapper.find('BootstrapTable').debug());
+it('renders WorkspaceAccounts table with no data', async () => {
+    const workspaceAccountsWrapper = mountAccountsWrapper([]);
     const table = workspaceAccountsWrapper.find('BootstrapTable');
-    expect(table).toHaveLength(1);
+    await waitFor(() => {
+        expect(table).toHaveLength(1);
+    });
     expect(table.find('p').text()).toBe("No active workspaces to view.");
 });
 
-it('verifies workspace accounts table has specific number of rows', () => {
-    jest.spyOn(apiUtils, 'getWorkspaces').mockImplementation((callback) => { callback(tableData) });
-    // jest.spyOn(authUtils, 'authorizeAdmin').mockResolvedValue(true);
 
-    const workspaceAccountsWrapper = mountAccountsWrapper();
-    // console.log(workspaceAccountsWrapper.find('BootstrapTable').debug());
+it('renders workspaceAccounts table which has specific number of rows', async () => {
+    const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
     const table = workspaceAccountsWrapper.find('BootstrapTable');
-    expect(table).toHaveLength(1);
-    // console.log("***************Seperator***************");
-
-    //Verify all the column headers are appearing correctly.
-    const headers = table.find('th');
-    headers.forEach((header,index) => {
-        //Ignore dummy field
-        if(columns[index]['isDummyField']) return;
-
-        //Verify text being displayed properly
-        expect(header.text().trim()).toBe(columns[index]['text']);
-
+    const rows = table.find('SimpleRow');
+    await waitFor(() => {
+        expect(rows).toHaveLength(tableData.length);
     });
-
-    // verifying number of rows to be displayed is equal to the number of records in the tableData
-    const rows = workspaceAccountsWrapper.find('SimpleRow');
-    expect(rows).toHaveLength(tableData.length);
-
-    // verifying number of cells in a row are equal NUMBER_OF_COLUMNS
-    const firstRowCells = rows.first().find('Cell');
-    expect(firstRowCells).toHaveLength(NUMBER_OF_COLUMNS);
-
-    columns.filter((column)=>!column['isDummyField']).forEach((column)=>{
-
-        const cell = firstRowCells.find({"column":column});
-
-        //Verifying the values in each column are displayed correctly with formatting
-        expect(cell.text()).toBe(formattedData[column.dataField]);
-
-        //Verifying the editability of each cell according to the defined columns
-        expect(cell.prop('editable')).toBe(column['editable']);
-
-    })
-
-    // workspaceAccountsWrapper.unmount();
 });
+
+it('verifies all the column headers are appearing correctly.', async () => {
+    const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
+    const table = workspaceAccountsWrapper.find('BootstrapTable');
+    const headers = table.find('th');
+    await waitFor(() => {
+        headers.forEach((header, index) => {
+            expect(header.text().trim()).toBe(columns[index]['text']);
+        });
+    });
+});
+
+it('verifies number of cells in a row are equal to NUMBER_OF_COLUMNS', async () => {
+    const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
+    const table = workspaceAccountsWrapper.find('BootstrapTable');
+    const rows = table.find('SimpleRow');
+    const firstRowCells = rows.first().find('Cell');
+    await waitFor(() => {
+        expect(firstRowCells).toHaveLength(NUMBER_OF_COLUMNS);
+    });
+});
+
+it('verifies the values in each column are displayed correctly with formatting', async () => {
+    const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
+    const table = workspaceAccountsWrapper.find('BootstrapTable');
+    const rows = table.find('SimpleRow');
+    const firstRowCells = rows.first().find('Cell');
+
+    await waitFor(() => {
+        columns.filter((column) => !column['isDummyField']).forEach((column) => {
+            const cell = firstRowCells.find({ "column": column });
+            expect(cell.text()).toBe(formattedData[column.dataField]);
+        })
+    });
+});
+
+it('verifies the editability of each cell according to the defined columns', async () => {
+    const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
+    const table = workspaceAccountsWrapper.find('BootstrapTable');
+    const rows = table.find('SimpleRow');
+    const firstRowCells = rows.first().find('Cell');
+
+    await waitFor(() => {
+        columns.forEach((column) => {
+            const cell = firstRowCells.find({ "column": column });
+            expect(cell.prop('editable')).toBe(column['editable']);
+        })
+    });
+});
+//TODO: Need to implement the following test
+// it('verifies the error message soft-limit is incorrect', async () => {
+//     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
+//     const table = workspaceAccountsWrapper.find('BootstrapTable');
+//     const rows = table.find('SimpleRow');
+//     const firstRowCells = rows.first().find('Cell');
+
+//     await waitFor(() => {
+//         columns.forEach((column) => {
+//             const cell = firstRowCells.find({ "column": column });
+//             if(column['editable']){
+//                 cell.find('td').simulate('click');
+//                 workspaceAccountsWrapper.update();
+//                 // td = cell.find('td.react-bootstrap-table-editing-cell')
+//                 console.log(cell.debug());
+//                 // td.simulate('change', {
+//                 //     target : { value : 230}
+//                 // });
+//                 // console.log(firstRowCells.find({ "column": column }).debug());
+//             }
+//             expect(cell.prop('editable')).toBe(column['editable']);
+//         })
+//     });
+// });
