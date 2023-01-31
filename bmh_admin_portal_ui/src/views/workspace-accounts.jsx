@@ -10,6 +10,7 @@ import { BiEditAlt } from 'react-icons/bi';
 import BootstrapTable from 'react-bootstrap-table-next';
 import cellEditFactory from 'react-bootstrap-table2-editor';
 import overlayFactory from 'react-bootstrap-table2-overlay';
+import LoadingOverlay from 'react-loading-overlay'
 import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
 
 import { getWorkspaces, setWorkspaceLimits } from "../util/api"
@@ -17,6 +18,7 @@ import {
   authorizeAdmin,
 } from '../util/auth';
 
+LoadingOverlay.propTypes = undefined; //FIXME: find out if this breaks the UI in anyway. Added this to avoid warning in unit tests
 const WorkspaceAccounts = () => {
   const [workspaces, setWorkspaces] = useState([])
   const [loading, setLoading] = useState(true)
