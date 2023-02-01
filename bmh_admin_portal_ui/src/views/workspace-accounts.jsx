@@ -78,9 +78,6 @@ const WorkspaceAccounts = () => {
     if (newValue <= softLimit) {
       valid = false
       message = "Hard limit must be greater than soft limit."
-    } else if (newValue <= 0) {
-      valid = false
-      message = "Hard limit must be greater than 0 (zero)."
     } else if (row['strides-credits'] !== null) {
       let creditsAmt = parseInt(row['strides-credits'])
       if (newValue > creditsAmt && creditsAmt !== 0) {

@@ -160,27 +160,71 @@ it('verifies the editability of each cell according to the defined columns', asy
         })
     });
 });
-//TODO: Need to implement the following test
-// it('verifies the error message soft-limit is incorrect', async () => {
-//     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
-//     const table = workspaceAccountsWrapper.find('BootstrapTable');
-//     const rows = table.find('SimpleRow');
-//     const firstRowCells = rows.first().find('Cell');
 
-//     await waitFor(() => {
-//         columns.forEach((column) => {
-//             const cell = firstRowCells.find({ "column": column });
-//             if(column['editable']){
-//                 cell.find('td').simulate('click');
-//                 workspaceAccountsWrapper.update();
-//                 // td = cell.find('td.react-bootstrap-table-editing-cell')
-//                 console.log(cell.debug());
-//                 // td.simulate('change', {
-//                 //     target : { value : 230}
-//                 // });
-//                 // console.log(firstRowCells.find({ "column": column }).debug());
-//             }
-//             expect(cell.prop('editable')).toBe(column['editable']);
-//         })
-//     });
-// });
+it('verifies the error message soft-limit is incorrect', async () => {
+    const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
+    const table = workspaceAccountsWrapper.find('BootstrapTable');
+    const rows = table.find('SimpleRow');
+    const firstRowCells = rows.first().find('Cell');
+    await waitFor(() => {
+        columns.filter((eachColumn)=> eachColumn['dataField'] === 'soft-limit').forEach((eachColumn) => {
+            const cell = firstRowCells.find({ "column": eachColumn });
+            let { row, column } = cell.props();
+            let validator = column.validator;
+            let test_scenarios = {
+                greater_than_hard_limit : {
+                    value : row['hard-limit'] + 1,
+                    response : {"message": "Soft limit must be less than hard limit.", "valid": false}
+                },
+                hard_limit : {
+                    value : row['hard-limit'],
+                    response : {"message": "Soft limit must be less than hard limit.", "valid": false}
+                },
+                valid_scenario :{
+                    value : row['hard-limit'] - 1,
+                    response: true
+                },
+                zero : {
+                    value : 0,
+                    response : { valid : false, message: 'Soft limit must be greater than 0 (zero).'}
+                },
+                smaller_than_zero : {
+                    value : -1,
+                    response : { valid : false, message: 'Soft limit must be greater than 0 (zero).'}
+                },
+            };
+            for (let scenario in test_scenarios) {
+                let response = validator(test_scenarios[scenario]['value'], row, column);
+                    expect(response).toEqual(test_scenarios[scenario]['response']);
+            };
+        });
+    });
+});
+
+it('verifies the error message hard-limit is incorrect', async () => {
+    const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
+    const table = workspaceAccountsWrapper.find('BootstrapTable');
+    const rows = table.find('SimpleRow');
+    const firstRowCells = rows.first().find('Cell');
+    await waitFor(() => {
+        columns.filter((eachColumn)=> eachColumn['dataField'] === 'hard-limit').forEach((eachColumn) => {
+            const cell = firstRowCells.find({ "column": eachColumn });
+            let { row, column } = cell.props();
+            let validator = column.validator;
+            let error_response = { "message": "Hard limit must be greater than soft limit.", "valid": false };
+
+            let success_cases = [row['soft-limit']+1];
+            let failure_cases = [row['soft-limit']-1, row['soft-limit'],0,-1];
+
+            for (let value in success_cases) {
+                let response = validator(success_cases[value], row, column);
+                expect(response).toEqual(true);
+            };
+
+            for (let value in failure_cases) {
+                let response = validator(failure_cases[value], row, column);
+                expect(response).toEqual(error_response);
+            };
+        });
+    });
+});
