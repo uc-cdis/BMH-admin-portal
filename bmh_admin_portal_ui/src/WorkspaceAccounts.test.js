@@ -83,9 +83,9 @@ const columns = [
 const NUMBER_OF_COLUMNS = 8
 process.env.REACT_APP_OIDC_AUTH_URI = "https://fence.planx-pla.net/user/oauth2/authorize"
 
-const mountAccountsWrapper = (tableData) => {
+const mountAccountsWrapper = (tableData, isAdmin = false) => {
     jest.spyOn(apiUtils, 'getWorkspaces').mockImplementation((callback) => { callback(tableData) });
-    jest.spyOn(authUtils, 'authorizeAdmin').mockResolvedValue(true);
+    jest.spyOn(authUtils, 'authorizeAdmin').mockResolvedValue(isAdmin);
     return mount(
         <BrowserRouter>
             <WorkspaceAccounts />
@@ -161,7 +161,7 @@ it('verifies the editability of each cell according to the defined columns', asy
     });
 });
 
-it('verifies the error message soft-limit is incorrect', async () => {
+it('verifies the error message when soft-limit is incorrect', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
     const table = workspaceAccountsWrapper.find('BootstrapTable');
     const rows = table.find('SimpleRow');
@@ -201,7 +201,7 @@ it('verifies the error message soft-limit is incorrect', async () => {
     });
 });
 
-it('verifies the error message hard-limit is incorrect', async () => {
+it('verifies the error message when hard-limit is incorrect', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
     const table = workspaceAccountsWrapper.find('BootstrapTable');
     const rows = table.find('SimpleRow');
@@ -227,4 +227,55 @@ it('verifies the error message hard-limit is incorrect', async () => {
             };
         });
     });
+});
+
+it('verifies the setWorkspaceLimits is called upon save correctly', async () => {
+    const mockFunction = jest.spyOn(apiUtils, 'setWorkspaceLimits');
+    mockFunction.mockImplementation(()=>{})
+    const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
+    const table = workspaceAccountsWrapper.find('BootstrapTable');
+    const rows = table.find('SimpleRow');
+    const firstRowCells = rows.first().find('Cell');
+
+    await waitFor(() => {
+        columns.filter((eachColumn)=> eachColumn['editable']).forEach((eachColumn) => {
+            const cell = firstRowCells.find({ "column": eachColumn });
+            let { row, column } = cell.props();
+            let new_limits = {};
+            let beforeSaveCall = table.prop('cellEdit').options.beforeSaveCell;
+            if (column['dataField'] === 'soft-limit') {
+                let { oldValue, newValue } = { oldValue: row['soft-limit'], newValue: 150 };
+                beforeSaveCall(oldValue, newValue, row, column);
+                new_limits = {
+                    'hard-limit': row['hard-limit'],
+                    'soft-limit': newValue
+                }
+            } else if(column['dataField'] === 'hard-limit'){
+                let { oldValue, newValue } = { oldValue: row['hard-limit'], newValue: 150 };
+                beforeSaveCall(oldValue, newValue, row, column);
+                new_limits = {
+                    'soft-limit': row['soft-limit'],
+                    'hard-limit': newValue
+                }
+            }
+            expect(mockFunction).toHaveBeenCalledWith(row['bmh_workspace_id'],new_limits);
+        });
+    });
+});
+
+it('verifies the Request Workspace link is applied correctly', async () => {
+    const workspaceAccountsWrapper = mountAccountsWrapper(tableData, false);
+    await waitFor(() => {}); //Need to have this to avoid `act` errors due to async/await calls in adminAuthorized
+    workspaceAccountsWrapper.update();
+    expect(workspaceAccountsWrapper.find('Link')).toHaveLength(1);
+    expect(workspaceAccountsWrapper.find('Link').find({"to":"/request-workspace"}).text()).toBe("Request New Workspace");
+});
+
+it('verifies the Admin link is applied correctly', async () => {
+    const workspaceAccountsWrapper = mountAccountsWrapper(tableData, true);
+    await waitFor(() => {}); //Need to have this to avoid `act` errors due to async/await calls in adminAuthorized
+    workspaceAccountsWrapper.update();
+    expect(workspaceAccountsWrapper.find('Link')).toHaveLength(2); //There are two links in the bottom if the user is admin
+    expect(workspaceAccountsWrapper.find('Link').find({"to":"/request-workspace"}).text()).toBe("Request New Workspace");
+    expect(workspaceAccountsWrapper.find('Link').find({"to":"/admin"}).text()).toBe("Administrate Workspace");
 });
