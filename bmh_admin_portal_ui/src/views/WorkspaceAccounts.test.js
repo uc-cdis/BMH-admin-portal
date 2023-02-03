@@ -1,8 +1,8 @@
 import { mount } from 'enzyme';
 import { waitFor } from '@testing-library/react';
-import WorkspaceAccounts from './views/workspace-accounts';
-import * as apiUtils from './util/api';
-import * as authUtils from './util/auth';
+import WorkspaceAccounts from './workspace-accounts';
+import * as apiUtils from '../util/api';
+import * as authUtils from '../util/auth';
 import { BrowserRouter } from 'react-router-dom';
 
 const tableData = [
