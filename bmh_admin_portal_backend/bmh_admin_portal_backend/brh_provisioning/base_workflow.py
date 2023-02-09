@@ -11,7 +11,14 @@ from ..bmh_admin_portal_config import BMHAdminPortalBackendConfig
 
 
 class ProvisioningWorkflow(core.Construct):
-    def __init__(self, scope: core.Construct, construct_id: str, brh_asset_bucket=None, dynamodb_table=None, **kwargs) -> None:
+    def __init__(
+        self,
+        scope: core.Construct,
+        construct_id: str,
+        brh_asset_bucket=None,
+        dynamodb_table=None,
+        **kwargs,
+    ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         # Defaults
@@ -32,7 +39,9 @@ class ProvisioningWorkflow(core.Construct):
         # )
 
         # Create Lambda function to handle events.
-        self.stepfn_lambda = self.create_stepfn_lambda(config, brh_asset_bucket, dynamodb_table)
+        self.stepfn_lambda = self.create_stepfn_lambda(
+            config, brh_asset_bucket, dynamodb_table
+        )
         ###################################################################################
 
         ###################################################################################
@@ -46,177 +55,168 @@ class ProvisioningWorkflow(core.Construct):
         self.email_task = self.create_email_task()
         self.workflow = self.create_step_functions_workflow()
 
-
-
     def create_stepfn_lambda(self, config, brh_asset_bucket, dynamodb_table):
-        """ Creates the lambda (and necessary permissions) which handles step function tasks """
+        """Creates the lambda (and necessary permissions) which handles step function tasks"""
 
         stepfn_lambda = lambda_.Function(
-            self, 'stepfn-handler',
+            self,
+            "stepfn-handler",
             runtime=lambda_.Runtime.PYTHON_3_8,
             timeout=core.Duration.seconds(600),
-            code=lambda_.Code.asset('lambda/step_functions_handler'),
-            handler='src.app.handler',
-            description='Function which deploys BRH specific infrastructure (cost and usage, etc.) to member accounts.',
+            code=lambda_.Code.asset("lambda/step_functions_handler"),
+            handler="src.app.handler",
+            description="Function which deploys BRH specific infrastructure (cost and usage, etc.) to member accounts.",
             environment={
-                'brh_asset_bucket_param_name': config['brh-workspace-assets-bucket'],
-                "brh_portal_url": config['api_url_param_name'],
-                "dynamodb_index_param_name": config['dynamodb_index_param_name'],
-                "dynamodb_table_param_name": config['dynamodb_table_param_name'],
-                "cross_account_role_name": config['cross_account_role_name'],
-                'email_domain': config['email_domain'],
+                "brh_asset_bucket_param_name": config["brh-workspace-assets-bucket"],
+                "brh_portal_url": config["api_url_param_name"],
+                "dynamodb_index_param_name": config["dynamodb_index_param_name"],
+                "dynamodb_table_param_name": config["dynamodb_table_param_name"],
+                "cross_account_role_name": config["cross_account_role_name"],
+                "email_domain": config["email_domain"],
                 #  TODO: Add admin email SNS here to notify admins for each request.
                 # "provision_workspace_sns_topic": self.stepfn_event_topic.topic_arn
-            }
+            },
         )
         # self.stepfn_event_topic.grant_publish(stepfn_lambda)
         dynamodb_table.grant_read_write_data(stepfn_lambda)
 
-        stepfn_lambda.add_to_role_policy(iam.PolicyStatement(
-            actions=[
-                "s3:PutBucketPolicy",
-                "s3:GetBucketPolicy",
-            ],
-            resources=[brh_asset_bucket.bucket_arn]
-        ))
+        stepfn_lambda.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "s3:PutBucketPolicy",
+                    "s3:GetBucketPolicy",
+                ],
+                resources=[brh_asset_bucket.bucket_arn],
+            )
+        )
 
-        stepfn_lambda.add_to_role_policy(iam.PolicyStatement(
-            actions=[
-                "sts:AssumeRole"
-            ],
-            resources=[f"arn:aws:iam::*:role/{config['cross_account_role_name']}"]
-        ))
+        stepfn_lambda.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=["sts:AssumeRole"],
+                resources=[f"arn:aws:iam::*:role/{config['cross_account_role_name']}"],
+            )
+        )
 
         ## Grant read/write to all SSM Parameters in the /bmh namespace.
         ## This is done to get rid of circular dependencies.
-        stepfn_lambda.add_to_role_policy(iam.PolicyStatement(
-            actions=[
-                "ssm:DescribeParameters",
-                "ssm:GetParameters",
-                "ssm:GetParameter",
-                "ssm:GetParameterHistory",
-            ],
-            resources=[f"arn:aws:ssm:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:parameter/bmh/*"]
-        ))
+        stepfn_lambda.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "ssm:DescribeParameters",
+                    "ssm:GetParameters",
+                    "ssm:GetParameter",
+                    "ssm:GetParameterHistory",
+                ],
+                resources=[
+                    f"arn:aws:ssm:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:parameter/bmh/*"
+                ],
+            )
+        )
 
         ## Grant permissions to run commands using SSM.
-        stepfn_lambda.add_to_role_policy(iam.PolicyStatement(
-            actions=[
-                "ssm:*"
-            ],
-            resources=["*"]
-        ))
+        stepfn_lambda.add_to_role_policy(
+            iam.PolicyStatement(actions=["ssm:*"], resources=["*"])
+        )
 
         ## Grant permissions to send emails using SES
-        stepfn_lambda.add_to_role_policy(iam.PolicyStatement(
-            actions=[
-                "ses:*"
-            ],
-            resources=["*"]
-        ))
+        stepfn_lambda.add_to_role_policy(
+            iam.PolicyStatement(actions=["ses:*"], resources=["*"])
+        )
 
         return stepfn_lambda
 
     def create_occ_lambda_task(self, config):
         create_workspace_lambda = lambda_.Function.from_function_arn(
-            self, 'workspace-occ-create-function',
-            function_arn=config['account_creation_lambda_arn']
+            self,
+            "workspace-occ-create-function",
+            function_arn=config["account_creation_lambda_arn"],
         )
 
         create_workspace_task = sfn_tasks.LambdaInvoke(
-            self, 'create-workspace-task',
+            self,
+            "create-workspace-task",
             lambda_function=create_workspace_lambda,
             payload_response_only=True,
             input_path="$.ddi_lambda_input",
-            result_path="$.brh_infrastructure.ddi_lambda_output"
+            result_path="$.brh_infrastructure.ddi_lambda_output",
         )
 
         create_workspace_task.add_catch(
-            self.get_handle_error_task(),
-            result_path="$.error"
+            self.get_handle_error_task(), result_path="$.error"
         )
         return create_workspace_task
 
     def get_handle_error_task(self):
         if self.handle_error_task == None:
             self.handle_error_task = sfn_tasks.LambdaInvoke(
-                self, 'handle-error-task',
+                self,
+                "handle-error-task",
                 lambda_function=self.stepfn_lambda,
                 payload_response_only=True,
-                payload=stepfunctions.TaskInput.from_object({
-                    'action':'failure',
-                    'input.$':'$'
-                })
+                payload=stepfunctions.TaskInput.from_object(
+                    {"action": "failure", "input.$": "$"}
+                ),
             )
         return self.handle_error_task
 
     def create_email_task(self):
         email_task = sfn_tasks.LambdaInvoke(
-            self, 'email_task',
+            self,
+            "email_task",
             lambda_function=self.stepfn_lambda,
             payload_response_only=True,
-            payload=stepfunctions.TaskInput.from_object({
-                'action':'email',
-                'input.$':'$'
-            }),
-            result_path="$.send_email"
+            payload=stepfunctions.TaskInput.from_object(
+                {"action": "email", "input.$": "$"}
+            ),
+            result_path="$.send_email",
         )
 
-        email_task.add_catch(
-            self.get_handle_error_task(),
-            result_path="$.error"
-        )
+        email_task.add_catch(self.get_handle_error_task(), result_path="$.error")
         return email_task
 
     def create_brh_provision_task(self):
         brh_provision_task = sfn_tasks.LambdaInvoke(
-            self, 'deploy_brh_infra_task',
+            self,
+            "deploy_brh_infra_task",
             lambda_function=self.stepfn_lambda,
             payload_response_only=True,
-            payload=stepfunctions.TaskInput.from_object({
-                'action':'provision_brh',
-                'input.$':'$.brh_infrastructure'
-            }),
-            result_path="$.deploy_brh_infra_result"
+            payload=stepfunctions.TaskInput.from_object(
+                {"action": "provision_brh", "input.$": "$.brh_infrastructure"}
+            ),
+            result_path="$.deploy_brh_infra_result",
         )
 
         brh_provision_task.add_catch(
-            self.get_handle_error_task(),
-            result_path="$.error"
+            self.get_handle_error_task(), result_path="$.error"
         )
         return brh_provision_task
 
     def create_step_functions_workflow(self):
 
         finish_task = sfn_tasks.LambdaInvoke(
-            self, 'success-task',
+            self,
+            "success-task",
             lambda_function=self.stepfn_lambda,
             payload_response_only=True,
-            payload=stepfunctions.TaskInput.from_object({
-                'action':'success',
-                'input.$':'$'
-            })
+            payload=stepfunctions.TaskInput.from_object(
+                {"action": "success", "input.$": "$"}
+            ),
         )
 
         chain = (
-            self.occ_lambda_task
-            .next(self.brh_provision_task)
+            self.occ_lambda_task.next(self.brh_provision_task)
             .next(self.email_task)
             .next(finish_task)
         )
-
-
 
         ## Add logging
         log_group = logs.LogGroup(self, "sfn-loggroup")
 
         state_machine = stepfunctions.StateMachine(
-            self, "workflow-request-state-machine",
+            self,
+            "workflow-request-state-machine",
             definition=chain,
-            logs={
-                "destination": log_group,
-                "level": stepfunctions.LogLevel.ALL
-            }
+            logs={"destination": log_group, "level": stepfunctions.LogLevel.ALL},
         )
 
         return state_machine

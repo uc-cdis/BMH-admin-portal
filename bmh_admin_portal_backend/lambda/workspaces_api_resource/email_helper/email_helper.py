@@ -1,7 +1,8 @@
 import boto3
 import os
 
-class EmailHelper():
+
+class EmailHelper:
     @classmethod
     def send_credits_workspace_request_email(cls, data):
         email_domain = os.environ.get("email_domain", None)
@@ -32,25 +33,17 @@ class EmailHelper():
 
     @classmethod
     def send_workspace_request_email(cls, to_addr, from_addr, data):
-        client = boto3.client('ses')
+        client = boto3.client("ses")
 
         # Build the string of data
-        body_string = "\n".join([f"{k}: {v}" for k,v in data.items()])
+        body_string = "\n".join([f"{k}: {v}" for k, v in data.items()])
 
-        ses_client = boto3.client('ses')
+        ses_client = boto3.client("ses")
         response = ses_client.send_email(
             Source=from_addr,
-            Destination={
-                'ToAddresses': [ to_addr ]
-            },
+            Destination={"ToAddresses": [to_addr]},
             Message={
-                'Subject': {
-                    'Data': "Workspace Request"
-                },
-                'Body': {
-                    'Text': {
-                        'Data': body_string
-                    }
-                }
-            }
+                "Subject": {"Data": "Workspace Request"},
+                "Body": {"Text": {"Data": body_string}},
+            },
         )
