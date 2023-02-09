@@ -54,29 +54,3 @@ class EmailHelper():
                 }
             }
         )
-    @classmethod
-    def send_occ_workspace_request_email(cls, to_addr, from_addr, data):
-        client = boto3.client('ses')
-        listPII = ["poc_email", "confirm_poc_email", "user_id"]
-
-        body_string = "\n".join([
-            f"{k}: {v}" for k,v in data.items() if k not in listPII
-        ])
-
-        ses_client = boto3.client('ses')
-        response = ses_client.send_email(
-            Source=from_addr,
-            Destination={
-                'ToAddresses': [ to_addr ]
-            },
-            Message={
-                'Subject': {
-                    'Data': "Workspace Request"
-                },
-                'Body': {
-                    'Text': {
-                        'Data': body_string
-                    }
-                }
-            }
-        )
