@@ -292,7 +292,7 @@ def _workspaces_post(body, email):
         item['strides-credits'] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT)
     else:
         item['strides-credits'] = decimal.Decimal(0)
-    
+
     if workspace_type == DIRECT_PAY_WORKSPACE_TYPE:
         item['soft-limit'] = 0
         item['hard-limit'] = 0
@@ -315,8 +315,6 @@ def _workspaces_post(body, email):
         EmailHelper.send_credits_workspace_request_email(item)
     elif workspace_type == 'STRIDES Grant':
         EmailHelper.send_grant_workspace_request_email(item)
-    elif workspace_type == 'Direct Pay':
-        EmailHelper.send_occworkspace_request_email(item)
     if workspace_type == 'Direct Pay':
         return create_response(
             status_code=200,
