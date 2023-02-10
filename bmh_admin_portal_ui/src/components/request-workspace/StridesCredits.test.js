@@ -207,3 +207,20 @@ describe('verifies form fields are being validated correctly', () => {
         expect(mockedFunction).toHaveBeenCalledWith("Must match NIH grant number format");
     });
 });
+
+it('submits the form and makes a call to requestWorkspace', () => {
+    const stridesCreditWrapper = shallow(<StridesCreditForm />);
+    const mockFunction = jest.spyOn(apiUtils, 'requestWorkspace');
+    let submitFunc = stridesCreditWrapper.prop('onSubmit');
+
+    //ensure request Workspace is called when the checkValidity returns true
+    let custom_event_object = { currentTarget: { checkValidity: () => false }, preventDefault: () => null };
+    submitFunc(custom_event_object);
+    // mockFunction.mockImplementation(()=>{});
+    expect(mockFunction.mock.calls).toHaveLength(0);
+
+    //ensure request Workspace is called when the checkValidity returns true
+    custom_event_object.currentTarget.checkValidity = () => true;
+    submitFunc(custom_event_object);
+    expect(mockFunction).toHaveBeenCalled();
+});
