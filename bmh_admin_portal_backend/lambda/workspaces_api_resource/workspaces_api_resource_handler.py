@@ -31,10 +31,14 @@ logger.setLevel(logging.INFO)
 
 DEFAULT_STRIDES_CREDITS_AMOUNT = 250
 
-STRIDES_CREDITS_WORKSPACE_TYPE="STRIDES Credits"
-STRIDES_GRANT_WORKSPACE_TYPE="STRIDES Grant"
-DIRECT_PAY_WORKSPACE_TYPE="Direct Pay"
-VALID_WORKSPACE_TYPES = [STRIDES_CREDITS_WORKSPACE_TYPE, STRIDES_GRANT_WORKSPACE_TYPE, DIRECT_PAY_WORKSPACE_TYPE]
+STRIDES_CREDITS_WORKSPACE_TYPE = "STRIDES Credits"
+STRIDES_GRANT_WORKSPACE_TYPE = "STRIDES Grant"
+DIRECT_PAY_WORKSPACE_TYPE = "Direct Pay"
+VALID_WORKSPACE_TYPES = [
+    STRIDES_CREDITS_WORKSPACE_TYPE,
+    STRIDES_GRANT_WORKSPACE_TYPE,
+    DIRECT_PAY_WORKSPACE_TYPE,
+]
 
 
 def handler(event, context):
@@ -88,6 +92,9 @@ def handler(event, context):
         },
         "/workspaces/{workspace_id}/provision": {
             "POST": lambda: _workspace_provision(body, path_params)
+        },
+        "/workspaces/{workspace_id}/direct-pay-limit": {
+            "PUT": lambda: _workspace_direct_pay_limit(body, path_params, user)
         },
     }
 
@@ -289,13 +296,12 @@ def _workspaces_post(body, email):
         item["strides-credits"] = decimal.Decimal(0)
 
     if workspace_type == DIRECT_PAY_WORKSPACE_TYPE:
-        item['soft-limit'] = 0
-        item['hard-limit'] = 0
+        item["soft-limit"] = 0
+        item["hard-limit"] = 0
     else:
-        item['soft-limit'] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * .5)
-        item['hard-limit'] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * .9)
-    item['total-usage'] = 0
-
+        item["soft-limit"] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * 0.5)
+        item["hard-limit"] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * 0.9)
+    item["total-usage"] = 0
 
     # Get the dynamodb table name from SSM Parameter Store
     dynamodb_table_name = _get_dynamodb_table_name()
@@ -310,16 +316,10 @@ def _workspaces_post(body, email):
     elif workspace_type == "STRIDES Grant":
         EmailHelper.send_grant_workspace_request_email(item)
 
-    if workspace_type == 'Direct Pay':
-        return create_response(
-            status_code=200,
-            body={"message":workspace_request_id}
-        )
+    if workspace_type == "Direct Pay":
+        return create_response(status_code=200, body={"message": workspace_request_id})
     else:
-        return create_response(
-            status_code=200,
-            body={"message":"success"}
-        )
+        return create_response(status_code=200, body={"message": "success"})
 
 
 def _workspace_provision(body, path_params):
@@ -486,29 +486,30 @@ def _workspaces_get(path_params, email, query_string_params=None):
     # Use expression attributes because dashes are not
     # allowed.
 
-    projection = ", ".join([
-        '#bmhworkspaceid',
-        '#nihaward',
-        '#requeststatus',
-        '#workspacetype',
-        '#totalusage',
-        '#stridescredits',
-        '#softlimit',
-        '#hardlimit',
-        '#directpaylimit'
-    ])
+    projection = ", ".join(
+        [
+            "#bmhworkspaceid",
+            "#nihaward",
+            "#requeststatus",
+            "#workspacetype",
+            "#totalusage",
+            "#stridescredits",
+            "#softlimit",
+            "#hardlimit",
+            "#directpaylimit",
+        ]
+    )
 
     expression_attribute_names = {
-        '#bmhworkspaceid': 'bmh_workspace_id',
-        "#nihaward": 'nih_funded_award_number',
-        '#requeststatus':'request_status',
-        '#workspacetype':'workspace_type',
-        '#totalusage': 'total-usage',
-        '#stridescredits': 'strides-credits',
-        '#softlimit': 'soft-limit',
-        '#hardlimit': 'hard-limit',
-        '#directpaylimit': 'direct_pay_limit'
-
+        "#bmhworkspaceid": "bmh_workspace_id",
+        "#nihaward": "nih_funded_award_number",
+        "#requeststatus": "request_status",
+        "#workspacetype": "workspace_type",
+        "#totalusage": "total-usage",
+        "#stridescredits": "strides-credits",
+        "#softlimit": "soft-limit",
+        "#hardlimit": "hard-limit",
+        "#directpaylimit": "direct_pay_limit",
     }
 
     status_code = 200
@@ -696,6 +697,102 @@ def _workspaces_set_total_usage(body, path_params, api_key):
         _publish_to_sns_topic(sns_topic_arn, subject, message)
 
     return create_response(status_code=200, body={})
+
+
+def _workspace_direct_pay_limit(body, path_params, user):
+    logger.info(f"Called 'set limit': {body}")
+
+    # Validate body and path_params
+    assert "workspace_id" in path_params
+    assert "direct_pay_limit" in body
+
+    # User is None for requests made by an application using client_credentials.
+    if not user:
+        if "user" in body:
+            user = body["user"]
+        else:
+            raise Exception("Required `user` parameter in request body")
+
+    # Get the dynamodb table name from SSM Parameter Store
+    workspace_id = path_params["workspace_id"]
+    dynamodb_table_name = _get_dynamodb_table_name()
+    dynamodb = boto3.resource("dynamodb")
+    table = dynamodb.Table(dynamodb_table_name)
+    projection = ", ".join(
+        [
+            "#bmhworkspaceid",
+            "#requeststatus",
+            "#workspacetype",
+            "#totalusage",
+            "#softlimit",
+            "#hardlimit",
+            "#directpaylimit",
+        ]
+    )
+
+    expression_attribute_names = {
+        "#bmhworkspaceid": "bmh_workspace_id",
+        "#requeststatus": "request_status",
+        "#workspacetype": "workspace_type",
+        "#totalusage": "total-usage",
+        "#softlimit": "soft-limit",
+        "#hardlimit": "hard-limit",
+        "#directpaylimit": "direct_pay_limit",
+    }
+
+    direct_pay_limit = round(decimal.Decimal(body["direct_pay_limit"]), 2)
+
+    if direct_pay_limit < 0:
+        raise ValueError("Direct pay limit must be a postive number")
+
+    try:
+        response = table.get_item(
+            Key={"bmh_workspace_id": workspace_id, "user_id": user},
+            ProjectionExpression=projection,
+            ExpressionAttributeNames=expression_attribute_names,
+        )
+        retval = response.get("Item", None)
+        if (
+            direct_pay_limit < retval["hard-limit"]
+            or direct_pay_limit < retval["soft-limit"]
+        ):
+            raise Exception(
+                "The new direct pay amount "
+                + str(direct_pay_limit)
+                + " is less than the soft limit "
+                + str(retval["soft-limit"])
+                + " or hard limit "
+                + str(retval["hard-limit"])
+            )
+        elif direct_pay_limit < retval["direct_pay_limit"]:
+            raise Exception(
+                "The new direct pay amount "
+                + str(direct_pay_limit)
+                + " is less than the old direct pay amount "
+                + str(retval["direct_pay_limit"])
+            )
+    except Exception as e:
+        raise ValueError()
+
+    try:
+        table_response = table.update_item(
+            Key={"bmh_workspace_id": workspace_id, "user_id": user},
+            UpdateExpression="set #direct = :direct",
+            ConditionExpression="attribute_exists(bmh_workspace_id)",
+            ExpressionAttributeValues={
+                ":direct": round(decimal.Decimal(body["direct_pay_limit"]), 2)
+            },
+            ExpressionAttributeNames={"#direct": "direct_pay_limit"},
+            ReturnValues="ALL_NEW",
+        )
+        logger.info(f"Table response: {table_response}")
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
+            raise Exception("Could not find BMH Workspace " f"with id {workspace_id}")
+        else:
+            raise e
+
+    return create_response(status_code=200, body=table_response["Attributes"])
 
 
 ################################################################################
