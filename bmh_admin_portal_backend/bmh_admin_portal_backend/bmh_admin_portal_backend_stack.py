@@ -334,6 +334,13 @@ class BmhAdminPortalBackendStack(core.Stack):
             "PUT", workspaces_resource_lambda_integration, api_key_required=True
         )
 
+        ################ PUT workspaces/{workspace_id}/direct-pay-limit #############################
+        limits_resource = workspace_resource.add_resource("direct-pay-limit")
+        limits_put = limits_resource.add_method(
+            "PUT", workspaces_resource_lambda_integration, authorizer=token_authorizer
+        )
+        ######################################################################################
+
         default_usage_plan = apigateway.UsagePlan(
             self,
             "default-usage-plan",
