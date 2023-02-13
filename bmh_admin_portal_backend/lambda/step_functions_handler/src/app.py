@@ -14,9 +14,11 @@ from .handlers import (
 )
 
 import logging
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger.setLevel(logging.INFO)
+
 
 def handler(event, context):
     logger.info(json.dumps(event))
@@ -28,11 +30,13 @@ def handler(event, context):
         Actions.EMAIL.value: EmailHandler,
     }
 
-    action = event.get('action', None)
+    action = event.get("action", None)
 
     if action is None or action not in dispatch:
         valid_actions = [e.value for e in Actions]
-        raise InvalidActionException(f"Action {event['action']} is not a valid action. Valid actions: {valid_actions}")
+        raise InvalidActionException(
+            f"Action {event['action']} is not a valid action. Valid actions: {valid_actions}"
+        )
 
     retval = None
     try:
@@ -46,11 +50,13 @@ def handler(event, context):
 
     return retval
 
+
 class InvalidActionException(Exception):
-    """ Used to indicate that an invalid exception was used to acces this function """
+    """Used to indicate that an invalid exception was used to acces this function"""
+
 
 class Actions(Enum):
-    BRH_PROVISION = 'provision_brh'
-    SUCCESS = 'success'
-    FAILURE = 'failure'
-    EMAIL = 'email'
+    BRH_PROVISION = "provision_brh"
+    SUCCESS = "success"
+    FAILURE = "failure"
+    EMAIL = "email"
