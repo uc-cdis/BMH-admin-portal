@@ -5,8 +5,7 @@ import * as apiUtils from '../util/api';
 import * as authUtils from '../util/auth';
 import { BrowserRouter } from 'react-router-dom';
 
-const tableData = [
-    {
+const tableData = [{
         "nih_funded_award_number": "1U2CDA050098-01",
         "request_status": "failed",
         "workspace_type": "STRIDES Credits",

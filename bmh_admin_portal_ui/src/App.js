@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Router, Route, Switch } from 'react-router-dom';
+import { Route, Switch } from 'react-router-dom';
 
 import { isAuthenticated } from './util/oidc';
 import PrivateRoute from "./components/private-route"

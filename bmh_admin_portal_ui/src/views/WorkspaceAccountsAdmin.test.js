@@ -5,31 +5,30 @@ import * as apiUtils from '../util/api';
 import * as authUtils from '../util/auth';
 import { BrowserRouter } from 'react-router-dom';
 
-const tableData = [
-        {
-            "scientific_poc": "Random Sample",
-            "request_status": "active",
-            "total-usage": 10,
-            "account_id": "9032657199",
-            "strides-credits": 250,
-            "workspace_type": "STRIDES Credits",
-            "root_account_email": "root_A2aaIH1d-e54I-AoeS-92DE-b93Be7e8A79B@planx-pla.net",
-            "user_id": "sample@uchicago.edu",
-            "bmh_workspace_id": "A2aaIH1d-e54I-AoeS-92DE-b93Be7e8A79B"
-        },
-        {
-            "scientific_poc": "Another Sample",
-            "request_status": "failed",
-            "total-usage": 0,
-            "account_id": "354484406138",
-            "strides-credits": 250,
-            "workspace_type": "STRIDES Credits",
-            "root_account_email": "root_a1s2dfdg-3I8S-2354-9og3-I422E4R8AW2a@planx-pla.net",
-            "user_id": "another_sample@uchicago.edu",
-            "bmh_workspace_id": "a1s2dfdg-3I8S-2354-9og3-I422E4R8AW2a",
-        }
+const tableData = [{
+        "scientific_poc": "Random Sample",
+        "request_status": "active",
+        "total-usage": 10,
+        "account_id": "9032657199",
+        "strides-credits": 250,
+        "workspace_type": "STRIDES Credits",
+        "root_account_email": "root_A2aaIH1d-e54I-AoeS-92DE-b93Be7e8A79B@planx-pla.net",
+        "user_id": "sample@uchicago.edu",
+        "bmh_workspace_id": "A2aaIH1d-e54I-AoeS-92DE-b93Be7e8A79B"
+    },
+    {
+        "scientific_poc": "Another Sample",
+        "request_status": "failed",
+        "total-usage": 0,
+        "account_id": "354484406138",
+        "strides-credits": 250,
+        "workspace_type": "STRIDES Credits",
+        "root_account_email": "root_a1s2dfdg-3I8S-2354-9og3-I422E4R8AW2a@planx-pla.net",
+        "user_id": "another_sample@uchicago.edu",
+        "bmh_workspace_id": "a1s2dfdg-3I8S-2354-9og3-I422E4R8AW2a",
+    }
 ];
-const formattedData =         {
+const formattedData = {
     "scientific_poc": "Random Sample",
     "user_id": "sample@uchicago.edu",
     "request_status": "Active",
@@ -41,50 +40,50 @@ const formattedData =         {
 }
 
 const columns = [
-{
-    dataField: 'scientific_poc',
-    text: 'Scientific POC',
-    editable: false
-},
-{
-    dataField: 'user_id',
-    text: 'User Id',
-    editable: false
-},
-{
-    dataField: 'request_status',
-    text: 'Request Status',
-    editable: false,
+    {
+        dataField: 'scientific_poc',
+        text: 'Scientific POC',
+        editable: false
+    },
+    {
+        dataField: 'user_id',
+        text: 'User Id',
+        editable: false
+    },
+    {
+        dataField: 'request_status',
+        text: 'Request Status',
+        editable: false,
 
-},
-{
-    dataField: 'workspace_type',
-    text: 'Workspace Type',
-    editable: false
-},
-{
-    dataField: 'total-usage',
-    text: 'Total Usage',
-    editable: false,
+    },
+    {
+        dataField: 'workspace_type',
+        text: 'Workspace Type',
+        editable: false
+    },
+    {
+        dataField: 'total-usage',
+        text: 'Total Usage',
+        editable: false,
 
-},
-{
-    dataField: 'strides-credits',
-    text: 'Strides Credits',
-    editable: false,
+    },
+    {
+        dataField: 'strides-credits',
+        text: 'Strides Credits',
+        editable: false,
 
-},
-{
-    dataField: 'root_account_email',
-    text: 'Root Email',
-    editable: false,
-},
-{
-    dataField: 'account_id',
-    text: 'AWS Account',
-    editable: true,
-
-}]
+    },
+    {
+        dataField: 'root_account_email',
+        text: 'Root Email',
+        editable: false,
+    },
+    {
+        dataField: 'account_id',
+        text: 'AWS Account',
+        editable: true,
+    }
+]
 
 const NUMBER_OF_COLUMNS = 8
 process.env.REACT_APP_OIDC_AUTH_URI = "https://fence.planx-pla.net/user/oauth2/authorize"

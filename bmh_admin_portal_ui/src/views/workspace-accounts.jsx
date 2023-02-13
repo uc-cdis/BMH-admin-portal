@@ -18,7 +18,10 @@ import {
   authorizeAdmin,
 } from '../util/auth';
 
-LoadingOverlay.propTypes = undefined; //FIXME: find out if this breaks the UI in anyway. Added this to avoid warning in unit tests
+// Added this to avoid warning in unit tests.
+// Error: `Failed prop type: LoadingOverlayWrapper: prop type `styles.content` is invalid;`
+LoadingOverlay.propTypes = undefined;
+
 const WorkspaceAccounts = () => {
   const [workspaces, setWorkspaces] = useState([])
   const [loading, setLoading] = useState(true)

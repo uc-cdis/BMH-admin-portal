@@ -1,15 +1,17 @@
-import { shallow } from 'enzyme';
+import {
+    shallow
+} from 'enzyme';
 import StridesCreditForm from './strides-credits-form';
 import * as apiUtils from '../../util/api';
 
 /**
  * Major scenarios being tested in the suite
-    * Form is being rendered with all the fields
-    * Form having default values
-    * Updating values in the form and make sure the updating part is happening as expected
-    * Verify all the client side validations for the form are done correctly.
-**/
-const FIELD_COUNT=8;
+ * Form is being rendered with all the fields
+ * Form having default values
+ * Updating values in the form and make sure the updating part is happening as expected
+ * Verify all the client side validations for the form are done correctly.
+ **/
+const FIELD_COUNT = 8;
 
 const initialFormData = Object.freeze({
     scientific_poc: "",
@@ -50,7 +52,12 @@ const getFormData = stridesCreditWrapper => {
     })();
     mockFunction.mockImplementation(iifeFunction);
     let submitFunc = stridesCreditWrapper.prop('onSubmit');
-    submitFunc({ currentTarget: { checkValidity: () => true }, preventDefault: () => null });
+    submitFunc({
+        currentTarget: {
+            checkValidity: () => true
+        },
+        preventDefault: () => null
+    });
     return formDataFromState;
 }
 
@@ -62,7 +69,7 @@ it('verifies form being rendered correctly', async () => {
 it('verifies form renders with default values', async () => {
     const stridesCreditWrapper = shallow(<StridesCreditForm />);
     let formData = getFormData(stridesCreditWrapper);
-    for(let key in initialFormData){
+    for (let key in initialFormData) {
         expect(formData[key]).toBe(initialFormData[key]);
     }
 });
@@ -71,18 +78,37 @@ it('verifies form fields being updated appropriately', async () => {
     const stridesCreditWrapper = shallow(<StridesCreditForm />);
     let input;
 
-    for(let key in updatedFormData){
-        if(key === 'intramural') continue; // Skipping intramural since it is not updated in the same way as other fields
-        input = stridesCreditWrapper.find('FormControl').filter({'name': key}).filterWhere((n) => n.prop('onChange'));
-        input.simulate('change', { target: { name: key, value: updatedFormData[key], setCustomValidity: () => {}}});
+    for (let key in updatedFormData) {
+        // Skipping intramural since it is not updated in the same way as other fields
+        if (key === 'intramural') continue;
+
+        input = stridesCreditWrapper.find('FormControl').filter({
+            'name': key
+        }).filterWhere((n) => n.prop('onChange'));
+        input.simulate('change', {
+            target: {
+                name: key,
+                value: updatedFormData[key],
+                setCustomValidity: () => { }
+            }
+        });
     }
 
     //Updating value for intramural
-    input = stridesCreditWrapper.find('FormCheck').filter({'name': 'intramural'}).filterWhere((n) => n.prop('onChange'));
-    input.simulate('change', { target: { name: 'intramural', type: 'checkbox', checked: updatedFormData['intramural'], setCustomValidity: () => {}}});
+    input = stridesCreditWrapper.find('FormCheck').filter({
+        'name': 'intramural'
+    }).filterWhere((n) => n.prop('onChange'));
+    input.simulate('change', {
+        target: {
+            name: 'intramural',
+            type: 'checkbox',
+            checked: updatedFormData['intramural'],
+            setCustomValidity: () => { }
+        }
+    });
 
     let formData = getFormData(stridesCreditWrapper);
-    for(let key in updatedFormData){
+    for (let key in updatedFormData) {
         expect(formData[key]).toBe(updatedFormData[key]);
     }
 });
@@ -94,17 +120,28 @@ describe('verifies form fields are being validated correctly', () => {
         let input;
 
         //Email validation makes sense only once a user checks the intramural field
-        input = stridesCreditWrapper.find('FormCheck').filter({'name': 'intramural'}).filterWhere((n) => n.prop('onChange'));
-        input.simulate('change', { target: { name: 'intramural', checked: true, type: "checkbox", setCustomValidity: () => {}}});
+        input = stridesCreditWrapper.find('FormCheck').filter({
+            'name': 'intramural'
+        }).filterWhere((n) => n.prop('onChange'));
+        input.simulate('change', {
+            target: {
+                name: 'intramural',
+                checked: true,
+                type: "checkbox",
+                setCustomValidity: () => { }
+            }
+        });
 
         //Enter internal_poc_email with a regex confirming value
-        input = stridesCreditWrapper.find('FormControl').filter({'name': 'internal_poc_email'}).filterWhere((n) => n.prop('onChange'));
+        input = stridesCreditWrapper.find('FormControl').filter({
+            'name': 'internal_poc_email'
+        }).filterWhere((n) => n.prop('onChange'));
 
         let custom_email_event = {
-            target :{
-                name : 'internal_poc_email',
-                value : updatedFormData['internal_poc_email'],
-                setCustomValidity : (msg) => {}
+            target: {
+                name: 'internal_poc_email',
+                value: updatedFormData['internal_poc_email'],
+                setCustomValidity: (msg) => { }
             }
         }
         let mockedFunction = jest.spyOn(custom_email_event.target, "setCustomValidity");
@@ -122,22 +159,40 @@ describe('verifies form fields are being validated correctly', () => {
         let input;
 
         //Email validation makes sense once a user checks the intramural field
-        input = stridesCreditWrapper.find('FormCheck').filter({'name': 'intramural'}).filterWhere((n) => n.prop('onChange'));
-        console.log(input);
-        input.simulate('change', { target: { name: 'intramural', checked: true, type: "checkbox", setCustomValidity: () => {}}});
+        input = stridesCreditWrapper.find('FormCheck').filter({
+            'name': 'intramural'
+        }).filterWhere((n) => n.prop('onChange'));
+        input.simulate('change', {
+            target: {
+                name: 'intramural',
+                checked: true,
+                type: "checkbox",
+                setCustomValidity: () => { }
+            }
+        });
 
         //Enter internal_poc_email with a regex confirming value
-        input = stridesCreditWrapper.find('FormControl').filter({'name': 'internal_poc_email'}).filterWhere((n) => n.prop('onChange'));
-        input.simulate('change', {target : { name : 'internal_poc_email', value : updatedFormData['internal_poc_email'],setCustomValidity : () => {} }});
+        input = stridesCreditWrapper.find('FormControl').filter({
+            'name': 'internal_poc_email'
+        }).filterWhere((n) => n.prop('onChange'));
+        input.simulate('change', {
+            target: {
+                name: 'internal_poc_email',
+                value: updatedFormData['internal_poc_email'],
+                setCustomValidity: () => { }
+            }
+        });
 
         //Enter confirm_internal_poc_email with a regex confirming value
-        input = stridesCreditWrapper.find('FormControl').filter({'name': 'confirm_internal_poc_email'}).filterWhere((n) => n.prop('onChange'));
+        input = stridesCreditWrapper.find('FormControl').filter({
+            'name': 'confirm_internal_poc_email'
+        }).filterWhere((n) => n.prop('onChange'));
 
         let custom_email_event = {
-            target :{
-                name : 'confirm_internal_poc_email',
-                value : updatedFormData['confirm_internal_poc_email'],
-                setCustomValidity : (msg) => {}
+            target: {
+                name: 'confirm_internal_poc_email',
+                value: updatedFormData['confirm_internal_poc_email'],
+                setCustomValidity: (msg) => { }
             }
         }
 
@@ -157,13 +212,15 @@ describe('verifies form fields are being validated correctly', () => {
         const fieldName = 'administering_nih_institute';
 
         //Update the administering_nih_institute with a non empty value
-        input = stridesCreditWrapper.find('FormControl').filter({'name': fieldName}).filterWhere((n) => n.prop('onChange'));
+        input = stridesCreditWrapper.find('FormControl').filter({
+            'name': fieldName
+        }).filterWhere((n) => n.prop('onChange'));
 
         let custom_input_change_event = {
-            target :{
-                name : fieldName,
-                value : updatedFormData[fieldName],
-                setCustomValidity : (msg) => {}
+            target: {
+                name: fieldName,
+                value: updatedFormData[fieldName],
+                setCustomValidity: (msg) => { }
             }
         }
         let mockedFunction = jest.spyOn(custom_input_change_event.target, "setCustomValidity");
@@ -183,13 +240,15 @@ describe('verifies form fields are being validated correctly', () => {
         const fieldName = 'nih_funded_award_number';
 
         //Update the nih_funded_award_number with a regex confirming value
-        input = stridesCreditWrapper.find('FormControl').filter({'name': fieldName}).filterWhere((n) => n.prop('onChange'));
+        input = stridesCreditWrapper.find('FormControl').filter({
+            'name': fieldName
+        }).filterWhere((n) => n.prop('onChange'));
 
         let custom_input_change_event = {
-            target :{
-                name : fieldName,
-                value : updatedFormData[fieldName],
-                setCustomValidity : (msg) => {}
+            target: {
+                name: fieldName,
+                value: updatedFormData[fieldName],
+                setCustomValidity: (msg) => { }
             }
         }
         let mockedFunction = jest.spyOn(custom_input_change_event.target, "setCustomValidity");
@@ -214,7 +273,12 @@ it('submits the form and makes a call to requestWorkspace', () => {
     let submitFunc = stridesCreditWrapper.prop('onSubmit');
 
     //ensure request Workspace is called when the checkValidity returns true
-    let custom_event_object = { currentTarget: { checkValidity: () => false }, preventDefault: () => null };
+    let custom_event_object = {
+        currentTarget: {
+            checkValidity: () => false
+        },
+        preventDefault: () => null
+    };
     submitFunc(custom_event_object);
     // mockFunction.mockImplementation(()=>{});
     expect(mockFunction.mock.calls).toHaveLength(0);
