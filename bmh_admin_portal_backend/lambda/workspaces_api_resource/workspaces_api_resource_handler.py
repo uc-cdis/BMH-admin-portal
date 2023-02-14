@@ -752,27 +752,22 @@ def _workspace_direct_pay_limit(body, path_params, user):
             ExpressionAttributeNames=expression_attribute_names,
         )
         retval = response.get("Item", None)
-        if (
-            direct_pay_limit < retval["hard-limit"]
-            or direct_pay_limit < retval["soft-limit"]
-        ):
-            raise Exception(
-                "The new direct pay amount "
-                + str(direct_pay_limit)
-                + " is less than the soft limit "
-                + str(retval["soft-limit"])
-                + " or hard limit "
-                + str(retval["hard-limit"])
-            )
-        elif direct_pay_limit < retval["direct_pay_limit"]:
-            raise Exception(
-                "The new direct pay amount "
-                + str(direct_pay_limit)
-                + " is less than the old direct pay amount "
-                + str(retval["direct_pay_limit"])
-            )
     except Exception as e:
-        raise ValueError()
+        raise ValueError(
+            "Could Not find record with exsisitng workspace_id and user" + str(e)
+        )
+
+    if (
+        direct_pay_limit < retval["hard-limit"]
+        or direct_pay_limit < retval["soft-limit"]
+    ):
+        raise ValueError(
+            "The new direct pay amount is less than the soft limit or hard limit "
+        )
+    elif direct_pay_limit < retval["direct_pay_limit"]:
+        raise ValueError(
+            "The new direct pay amount is less than the old direct pay amount "
+        )
 
     try:
         table_response = table.update_item(
