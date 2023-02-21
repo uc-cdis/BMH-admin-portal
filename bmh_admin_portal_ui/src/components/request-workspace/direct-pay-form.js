@@ -1,5 +1,4 @@
 import React, { useState} from 'react';
-import axios from 'axios';
 import { BiHelpCircle } from 'react-icons/bi';
 import ReactTooltip from 'react-tooltip';
 
@@ -8,7 +7,7 @@ import Col from 'react-bootstrap/Col';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Alert from 'react-bootstrap/Alert';
-import { getIdToken, logout } from "../../util/oidc";
+import { getAccessToken, logout } from "../../util/oidc";
 
 const baseUrl = process.env.REACT_APP_API_GW_ENDPOINT
 const occHelpURL = process.env.REACT_APP_OCC_HELPER_URL
@@ -43,49 +42,51 @@ const [buttonDisabledtoo, setButtonDisabledtoo] = useState(false);
 
 let componentToRender;
 
-const handleSubmit = event =>{
-  event.preventDefault();
-  
-  var axios = require('axios');
-  var data = '{\n    "queryStringParameters":{\n        "method": "confirmBillingID",\n        "brh_data" : {\n            "AGBillingID": "' + billingID + '",\n            "Email": "' + email + '"\n        }\n    }\n}    ';
-  
-  var config = {
-    method: 'post',
-    url: occHelpURL,
-    headers: { 
-      'Content-Type': 'text/plain'
-    },
-    data : data
-  };
-  
-  axios(config)
-  .then(function (response) {
-    if(response.data['statusCode'] !== 400){
-      if(response.data.body[0]["Message"]["statusCode"] === 200){
-          setRequestApproved("true");
-          setDirectPayLimit(response.data.body[0]["Message"]["body"]);
-          setButtonDisabledtoo(true)
-        }
-        else{
-          console.log("handle error");
-          setRequestApproved("false");
-        }
-    }
-    else{
-      console.log("handle error");
-      setRequestApproved("false");
-    }
-  })
-  .catch(function (error) {
-    console.log(error);
-  });
+const handleSubmit = event => {
+    event.preventDefault();
 
+    var data = {
+        "queryStringParameters": {
+            "method": "confirmBillingID",
+            "brh_data": {
+                "AGBillingID": billingID,
+                "Email": email
+            }
+        }
+    };
 
+    var config = {
+        method: 'post',
+        headers: {
+            'Content-Type': 'text/plain'
+        },
+        body: JSON.stringify(data)
+    };
+
+    fetch(occHelpURL, config)
+        .then((response) => {
+            if (response.data['statusCode'] !== 400) {
+                if (response.data.body[0]["Message"]["statusCode"] === 200) {
+                    setRequestApproved("true");
+                    setDirectPayLimit(response.data.body[0]["Message"]["body"]);
+                    setButtonDisabledtoo(true)
+                } else {
+                    console.log("handle error");
+                    setRequestApproved("false");
+                }
+            } else {
+                console.log("handle error");
+                setRequestApproved("false");
+            }
+        })
+        .catch((error) => {
+            console.log(error);
+        });
 }
 
 
 const handleChange = event =>{
-  
+
   if(event.target.name === 'project_short_title'){
     setTitle(event.target.value)
   }
@@ -109,12 +110,12 @@ const handleChange = event =>{
 
 
 const handleRequest = event =>{
-  
+
   setButtonDisabled(true);
   event.preventDefault();
   const form = event.currentTarget;
   const api = `${baseUrl}/workspaces`
-  const id_token = getIdToken()
+  const id_token = getAccessToken()
   if (id_token == null) {
     console.log("Error getting id token before getting workspaces")
     logout();
@@ -125,52 +126,62 @@ const handleRequest = event =>{
     'Authorization': `Bearer ${id_token}`
   }
 
-  
-  var axios = require('axios');
+
   var direct_pay_limit = `,"direct_pay_limit":` + directpaylimit + `}`
   var tempdata = JSON.stringify(formData)
   tempdata = tempdata.slice(0, tempdata.length - 1)
   var data = tempdata + direct_pay_limit;
-  
-  
+
+
   var config = {
     method: 'POST',
-    url: api,
     headers: headers,
-    data : data
+    body : data
   };
-  
-  
-  axios(config)
-  .then(function (response) {
+
+
+  fetch(api, config)
+  .then((response) => {
     var reqid = (JSON.stringify(response.data.message));
     reqid = (reqid.slice(1, reqid.length - 1));
     requestAPICall(reqid);
   })
-  
+
 }
 
 const requestAPICall = (reqid) => {
-    var axios = require('axios');
-    var data = '{\n    "queryStringParameters": \n    {\n        "method": "handleRequest",\n        "brh_data" : {\n            "AGBillingID": "' + billingID +'",\n            "Email": "' + email + '",\n            "ProjectTitle": "' + title + '",\n            "ProjectSummary": "' + summary +'",\n            "WorkspaceUse": "' + workspace_use +'",\n            "ApprovedCreditCard": "'+ creditCard +'",\n            "ProjectRole": "' + projectRole +'",\n            "RequestUUID": "' + reqid +'"\n        }\n    }\n}';
+    var data = {
+        "queryStringParameters": {
+            "method": "handleRequest",
+            "brh_data": {
+                "AGBillingID": billingID,
+                "Email": email,
+                "ProjectTitle ": title,
+                "ProjectSummary": summary,
+                "WorkspaceUse": workspace_use,
+                "ApprovedCreditCard": creditCard,
+                "ProjectRole": projectRole,
+                "RequestUUID": reqid
+            }
+        }
+    };
 
     var config = {
-      method: 'post',
-      url: occHelpURL,
-      headers: { 
-        'Content-Type': 'text/plain'
-      },
-      data : data
+        method: 'post',
+        headers: {
+            'Content-Type': 'text/plain'
+        },
+        body: JSON.stringify(data)
     };
-    
-    axios(config)
-    .then(function (response) {
-      console.log(JSON.stringify(response.data));
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
-    
+
+    fetch(occHelpURL, config)
+        .then((response) => {
+            console.log(JSON.stringify(response.data));
+        })
+        .catch((error) => {
+            console.log(error);
+        });
+
     window.location = '/';
 }
 
@@ -252,7 +263,7 @@ if(requestApproved === "true"){
           <Button type="submit" disabled={buttonDisabled}>Submit Request</Button>
         <br></br>
     </Form>
-  </div>) 
+  </div>)
 }
 
 else if(requestApproved === "false"){
@@ -287,7 +298,7 @@ else if(requestApproved === "false"){
         {componentToRender}
         </div>
     )
-    
+
 }
 
 export default DirectPayForm;
