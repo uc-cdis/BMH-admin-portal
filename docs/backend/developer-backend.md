@@ -52,7 +52,6 @@ A Global Secondary Index is provided which uses bmh_workspace_id as the Partitio
           "user_id": "researcher@university.edu",
           "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde101",
           "soft-limit": 150,
-          "total-usage": 7.43,
           "request_status": "active",
           "workspace_type": "STRIDES Credits",
           "nih_funded_award_number": "4325534543"
@@ -75,7 +74,6 @@ A Global Secondary Index is provided which uses bmh_workspace_id as the Partitio
           "user_id": "researcher@university.edu",
           "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde101",
           "soft-limit": 150,
-          "total-usage": 7.43,
           "request_status": "active",
           "workspace_type": "STRIDES Credits",
           "nih_funded_award_number": "4325534543"
