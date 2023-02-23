@@ -19,7 +19,7 @@ import botocore
 from botocore.exceptions import ClientError
 from boto3.dynamodb.conditions import Key
 from boto3.session import Session
-from email_helper.email_helper import EmailHelper
+from lambdas.workspaces_api_resource.email_helper.email_helper import EmailHelper
 
 
 import logging
