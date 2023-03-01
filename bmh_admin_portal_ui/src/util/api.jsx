@@ -57,7 +57,7 @@ const getWorkspacesResponse = async () => {
   const api = `${baseUrl}/workspaces`
   const access_token = getAccessToken()
   if (access_token == null) {
-    console.log("Error getting id token before getting workspaces")
+    console.log("Error getting access token before getting workspaces")
     logout();
   }
 
@@ -86,7 +86,7 @@ const getAdminWorkspacesResponse = async () => {
   const api = `${baseUrl}/workspaces/admin_all`
   const access_token = getAccessToken()
   if (access_token == null) {
-    console.log("Error getting id token before getting workspaces")
+    console.log("Error getting access token before getting workspaces")
     logout();
   }
 
@@ -112,7 +112,7 @@ const callRequestWorkspace = async (form_data) => {
   const api = `${baseUrl}/workspaces`
   const access_token = getAccessToken()
   if (access_token == null) {
-    console.log("Error getting id token before getting workspaces")
+    console.log("Error getting access token before getting workspaces")
     logout();
   }
 

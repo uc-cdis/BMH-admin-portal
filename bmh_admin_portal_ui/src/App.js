@@ -16,21 +16,21 @@ export default function App() {
 
   return (
     <div className="App">
-      <NavBar isAuthenticated={authenticated} />
-      <Switch>
+        <NavBar isAuthenticated={authenticated} />
+        <Switch>
 
-        {/* Public routes meant for login */}
-        <Route exact path="/login/callback">
-          <LoginCallback setParentAuthenticated={setAuthenticated} />
-        </Route>
-        <Route exact path="/login" component={LoginForm} />
+          {/* Public routes meant for login */}
+          <Route exact path="/login/callback">
+            <LoginCallback setParentAuthenticated={setAuthenticated} />
+          </Route>
+          <Route exact path="/login" component={LoginForm} />
 
-        {/* React Router protected routes */}
-        <PrivateRoute path="/admin" component={WorkspaceAccountsAdmin} />
-        <PrivateRoute path="/request-workspace" component={RequestWorkspace} />
-        <PrivateRoute path="/" component={WorkspaceAccounts} />
+          {/* React Router protected routes */}
+          <PrivateRoute path="/admin" component={WorkspaceAccountsAdmin} />
+          <PrivateRoute path="/request-workspace" component={RequestWorkspace} />
+          <PrivateRoute path="/" component={WorkspaceAccounts} />
 
-      </Switch>
+        </Switch>
     </div>
   )
 }
