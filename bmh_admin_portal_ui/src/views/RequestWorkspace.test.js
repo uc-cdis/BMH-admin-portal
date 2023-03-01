@@ -11,7 +11,6 @@ import {
 } from 'react-dom/test-utils';
 
 
-process.env.REACT_APP_OIDC_AUTH_URI = "https://fence.planx-pla.net/user/oauth2/authorize"
 const FORM_TYPES = {
     stridesGrant: "strides-grant",
     stridesCredits: "strides-credits"
