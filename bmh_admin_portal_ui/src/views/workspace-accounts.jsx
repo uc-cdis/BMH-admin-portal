@@ -139,7 +139,7 @@ const WorkspaceAccounts = () => {
   }, {
     dataField: 'access-link',
     text: 'Workspaces Link',
-    formatter: (cell, row) => <a href={'https://' + process.env.REACT_APP_OIDC_AUTH_URI.split("/")[2]} target="_blank" rel="noreferrer">Link </a> , // By passing row variable to values I got all the contents of my datafields
+    formatter: (cell, row) => <a href={'https://' + process.env.REACT_APP_OIDC_AUTH_URI.split("/")[2] + '/workspace'} target="_blank" rel="noreferrer">Link </a> , // By passing row variable to values I got all the contents of my datafields
     editable: false,
     isDummyField: true,
   }]
