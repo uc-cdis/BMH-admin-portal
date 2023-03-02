@@ -1,18 +1,15 @@
 from unittest import mock
 from unittest.mock import patch, MagicMock, ANY
-import os
 import pytest
 import uuid
-import boto3
 import decimal
-import yaml
 import json
+import os
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 from boto3.dynamodb import table
 from lambdas.workspaces_api_resource import workspaces_api_resource_handler
-from lambdas.workspaces_api_resource.email_helper.email_helper import EmailHelper
-from moto import mock_dynamodb, mock_ssm, mock_stepfunctions, mock_apigateway, mock_sns
+from moto import mock_apigateway, mock_sns
 
 api_key = "testKey"
 test_email_1 = "test1@uchicago.com"
@@ -81,9 +78,14 @@ def test_workspaces_post(dynamodb_table):
     with pytest.raises(ValueError):
         workspaces_api_resource_handler._workspaces_post(json, test_email_1)
 
-    # Hardcode the `item` in the function and ensure the mock dynamo table consists it as a record
-    # Verify a success response is returned from the function
+    # Remove email_domain from OS settings and verify ValueError is being thrown
     json = {"workspace_type": "STRIDES Credits"}
+    os.environ.pop("email_domain")
+    with pytest.raises(ValueError):
+        workspaces_api_resource_handler._workspaces_post(json, test_email_1)
+
+    # Verify a success response is returned from the function and workspace request is saved in database
+    os.environ["email_domain"] = "uchicago.edu"
     with patch(
         "lambdas.workspaces_api_resource.workspaces_api_resource_handler.EmailHelper"
     ) as mock_email_client:

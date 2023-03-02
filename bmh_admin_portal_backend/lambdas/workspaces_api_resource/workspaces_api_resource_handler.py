@@ -175,7 +175,6 @@ def _get_tokens(query_string_params, api_key):
         base_url, grant_type, code, redirect_uri
     )
 
-    # url = f"{base_url}/oauth2/token?grant_type={grant_type}"
     logger.info(f"Requesting tokens: {url}")
     req = Request(url, data={})
     req.add_header("Content-Type", "application/x-www-form-urlencoded")

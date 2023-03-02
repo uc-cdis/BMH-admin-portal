@@ -88,14 +88,6 @@ def lambda_handler(event, context):
 
     # Finally, build the policy
     authResponse = policy.build()
-
-    # new! -- add additional key-value pairs associated with the authenticated principal
-    # these are made available by APIGW like so: $context.authorizer.<key>
-    # additional context is cached
-    context = {"user": name}
-    # context['arr'] = ['foo'] <- this is invalid, APIGW will not accept it
-    # context['obj'] = {'foo':'bar'} <- also invalid
-
     authResponse["context"] = context
     return authResponse
 
