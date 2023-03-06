@@ -143,12 +143,6 @@ def test_workspaces_post(dynamodb_table):
 
 def test_workspace_provision(dynamodb_table):
 
-    # mock_api_calls
-    def mock_make_api_call(self, operation_name, kwarg):
-        if operation_name == "CreateApiKey":
-            retval = {"operation_name": "CreateApiKey", "statusCode": "200"}
-            return retval
-
     # Mock the Dynamodb table with an exiting workspace records
     id1 = str(uuid.uuid4())
     item1 = {
@@ -207,7 +201,6 @@ def test_workspace_provision(dynamodb_table):
 
 
 def test_workspace_provision_failures():
-    # Success Response#
     with mock.patch.object(
         workspaces_api_resource_handler, "_get_dynamodb_table_name"
     ) as mock_get_table_name:
