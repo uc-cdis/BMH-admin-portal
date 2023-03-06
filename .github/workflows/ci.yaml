@@ -7,7 +7,7 @@ on:
 
 
 jobs:
-  unit_test:
+  frontend_unit_test:
     runs-on: ubuntu-latest
 
     steps:
@@ -16,7 +16,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 16.x
-      - run: |
+      - name: Setup and run npm test
+        run: |
             cd bmh_admin_portal_ui
             npm ci
             npm run build --if-present
