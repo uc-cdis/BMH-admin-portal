@@ -59,6 +59,7 @@ const authorize = async (resourceMap, user_auth_mapping) => {
   }
 
   // We souldn't ever get here, but in case something changes.
+  /* eslint-disable */
   return false;
 }
 
