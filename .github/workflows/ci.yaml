@@ -34,10 +34,10 @@ jobs:
           python-version: "3.9"
       - name: Install poetry
         run: |
+            cd bmh_admin_portal_backend
             pip --version
             pip install poetry
             poetry install -vv
       - name: Run test
         run: |
-          cd bmh_admin_portal_backend
           poetry run pytest -vv --cov=fence --cov=migrations/versions --cov-report xml tests
