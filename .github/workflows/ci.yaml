@@ -41,4 +41,4 @@ jobs:
       - name: Run test
         run: |
           cd bmh_admin_portal_backend
-          poetry run pytest -vv --cov=fence --cov=migrations/versions --cov-report xml tests
+          poetry run pytest -vv --cov-report xml tests
