@@ -21,6 +21,7 @@ LoadingOverlay.propTypes = undefined;
 const WorkspaceAccountsAdmin = () => {
   const [workspaces, setWorkspaces] = useState([])
   const [loading, setLoading] = useState(true)
+  /* eslint-disable */
   const [adminAuthorized, setAdminAuthorized] = useState(false)
 
   useEffect(() => {
@@ -46,12 +47,6 @@ const WorkspaceAccountsAdmin = () => {
     )
   }
 
-
-  const selectRow = {
-    mode: 'radio',
-    clickToSelect: true,
-    clickToExpand: true
-  };
 
   const columns = [{
     dataField: 'scientific_poc',
