@@ -8,6 +8,7 @@ import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Alert from 'react-bootstrap/Alert';
 import { getAccessToken, logout } from "../../util/oidc";
+import { requestWorkspace } from '../../util/api';
 
 const baseUrl = process.env.REACT_APP_API_GW_ENDPOINT
 const occHelpURL = process.env.REACT_APP_OCC_HELPER_URL
@@ -26,6 +27,7 @@ const directpayinitialFormData = Object.freeze({
 
 const DirectPayForm = (props) => {
 
+const { updateRedirectHome } = props
 const [formData, updateFormData] = useState(directpayinitialFormData);
 const [billingID, setBillingID] = useState('');
 const [email, setEmail] = useState('');
@@ -63,25 +65,35 @@ const handleSubmit = event => {
         body: JSON.stringify(data)
     };
 
-    fetch(occHelpURL, config)
-        .then((response) => {
-            if (response.data['statusCode'] !== 400) {
-                if (response.data.body[0]["Message"]["statusCode"] === 200) {
-                    setRequestApproved("true");
-                    setDirectPayLimit(response.data.body[0]["Message"]["body"]);
-                    setButtonDisabledtoo(true)
-                } else {
-                    console.log("handle error");
-                    setRequestApproved("false");
-                }
+    async function fetchDataForDirectPayAmount() {
+      const response = await fetch(occHelpURL, config)
+      if (!response.ok) {
+        const message = `An error has occured: ${response.status}`;
+        throw new Error(message);
+      }
+      const data = await response.json();
+      return data;
+    }
+
+    fetchDataForDirectPayAmount()
+    .then(data => {
+        if (data['statusCode'] !== 400) {
+            if (data.body[0]["Message"]["statusCode"] === 200) {
+                setRequestApproved("true");
+                setDirectPayLimit(data.body[0]["Message"]["body"]);
+                setButtonDisabledtoo(true)
             } else {
                 console.log("handle error");
                 setRequestApproved("false");
             }
-        })
-        .catch((error) => {
-            console.log(error);
-        });
+        } else {
+            console.log("handle error");
+            setRequestApproved("false");
+        }
+    })
+    .catch(error => {
+        console.log(error.message);
+    });
 }
 
 
@@ -116,6 +128,7 @@ const handleRequest = event =>{
   const form = event.currentTarget;
   const api = `${baseUrl}/workspaces`
   const id_token = getAccessToken()
+
   if (id_token == null) {
     console.log("Error getting id token before getting workspaces")
     logout();
@@ -140,9 +153,19 @@ const handleRequest = event =>{
   };
 
 
-  fetch(api, config)
+  async function storeDirectPayAmounttoBRH() {
+      const response = await fetch(api, config)
+      if (!response.ok) {
+        const message = `An error has occured: ${response.status}`;
+        throw new Error(message);
+      }
+      const data = await response.json();
+      return data;
+  }
+
+  storeDirectPayAmounttoBRH()
   .then((response) => {
-    var reqid = (JSON.stringify(response.data.message));
+    var reqid = (JSON.stringify(response.message));
     reqid = (reqid.slice(1, reqid.length - 1));
     requestAPICall(reqid);
   })
@@ -156,7 +179,7 @@ const requestAPICall = (reqid) => {
             "brh_data": {
                 "AGBillingID": billingID,
                 "Email": email,
-                "ProjectTitle ": title,
+                "ProjectTitle": title,
                 "ProjectSummary": summary,
                 "WorkspaceUse": workspace_use,
                 "ApprovedCreditCard": creditCard,
@@ -174,9 +197,19 @@ const requestAPICall = (reqid) => {
         body: JSON.stringify(data)
     };
 
-    fetch(occHelpURL, config)
+    async function storeDirectPayAmounttoOCC() {
+      const response = await fetch(occHelpURL, config)
+      if (!response.ok) {
+        const message = `An error has occured: ${response.status}`;
+        throw new Error(message);
+      }
+      const data = await response.json();
+      return data;
+    }
+
+    storeDirectPayAmounttoOCC()
         .then((response) => {
-            console.log(JSON.stringify(response.data));
+            console.log(JSON.stringify(response));
         })
         .catch((error) => {
             console.log(error);
@@ -192,7 +225,7 @@ if(requestApproved === "true"){
         <Form onSubmit={handleRequest}>
           <Form.Row className="mb-3">
           <Col>
-          <Form.Check type="checkbox" name="attestation" label={`By filling out this form below, I consent to be invoiced by OCC the amount of $ ${(directpaylimit)}  to provision that amount of compute for my workspace. If this value is incorrect, please contact OCC to update your request amount.`} required />
+          <Form.Check type="checkbox" name="attestation" label={`By filling out this form below, I consent to be invoiced by OCC the amount of $${(directpaylimit)}  to provision that amount of compute for my workspace. If this value is incorrect, please contact OCC to update your request amount.`} required />
           </Col>
           </Form.Row>
           <br></br>
