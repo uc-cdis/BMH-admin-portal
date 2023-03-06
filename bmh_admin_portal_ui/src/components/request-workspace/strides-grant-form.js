@@ -50,12 +50,13 @@ const StridesGrantForm = (props) => {
       }
     }
 
-    if (e.target.name === "internal_poc_email" && e.target.value.trim() !== formData['confirm_internal_poc_email']) {
-
+    if (pocConfirmEmailInputEl.current) {
+      if (e.target.name === "internal_poc_email" && e.target.value.trim() !== formData['confirm_internal_poc_email']) {
         pocConfirmEmailInputEl.current.setCustomValidity("Must match email")
       } else {
         pocConfirmEmailInputEl.current.setCustomValidity("")
       }
+    }
 
     // validate NIH IoC
     if (e.target.name === "administering_nih_institute") {

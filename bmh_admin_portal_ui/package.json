@@ -60,7 +60,9 @@
     ]
   },
   "devDependencies": {
-    "@svgr/webpack": "^6.2.1"
+    "@svgr/webpack": "^6.2.1",
+    "enzyme": "^3.11.0",
+    "enzyme-adapter-react-16": "^1.15.7"
   },
   "overrides": {
     "@svgr/webpack": "$@svgr/webpack"
