@@ -19,8 +19,7 @@ import botocore
 from botocore.exceptions import ClientError
 from boto3.dynamodb.conditions import Key
 from boto3.session import Session
-
-from email_helper.email_helper import EmailHelper
+from lambdas.workspaces_api_resource.email_helper.email_helper import EmailHelper
 
 
 import logging
@@ -175,6 +174,7 @@ def _get_tokens(query_string_params, api_key):
     url = "{}/oauth2/token?grant_type={}&code={}&redirect_uri={}".format(
         base_url, grant_type, code, redirect_uri
     )
+
     logger.info(f"Requesting tokens: {url}")
     req = Request(url, data={})
     req.add_header("Content-Type", "application/x-www-form-urlencoded")
@@ -343,7 +343,7 @@ def _workspace_provision(body, path_params):
     )
 
     # Create the SNS topic for communication back to the user.
-    # TODO: Make this SNS topic a single SNS topic that notifies the admin instead
+    # TODO: Make this SNS topic a single SNS topic that notifies the admin
     # instead of a topic per workspace.
     sns = boto3.client("sns")
     response = sns.create_topic(
@@ -544,6 +544,13 @@ def _workspaces_set_limits(body, path_params, user):
         else:
             raise Exception("Required `user` parameter in request body")
 
+    # User is None for requests made by an application using client_credentials.
+    if not user:
+        if "user" in body:
+            user = body["user"]
+        else:
+            raise Exception("Required `user` parameter in request body")
+
     # Get the dynamodb table name from SSM Parameter Store
     workspace_id = path_params["workspace_id"]
     dynamodb_table_name = _get_dynamodb_table_name()
@@ -646,7 +653,7 @@ def _workspaces_set_total_usage(body, path_params, api_key):
 
     sns_topic_arn = table_response["Attributes"]["sns-topic"]
     message = "Success"
-    if old_total_usage < hard_limit and formatted_total_usage >= hard_limit:
+    if old_total_usage < hard_limit <= formatted_total_usage:
         logger.info(
             f"Surpassed the hard limit: {old_total_usage=} {formatted_total_usage=} {hard_limit=}"
         )
@@ -660,9 +667,9 @@ def _workspaces_set_total_usage(body, path_params, api_key):
         #  TODO: Publish to admin email instead of per user
         _publish_to_sns_topic(sns_topic_arn, subject, message)
 
-    elif old_total_usage < soft_limit and formatted_total_usage >= soft_limit:
+    elif old_total_usage < soft_limit <= formatted_total_usage:
         logger.info(
-            f"Surpassed the hard limit: {old_total_usage=} {formatted_total_usage=} {soft_limit=}"
+            f"Surpassed the soft limit: {old_total_usage=} {formatted_total_usage=} {soft_limit=}"
         )
 
         subject = f"Workspace {workspace_id}: exceeded usage soft limit"
