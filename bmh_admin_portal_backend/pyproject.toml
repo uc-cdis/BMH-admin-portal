@@ -15,7 +15,7 @@ boto3 = "^1.26"
 
 [tool.poetry.dev-dependencies]
 moto = "^4.1.1"
-openapi-core = "*"
+openapi-core = "^0.17.0"
 pytest = "^6.0.0"
 pytest-cov = "*"
 pyyaml = "^6.0.0"
