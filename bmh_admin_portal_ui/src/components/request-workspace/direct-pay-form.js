@@ -75,7 +75,7 @@ const DirectPayForm = (props) => {
 
             doFetchAPICalls(occHelpURL, requestData)
                 .then(data => {
-                    if (data['statusCode'] !== 40 && data.body[0]["Message"]["statusCode"] === 200) {
+                    if (data['statusCode'] !== 400 && data.body[0]["Message"]["statusCode"] === 200) {
                         setRequestApproved("true");
                         setDirectPayLimit(data.body[0]["Message"]["body"]);
                         setButtonDisabledtoo(true)
