@@ -82,7 +82,7 @@ const RequestWorkspace = () => {
   }
   else if (formToggle === FORM_OPTIONS.directPay) {
     componentToRender = (<div>
-      <Row className="mb-3"><p>{`If you have registered through Payment Solutions Portal, received a unique Billing ID from OCC, and are requesting a workspace account through Direct Pay, please proceed with filling out the form below. If your request is approved, then a new account with a spending limit will be provisioned for usage. If you have not received a Billing ID from OCC, please proceed to the`} <a href="https://va.occ-data.org/">Payment Solutions Portal</a>{` to complete your registration, and return to make a request here once you recieve your Billing ID`} </p> </Row>
+      <Row className="mb-3"><p>{`If you have registered through Payment Solutions Portal, received a unique Billing ID from OCC, and are requesting a workspace account through Direct Pay, please proceed with filling out the form below. If your request is approved, then a new account with a spending limit will be provisioned for usage. If you have not received a Billing ID from OCC, please proceed to the`} <a href="https://payments.occ-pla.net/">Payment Solutions Portal</a>{` to complete your registration, and return to make a request here once you recieve your Billing ID`} </p> </Row>
       <Row className="mb-3"><h4>{"Request Form for OCC Direct Pay Account"}</h4></Row>
       <Row className="justify-content-left">
         <Col>
