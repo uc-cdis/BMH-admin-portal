@@ -44,6 +44,10 @@ const LoginCallback = ({ setParentAuthenticated }) => {
     if (code !== null) {
       execute();
     }
+    else {
+      removeTokens();
+      setToHome(true);
+    }
   });
 
   if (toHome) {
