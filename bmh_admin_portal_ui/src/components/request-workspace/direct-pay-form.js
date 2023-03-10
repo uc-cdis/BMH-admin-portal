@@ -66,28 +66,21 @@ const DirectPayForm = (props) => {
                 }
             };
 
-            var requestData = {
-                method: 'post',
-                headers: {
+            var headers = {
                     'Content-Type': 'text/plain'
-                },
-                body: JSON.stringify(data)
-            };
+            }
 
-            doFetchAPICalls(occHelpURL, requestData)
-                .then(data => {
-                    if (data['statusCode'] !== 400 && data.body[0]["Message"]["statusCode"] === 200) {
-                        setRequestApproved("true");
-                        setDirectPayLimit(data.body[0]["Message"]["body"]);
-                        setButtonDisabledtoo(true)
-                    } else {
-                        console.log("handle error");
-                        setRequestApproved("false");
-                    }
-                })
-                .catch(error => {
-                    console.log(error.message);
-                });
+            callExternalURL(occHelpURL, "post", headers, data, (response) => {
+                if (response['statusCode'] !== 400 && response.body[0]["Message"]["statusCode"] === 200) {
+                    setRequestApproved("true");
+                    setDirectPayLimit(response.body[0]["Message"]["body"]);
+                    setButtonDisabledtoo(true);
+                } else {
+                    console.log("handle error");
+                    setRequestApproved("false");
+                }
+                updateRedirectHome(true);
+            });
         }
 
 
@@ -119,49 +112,18 @@ const DirectPayForm = (props) => {
 
             setButtonDisabled(true);
             event.preventDefault();
-            const api = `${baseUrl}/workspaces`
-            const access_token = getAccessToken()
-
-            if (access_token == null) {
-                console.log("Error getting id token before getting workspaces")
-                logout();
-            }
-
-            const headers = {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${access_token}`
-            }
 
             var direct_pay_limit = `,"direct_pay_limit":` + directpaylimit + `}`
             var tempdata = JSON.stringify(formData)
             tempdata = tempdata.slice(0, tempdata.length - 1)
             var data = tempdata + direct_pay_limit;
 
-
-            var config = {
-                method: 'POST',
-                headers: headers,
-                body: data
-            };
-
-
-            async function storeDirectPayAmounttoBRH() {
-                const response = await fetch(api, config)
-                if (!response.ok) {
-                    const message = `An error has occured: ${response.status}`;
-                    throw new Error(message);
-                }
-                const data = await response.json();
-                return data;
-            }
-
-            storeDirectPayAmounttoBRH()
-                .then((response) => {
-                    var reqid = (JSON.stringify(response.message));
-                    reqid = (reqid.slice(1, reqid.length - 1));
-                    requestAPICall(reqid);
- 		    updateRedirectHome(true);
-                })
+            requestWorkspace(JSON.parse(data), (response) => {
+                var reqid = (JSON.stringify(response.message));
+                reqid = (reqid.slice(1, reqid.length - 1));
+                requestAPICall(reqid);
+                updateRedirectHome(true);
+            });
 
         }
 
@@ -182,22 +144,13 @@ const DirectPayForm = (props) => {
                 }
             };
 
-            var requestData = {
-                method: 'post',
-                headers: {
+            var headers = {
                     'Content-Type': 'text/plain'
-                },
-                body: JSON.stringify(data)
             };
 
-
-            doFetchAPICalls(occHelpURL, requestData)
-                .then((response) => {
-                    console.log(JSON.stringify(response));
-                })
-                .catch((error) => {
-                    console.log(error);
-                });
+            callExternalURL(occHelpURL, "post", headers, data, (response) => {
+                console.log(JSON.stringify(response));
+            });
 
             window.location = '/';
         }
@@ -315,17 +268,6 @@ const DirectPayForm = (props) => {
               {componentToRender}
               </div>
         )
-
-
-        async function doFetchAPICalls(url, config) {
-            const response = await fetch(url, config);
-            if (!response.ok) {
-                const message = `An error has occured: ${response.status}`;
-                throw new Error(message);
-            }
-            const data = await response.json();
-            return data;
-        }
 
     }
 

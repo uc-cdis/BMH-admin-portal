@@ -103,8 +103,8 @@ const getAdminWorkspacesResponse = async () => {
 /*************** requestWorkspace **************************/
 export const requestWorkspace = (form_data, callback) => {
   makeApiCall(() => callRequestWorkspace(form_data), async (resp) => {
-    await resp.json()
-    callback()
+    var response_data = await resp.json()
+    callback(response_data)
   })
 }
 
@@ -180,6 +180,32 @@ const callApproveWorkspace = async (workspace_id, account_id) => {
   const response = await fetch(api, {
     method: 'POST',
     body: JSON.stringify(account_id),
+    headers: headers
+  })
+  return response
+}
+
+
+/***************  callExternalURL **************************/
+export const callExternalURL = (url, method, headers, data, callback) => {
+  makeApiCall(() => callExternalURLFunc(url, method, headers, data), async (resp) => {
+    var response_data = await resp.json()
+    callback(response_data)
+  })
+}
+
+const callExternalURLFunc = async (url, method, headers, data) => {
+
+  const access_token = getAccessToken()
+  if (access_token == null) {
+    console.log("Error getting access token before getting workspaces")
+    logout();
+  }
+
+
+  const response = await fetch(url, {
+    method: 'POST',
+    body: JSON.stringify(data),
     headers: headers
   })
   return response
