@@ -19,7 +19,11 @@ import botocore
 from botocore.exceptions import ClientError
 from boto3.dynamodb.conditions import Key
 from boto3.session import Session
-from .email_helper.email_helper import EmailHelper
+
+# Boilerplate code to have a workaround for unit tests and AWS deployment for relative imports
+sys.path.append(os.path.join(os.path.dirname(__file__)))
+
+from email_helper.email_helper import EmailHelper
 
 
 import logging
