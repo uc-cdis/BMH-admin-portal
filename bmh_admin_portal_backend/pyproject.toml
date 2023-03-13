@@ -1,6 +1,6 @@
 [tool.pytest.ini_options]
 pythonpath = [
-  ".", "lambdas/workspaces_api_resource"
+  ".", "lambdas/workspaces_api_resource", "lambdas/workspaces_api_resource/email_helper"
 ]
 
 [tool.poetry]
