@@ -1221,14 +1221,14 @@ typeguard = ">=2.13.3,<2.14.0"
 
 [[package]]
 name = "boto3"
-version = "1.26.85"
+version = "1.26.90"
 description = "The AWS SDK for Python"
 category = "main"
 optional = false
 python-versions = ">= 3.7"
 
 [package.dependencies]
-botocore = ">=1.29.85,<1.30.0"
+botocore = ">=1.29.90,<1.30.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.6.0,<0.7.0"
 
@@ -1237,7 +1237,7 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.29.85"
+version = "1.29.90"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
 optional = false
@@ -1789,20 +1789,20 @@ use_chardet_on_py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "responses"
-version = "0.22.0"
+version = "0.23.1"
 description = "A utility library for mocking out the `requests` Python library."
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 
 [package.dependencies]
+pyyaml = "*"
 requests = ">=2.22.0,<3.0"
-toml = "*"
-types-toml = "*"
+types-PyYAML = "*"
 urllib3 = ">=1.25.10"
 
 [package.extras]
-tests = ["pytest (>=7.0.0)", "coverage (>=6.0.0)", "pytest-cov", "pytest-asyncio", "pytest-httpserver", "flake8", "types-requests", "mypy"]
+tests = ["pytest (>=7.0.0)", "coverage (>=6.0.0)", "pytest-cov", "pytest-asyncio", "pytest-httpserver", "flake8", "types-requests", "mypy", "tomli-w", "tomli"]
 
 [[package]]
 name = "rfc3339-validator"
@@ -1866,9 +1866,9 @@ doc = ["sphinx-rtd-theme", "sphinx-autodoc-typehints (>=1.2.0)"]
 test = ["pytest", "typing-extensions", "mypy"]
 
 [[package]]
-name = "types-toml"
-version = "0.10.8.5"
-description = "Typing stubs for toml"
+name = "types-pyyaml"
+version = "6.0.12.8"
+description = "Typing stubs for PyYAML"
 category = "dev"
 optional = false
 python-versions = "*"
@@ -1883,7 +1883,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "urllib3"
-version = "1.26.14"
+version = "1.26.15"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 category = "main"
 optional = false
@@ -2082,7 +2082,7 @@ toml = [
 ]
 tomli = []
 typeguard = []
-types-toml = []
+types-pyyaml = []
 typing-extensions = []
 urllib3 = []
 warrant = []
