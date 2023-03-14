@@ -194,7 +194,7 @@ export const callExternalURL = (url, method, headers, data, callback) => {
   })
 }
 
-const callExternalURLFunc = async (url, method, headers, data) => {
+const callExternalURLFunc = async (url, externalURLMethod, externalURLHeaders, externalURLData) => {
 
   const access_token = getAccessToken()
   if (access_token == null) {
@@ -204,9 +204,9 @@ const callExternalURLFunc = async (url, method, headers, data) => {
 
 
   const response = await fetch(url, {
-    method: 'POST',
-    body: JSON.stringify(data),
-    headers: headers
+    method: externalURLMethod,
+    body: JSON.stringify(externalURLData),
+    headers: externalURLHeaders
   })
   return response
 }
