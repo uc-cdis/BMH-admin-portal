@@ -12,15 +12,10 @@ import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Alert from 'react-bootstrap/Alert';
 import {
-    getAccessToken,
-    logout
-} from "../../util/oidc";
-import {
     requestWorkspace,
     callExternalURL
 } from '../../util/api';
 
-const baseUrl = process.env.REACT_APP_API_GW_ENDPOINT
 const occHelpURL = process.env.REACT_APP_OCC_HELPER_URL
 
 const directpayinitialFormData = Object.freeze({

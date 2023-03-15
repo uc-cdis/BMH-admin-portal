@@ -40,7 +40,7 @@ const WorkspaceAccounts = () => {
       let stridesData = [];
       let i = 0;
       while (i < data.length){
-        if(data[i].workspace_type == "Direct Pay"){
+        if(data[i].workspace_type === "Direct Pay"){
             occData.push(data[i]);
         }
         else{
