@@ -16,7 +16,8 @@ import {
     logout
 } from "../../util/oidc";
 import {
-    requestWorkspace
+    requestWorkspace,
+    callExternalURL
 } from '../../util/api';
 
 const baseUrl = process.env.REACT_APP_API_GW_ENDPOINT
