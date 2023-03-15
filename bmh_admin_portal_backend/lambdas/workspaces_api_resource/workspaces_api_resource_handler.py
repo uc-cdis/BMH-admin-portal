@@ -755,10 +755,16 @@ def _workspace_direct_pay_limit(body, path_params, user):
         "#directpaylimit": "direct_pay_limit",
     }
 
-    direct_pay_limit = round(decimal.Decimal(body["direct_pay_limit"]), 2)
+    try:
+        direct_pay_limit = round(decimal.Decimal(body["direct_pay_limit"]), 2)
+    except Exception as e:
+        raise ValueError(
+            "Direct pay limit must be a number, issue in converting direct_pay_limit from UI. Error: "
+            + str(e)
+        )
 
     if direct_pay_limit < 0:
-        raise ValueError("Direct pay limit must be a postive number")
+        raise ValueError("Direct pay limit must be a positive number")
 
     try:
         response = table.get_item(
@@ -769,7 +775,7 @@ def _workspace_direct_pay_limit(body, path_params, user):
         retval = response.get("Item", None)
     except Exception as e:
         raise ValueError(
-            "Could Not find record with exsisitng workspace_id and user" + str(e)
+            "Could not find record with existing workspace_id and user. Error:" + str(e)
         )
 
     if (
@@ -777,11 +783,11 @@ def _workspace_direct_pay_limit(body, path_params, user):
         or direct_pay_limit < retval["soft-limit"]
     ):
         raise ValueError(
-            "The new direct pay amount is less than the soft limit or hard limit "
+            "The new direct pay amount is less than the soft limit or hard limit"
         )
     elif direct_pay_limit < retval["direct_pay_limit"]:
         raise ValueError(
-            "The new direct pay amount is less than the old direct pay amount "
+            "The new direct pay amount is less than the old direct pay amount"
         )
 
     try:
@@ -789,9 +795,7 @@ def _workspace_direct_pay_limit(body, path_params, user):
             Key={"bmh_workspace_id": workspace_id, "user_id": user},
             UpdateExpression="set #direct = :direct",
             ConditionExpression="attribute_exists(bmh_workspace_id)",
-            ExpressionAttributeValues={
-                ":direct": round(decimal.Decimal(body["direct_pay_limit"]), 2)
-            },
+            ExpressionAttributeValues={":direct": direct_pay_limit},
             ExpressionAttributeNames={"#direct": "direct_pay_limit"},
             ReturnValues="ALL_NEW",
         )
