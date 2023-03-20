@@ -44,6 +44,10 @@ const LoginCallback = ({ setParentAuthenticated }) => {
     if (code !== null) {
       execute();
     }
+    else {
+      removeTokens();
+      setTimeout(() => setToHome(true), 0) //Adding it in the setTimeout queue, since this can't be run directly
+    }
   });
 
   if (toHome) {
