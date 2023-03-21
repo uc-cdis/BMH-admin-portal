@@ -8,7 +8,7 @@
 /* api.js
    Contains functions used to interact with backend BRH endpoints */
 
-import { getIdToken, logout, refresh } from "./oidc"
+import { getAccessToken, logout, refresh } from "./oidc"
 
 const baseUrl = process.env.REACT_APP_API_GW_ENDPOINT
 
@@ -55,15 +55,15 @@ export const getWorkspaces = (callback) => {
 
 const getWorkspacesResponse = async () => {
   const api = `${baseUrl}/workspaces`
-  const id_token = getIdToken()
-  if (id_token == null) {
-    console.log("Error getting id token before getting workspaces")
+  const access_token = getAccessToken()
+  if (access_token == null) {
+    console.log("Error getting access token before getting workspaces")
     logout();
   }
 
   const headers = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${id_token}`
+    'Authorization': `Bearer ${access_token}`
   }
   const response = await fetch(api, { headers: headers })
   return response
@@ -84,9 +84,9 @@ export const getAdminWorkspaces = (callback) => {
 
 const getAdminWorkspacesResponse = async () => {
   const api = `${baseUrl}/workspaces/admin_all`
-  const id_token = getIdToken()
-  if (id_token == null) {
-    console.log("Error getting id token before getting workspaces")
+  const access_token = getAccessToken()
+  if (access_token == null) {
+    console.log("Error getting access token before getting workspaces")
     logout();
   }
 
@@ -94,7 +94,7 @@ const getAdminWorkspacesResponse = async () => {
 
   const headers = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${id_token}`
+    'Authorization': `Bearer ${access_token}`
   }
   const response = await fetch(api, { headers: headers })
   return response
@@ -110,15 +110,15 @@ export const requestWorkspace = (form_data, callback) => {
 
 const callRequestWorkspace = async (form_data) => {
   const api = `${baseUrl}/workspaces`
-  const id_token = getIdToken()
-  if (id_token == null) {
-    console.log("Error getting id token before getting workspaces")
+  const access_token = getAccessToken()
+  if (access_token == null) {
+    console.log("Error getting access token before getting workspaces")
     logout();
   }
 
   const headers = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${id_token}`
+    'Authorization': `Bearer ${access_token}`
   }
 
   const response = await fetch(api, {
@@ -139,14 +139,14 @@ export const setWorkspaceLimits = (workspace_id, limits) => {
 
 const callSetWorkspaceLimits = async (workspace_id, limits) => {
   const api = `${baseUrl}/workspaces/${workspace_id}/limits`
-  const id_token = getIdToken()
-  if (id_token == null) {
+  const access_token = getAccessToken()
+  if (access_token == null) {
     logout();
   }
 
   const headers = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${id_token}`
+    'Authorization': `Bearer ${access_token}`
   }
 
 
@@ -167,14 +167,14 @@ export const approveWorkspace = (workspace_id, account_id) => {
 
 const callApproveWorkspace = async (workspace_id, account_id) => {
   const api = `${baseUrl}/workspaces/${workspace_id}/provision`
-  const id_token = getIdToken()
-  if (id_token == null) {
+  const access_token = getAccessToken()
+  if (access_token == null) {
     logout();
   }
 
   const headers = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${id_token}`
+    'Authorization': `Bearer ${access_token}`
   }
 
   const response = await fetch(api, {

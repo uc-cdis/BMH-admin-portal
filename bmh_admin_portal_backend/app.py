@@ -2,7 +2,9 @@
 
 from aws_cdk import core
 
-from bmh_admin_portal_backend.bmh_admin_portal_backend_stack import BmhAdminPortalBackendStack
+from bmh_admin_portal_backend.bmh_admin_portal_backend_stack import (
+    BmhAdminPortalBackendStack,
+)
 
 
 app = core.App()

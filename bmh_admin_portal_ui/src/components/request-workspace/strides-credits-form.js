@@ -56,10 +56,13 @@ const StridesCreditForm = (props) => {
       } else {
         e.target.setCustomValidity("")
       }
-      if (e.target.value.trim() !== formData['confirm_internal_poc_email']) {
-        pocConfirmEmailInputEl.current.setCustomValidity("Must match email")
-      } else {
-        pocConfirmEmailInputEl.current.setCustomValidity("")
+
+      if(pocConfirmEmailInputEl.current) {
+        if (e.target.value.trim() !== formData['confirm_internal_poc_email']) {
+          pocConfirmEmailInputEl.current.setCustomValidity("Must match email")
+        } else {
+          pocConfirmEmailInputEl.current.setCustomValidity("")
+        }
       }
     } else {
       setInvalidEmailFeedback("Must be a valid email")
@@ -87,7 +90,7 @@ const StridesCreditForm = (props) => {
     if (e.target.name === "intramural") {
       const isIntramuralChecked = e.target.checked
 
-      if (isIntramuralChecked && !pocEmailInputEl.current.value.match(NIH_EMAIL_REGEX)) {
+      if (isIntramuralChecked && pocEmailInputEl.current && !pocEmailInputEl.current.value.match(NIH_EMAIL_REGEX)) {
         pocEmailInputEl.current.setCustomValidity("Intramural user must their NIH email to request account")
         setInvalidEmailFeedback("Intramural user must their NIH email to request account")
       } else {

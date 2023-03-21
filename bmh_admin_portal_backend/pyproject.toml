@@ -1,0 +1,51 @@
+[tool.poetry]
+name = "bmh_admin_portal_backend"
+version = "0.1.0"
+description = "BMH Payment Management Portal"
+authors = ["CTDS"]
+classifiers=[
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: JavaScript",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Utilities",
+    "Typing :: Typed",
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+boto3 = "^1.26"
+"aws-cdk.core" = "^1.196.0"
+"aws-cdk.aws-apigateway" = "*"
+"aws-cdk.aws-logs" = "*"
+"aws-cdk.aws-lambda" = "*"
+"aws-cdk.aws-ssm" = "*"
+"aws-cdk.aws-iam" = "*"
+"aws-cdk.aws-events" = "*"
+"aws-cdk.aws-events-targets" = "*"
+"aws-cdk.aws-stepfunctions" = "*"
+"aws-cdk.aws-stepfunctions-tasks" = "*"
+"aws-cdk.aws-cognito" = "*"
+"aws-cdk.aws-sqs" = "*"
+"aws-cdk.aws-s3" = "*"
+"aws-cdk.aws-s3-deployment" = "*"
+"aws-cdk.aws-lambda-python" = "*"
+"aws-cdk.aws-secretsmanager" = "*"
+"aws-cdk.aws-sns" = "*"
+warrant = "^0.6.1"
+
+[tool.poetry.dev-dependencies]
+moto = "^4.1.1"
+openapi-core = "^0.17.0"
+pytest = "^6.0.0"
+pytest-cov = "*"
+pyyaml = "^6.0.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

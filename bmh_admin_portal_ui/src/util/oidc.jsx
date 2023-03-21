@@ -14,21 +14,21 @@ import axios from 'axios';
 import config from '../config.json';
 
 export const isAuthenticated = () => {
-  const id_token = getIdToken();
-  if( id_token ) {
+  const access_token = getAccessToken();
+  if( access_token ) {
     return true
   }
   return false
 }
 
 export const getName = () => {
-  const id_token = getIdToken();
-  if( id_token == null ) {
+  const access_token = getAccessToken();
+  if( access_token == null ) {
     return null
   }
   let name = "Unknown"
   try {
-    const decoded = jwt_decode(id_token);
+    const decoded = jwt_decode(access_token);
     name = decoded['context']['user']['name']
   } catch(err) {
     console.log("Could not retrieve name from id token");

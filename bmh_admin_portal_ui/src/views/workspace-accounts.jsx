@@ -10,12 +10,17 @@ import { BiEditAlt } from 'react-icons/bi';
 import BootstrapTable from 'react-bootstrap-table-next';
 import cellEditFactory from 'react-bootstrap-table2-editor';
 import overlayFactory from 'react-bootstrap-table2-overlay';
+import LoadingOverlay from 'react-loading-overlay'
 import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
 
 import { getWorkspaces, setWorkspaceLimits } from "../util/api"
 import {
   authorizeAdmin,
 } from '../util/auth';
+
+// Added this to avoid warning in unit tests.
+// Error: `Failed prop type: LoadingOverlayWrapper: prop type `styles.content` is invalid;`
+LoadingOverlay.propTypes = undefined;
 
 const WorkspaceAccounts = () => {
   const [workspaces, setWorkspaces] = useState([])
@@ -76,9 +81,6 @@ const WorkspaceAccounts = () => {
     if (newValue <= softLimit) {
       valid = false
       message = "Hard limit must be greater than soft limit."
-    } else if (newValue <= 0) {
-      valid = false
-      message = "Hard limit must be greater than 0 (zero)."
     } else if (row['strides-credits'] !== null) {
       let creditsAmt = parseInt(row['strides-credits'])
       if (newValue > creditsAmt && creditsAmt !== 0) {
@@ -137,7 +139,7 @@ const WorkspaceAccounts = () => {
   }, {
     dataField: 'access-link',
     text: 'Workspaces Link',
-    formatter: (cell, row) => <a href={'https://' + process.env.REACT_APP_OIDC_AUTH_URI.split("/")[2]} target="_blank" rel="noreferrer">Link </a> , // By passing row variable to values I got all the contents of my datafields
+    formatter: (cell, row) => <a href={'https://' + process.env.REACT_APP_OIDC_AUTH_URI.split("/")[2] + '/workspace'} target="_blank" rel="noreferrer">Link </a> , // By passing row variable to values I got all the contents of my datafields
     editable: false,
     isDummyField: true,
   }]

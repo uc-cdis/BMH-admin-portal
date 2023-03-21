@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    types: [opened, reopened]
+
+
+jobs:
+  frontend_unit_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+      - name: Setup and run npm test
+        run: |
+            cd bmh_admin_portal_ui
+            npm ci
+            npm run build --if-present
+            npm test .
+
+  backend_unit_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: Install poetry
+        run: |
+            cd bmh_admin_portal_backend
+            pip --version
+            pip install poetry
+            poetry install -vv
+      - name: Run test
+        run: |
+          cd bmh_admin_portal_backend
+          poetry run pytest -vv --cov-report xml tests

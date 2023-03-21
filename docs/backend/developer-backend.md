@@ -52,7 +52,6 @@ A Global Secondary Index is provided which uses bmh_workspace_id as the Partitio
           "user_id": "researcher@university.edu",
           "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde101",
           "soft-limit": 150,
-          "total-usage": 7.43,
           "request_status": "active",
           "workspace_type": "STRIDES Credits",
           "nih_funded_award_number": "4325534543"
@@ -64,6 +63,7 @@ A Global Secondary Index is provided which uses bmh_workspace_id as the Partitio
 * **Authorization**: Required, valid JWT token
 
 * **Description:** This request will return a single workspace representation (see above), if a resource exists with the specified workspace_id.
+  * **NOTE:** If the request is being sent using an `access_token` fetched using client_credentials, the request needs to be accompanied by a query parameter `user` with the value of the email address of the user linked with the `workspace_id`.
 
 * **Response:** Will return a single representation of a workspace. Otherwise, will return status code 404 if no workspace with the given ID can be found.
 
@@ -74,7 +74,6 @@ A Global Secondary Index is provided which uses bmh_workspace_id as the Partitio
           "user_id": "researcher@university.edu",
           "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde101",
           "soft-limit": 150,
-          "total-usage": 7.43,
           "request_status": "active",
           "workspace_type": "STRIDES Credits",
           "nih_funded_award_number": "4325534543"
@@ -100,6 +99,16 @@ A Global Secondary Index is provided which uses bmh_workspace_id as the Partitio
           "soft-limit": 2500,
           "hard-limit": 4750
       }
+  * **NOTE:** If the request is being sent using an `access_token` fetched using client_credentials, the request body must have a parameter `user` with the value of the email address of the user linked with the `workspace_id`.
+
+  * **Request:**
+      ```
+      {
+          "soft-limit": 2500,
+          "hard-limit": 4750,
+          "user": "abc@example.com"
+      }
+      ```
 
 * **Response:** Returns a full representation of the workspace (see above) with the new values for hard and soft limits. 404 if the workspace was not found.
 
