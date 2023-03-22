@@ -12,7 +12,9 @@ import {
 import { isAuthenticated } from "../util/oidc"
 
 const AdminRoute = ({ component: Component, ...rest }) => {
+
   const [adminAuthorized, setAdminAuthorized] = useState(null);
+
   useEffect(() => {
     async function fetchAuthorized() {
       const adminAuthorized = await authorizeAdmin();
@@ -41,6 +43,7 @@ const AdminRoute = ({ component: Component, ...rest }) => {
     <Route
       {...rest}
       render={props =>
+
         adminAuthorized ? (
           <Component {...props} />
         ) : (
