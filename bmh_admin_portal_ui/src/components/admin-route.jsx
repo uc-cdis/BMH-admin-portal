@@ -12,7 +12,7 @@ import {
 import { isAuthenticated } from "../util/oidc"
 
 const AdminRoute = ({ component: Component, ...rest }) => {
-  const [adminAuthorized, setAdminAuthorized] = useState(false);
+  const [adminAuthorized, setAdminAuthorized] = useState(null);
   useEffect(() => {
     async function fetchAuthorized() {
       const adminAuthorized = await authorizeAdmin();
@@ -20,12 +20,28 @@ const AdminRoute = ({ component: Component, ...rest }) => {
     }
     fetchAuthorized();
   }, []);
+
   const isLoggedIn = isAuthenticated()
+  if (!isLoggedIn){
+    return (
+      <Route
+        {...rest}
+        render={props =>
+          <Redirect to={{ pathname: '/', state: { from: props.location } }} />
+        }
+      />
+    )
+  }
+
+  if(adminAuthorized===null){ //Only return <div/> if adminAuthorized equal to null, not when equal to false.
+    return <div/>
+  }
+
   return (
     <Route
       {...rest}
       render={props =>
-        isLoggedIn && adminAuthorized ? (
+        adminAuthorized ? (
           <Component {...props} />
         ) : (
           <Redirect to={{ pathname: '/', state: { from: props.location } }} />
