@@ -273,11 +273,11 @@ def _workspaces_post(body, email):
 
     # Generate email address for root account
     email_domain = os.environ.get("email_domain", None)
-    if email_domain:
+    if not email_domain:
         raise ValueError("Could not find root account email domain.")
 
     occ_email_domain = os.environ.get("occ_email_domain", None)
-    if occ_email_domain:
+    if not occ_email_domain:
         raise ValueError("Could not find root account email domain.")
 
     if workspace_type == DIRECT_PAY_WORKSPACE_TYPE:
@@ -325,7 +325,10 @@ def _workspaces_post(body, email):
         EmailHelper.send_grant_workspace_request_email(item)
 
     if workspace_type == "Direct Pay":
-        return create_response(status_code=200, body={"message": workspace_request_id})
+        return create_response(
+            status_code=200,
+            body={"message": "success", "workspace_request_id": workspace_request_id},
+        )
     else:
         return create_response(status_code=200, body={"message": "success"})
 

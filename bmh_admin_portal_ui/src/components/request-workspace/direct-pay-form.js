@@ -33,7 +33,7 @@ const directpayinitialFormData = Object.freeze({
 const DirectPayForm = (props) => {
 
         const { updateRedirectHome } = props
-	const [formData, updateFormData] = useState(directpayinitialFormData);
+	    const [formData, updateFormData] = useState(directpayinitialFormData);
         const [billingID, setBillingID] = useState('');
         const [email, setEmail] = useState('');
         const [requestApproved, setRequestApproved] = useState("");
@@ -45,7 +45,7 @@ const DirectPayForm = (props) => {
         const [directpaylimit, setDirectPayLimit] = useState('');
         const [buttonDisabled, setButtonDisabled] = useState(false);
         const [buttonDisabledtoo, setButtonDisabledtoo] = useState(false);
-
+        const [formDisabled, setformDisabled] = useState(false);
 
         let componentToRender;
 
@@ -70,6 +70,7 @@ const DirectPayForm = (props) => {
                 if (response['statusCode'] !== 400 && response.body[0]["Message"]["statusCode"] === 200) {
                     setRequestApproved("true");
                     setDirectPayLimit(response.body[0]["Message"]["body"]);
+                    setformDisabled(true);
                     setButtonDisabledtoo(true);
                 } else {
                     console.log("handle error");
@@ -115,7 +116,7 @@ const DirectPayForm = (props) => {
             var data = tempdata + direct_pay_limit;
 
             requestWorkspace(JSON.parse(data), (response) => {
-                var reqid = (JSON.stringify(response.message));
+                var reqid = (JSON.stringify(response.workspace_request_id));
                 reqid = (reqid.slice(1, reqid.length - 1));
                 requestAPICall(reqid);
                 updateRedirectHome(true);
@@ -249,13 +250,13 @@ const DirectPayForm = (props) => {
                         Enter the Billing ID provided from registration through the Payment Solutions Portal. <br />
                         If you have not recieved a BillingID, please complete registration at: <href>https://payments.occ-pla.net/</href>
                       </ReactTooltip>
-                      <Form.Control type="text" name="billingID" onChange={event => setBillingID(event.target.value)} placeholder="Enter BillingID" />
+                      <Form.Control type="text" name="billingID" disabled={formDisabled} onChange={event => setBillingID(event.target.value)} placeholder="Enter BillingID" />
                       <br></br>
                       <Form.Label> First 3 Characters of Associated Email Address <span data-tip data-for="email_help"><BiHelpCircle /></span></Form.Label>
                       <ReactTooltip class="tooltip" id="email_help" place="top" effect="solid" multiline={true}>
                         Enter the first three characters of the email associated with your OCC BillingID. Ex: Email address JohnDoe@gmail.com should enter Joh in the box
                       </ReactTooltip>
-                      <Form.Control type="text" name="email" onChange={event => setEmail(event.target.value)} placeholder="Enter First Three Characters of Email" />
+                      <Form.Control type="text" name="email" disabled={formDisabled} onChange={event => setEmail(event.target.value)} placeholder="Enter First Three Characters of Email" />
                       <br></br>
                       <Button type="submit" disabled={buttonDisabledtoo}>Confirm BillingID</Button>
                     <br></br>
