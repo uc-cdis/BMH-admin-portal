@@ -24,18 +24,8 @@ const AdminRoute = ({ component: Component, ...rest }) => {
   }, []);
 
   const isLoggedIn = isAuthenticated()
-  if (!isLoggedIn){
-    return (
-      <Route
-        {...rest}
-        render={props =>
-          <Redirect to={{ pathname: '/', state: { from: props.location } }} />
-        }
-      />
-    )
-  }
 
-  if(adminAuthorized===null){ //Only return <div/> if adminAuthorized equal to null, not when equal to false.
+  if(isLoggedIn && adminAuthorized===null){ //Only return <div/> if we're waiting to fetch adminAuthorized for logged in user, not when equal to false.
     return <div/>
   }
 
@@ -43,8 +33,7 @@ const AdminRoute = ({ component: Component, ...rest }) => {
     <Route
       {...rest}
       render={props =>
-
-        adminAuthorized ? (
+        adminAuthorized ? (  // adminAuthorized would never be true for users who are not logged in, therefore they'd be redirected to the '/' page.
           <Component {...props} />
         ) : (
           <Redirect to={{ pathname: '/', state: { from: props.location } }} />
