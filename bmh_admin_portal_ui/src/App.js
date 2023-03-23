@@ -3,6 +3,7 @@ import { Route, Switch } from 'react-router-dom';
 
 import { isAuthenticated } from './util/oidc';
 import PrivateRoute from "./components/private-route"
+import AdminRoute from "./components/admin-route"
 import NavBar from './components/nav-bar';
 import WorkspaceAccounts from './views/workspace-accounts';
 import WorkspaceAccountsAdmin from './views/workspace-accounts-admin';
@@ -26,7 +27,7 @@ export default function App() {
           <Route exact path="/login" component={LoginForm} />
 
           {/* React Router protected routes */}
-          <PrivateRoute path="/admin" component={WorkspaceAccountsAdmin} />
+          <AdminRoute path="/admin" component={WorkspaceAccountsAdmin} />
           <PrivateRoute path="/request-workspace" component={RequestWorkspace} />
           <PrivateRoute path="/" component={WorkspaceAccounts} />
 
