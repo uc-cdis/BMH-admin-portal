@@ -12,7 +12,9 @@ import {
 import { isAuthenticated } from "../util/oidc"
 
 const AdminRoute = ({ component: Component, ...rest }) => {
-  const [adminAuthorized, setAdminAuthorized] = useState(false);
+
+  const [adminAuthorized, setAdminAuthorized] = useState(null);
+
   useEffect(() => {
     async function fetchAuthorized() {
       const adminAuthorized = await authorizeAdmin();
@@ -20,12 +22,18 @@ const AdminRoute = ({ component: Component, ...rest }) => {
     }
     fetchAuthorized();
   }, []);
+
   const isLoggedIn = isAuthenticated()
+
+  if(isLoggedIn && adminAuthorized===null){ //Only return <div/> if we're waiting to fetch adminAuthorized for logged in user, not when equal to false.
+    return <div/>
+  }
+
   return (
     <Route
       {...rest}
       render={props =>
-        isLoggedIn && adminAuthorized ? (
+        adminAuthorized ? (  // adminAuthorized would never be true for users who are not logged in, therefore they'd be redirected to the '/' page.
           <Component {...props} />
         ) : (
           <Redirect to={{ pathname: '/', state: { from: props.location } }} />
