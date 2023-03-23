@@ -72,9 +72,9 @@ class EmailClient:
         email_domain = os.environ.get("email_domain", None)
         if email_domain == "planx-pla.net":
             return {
-                "site": "Gen3 QA",
-                "url": "https://qa-heal.planx-pla.net",
-                "doc_link": "https://qa-heal.planx-pla.net/dashboard/Public/documentation/index.html#Workspaces",
+                "site": "QA-BRH",
+                "url": "https://qa-brh.planx-pla.net",
+                "doc_link": "https://qa-brh.planx-pla.net/dashboard/Public/index.html#Workspaces",
             }
         elif email_domain == "brh-portal.org":
             return {
