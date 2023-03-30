@@ -236,7 +236,7 @@ const DirectPayForm = (props) => {
         else if(requestApproved === "false"){
           componentToRender = (<div>
               <Alert key= 'danger' variant='danger'>
-                  Cannot confirm BillingID. Confirm BillingID and email and try again, or contact OCC.
+                  Cannot confirm BillingID. Please correct the BillingID number you entered and/or the email characters and try again, or contact OCC at ag@occ-data.org
               </Alert>
             </div>
           )
