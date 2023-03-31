@@ -253,7 +253,6 @@ def _refresh_tokens(body, api_key):
 
 ####################### Functions to handle API Method Calls ###################
 def _workspaces_post(body, email):
-
     assert "workspace_type" in body
     workspace_type = body["workspace_type"]
 
@@ -364,6 +363,11 @@ def _workspace_provision(body, path_params):
     #     Protocol="email",
     #     Endpoint=sns_email
     # )
+
+    # Adding a subscription to the Lambda function that updates dynamoDB if total-usage is over the hard-limit
+    lambda_arn = _get_param(os.environ["api_usage_id_param_name"])
+    if lambda_arn:
+        sns.subscribe(TopicArn=topic_arn, Protocol="lambda", Endpoint=lambda_arn)
 
     # Get the dynamodb table name from SSM Parameter Store
     dynamodb_table_name = _get_dynamodb_table_name()
@@ -668,8 +672,16 @@ def _workspaces_set_total_usage(body, path_params, api_key):
         Soft Usage Limit: {soft_limit}
         Hard Usage Limit: {hard_limit}
         """
+        attributes = {
+            "workspace_id": {"DataType": "String", "StringValue": workspace_id},
+            "total_usage": {
+                "DataType": "String",
+                "StringValue": str(formatted_total_usage),
+            },
+            "hard_limit": {"DataType": "String", "StringValue": str(hard_limit)},
+        }
         #  TODO: Publish to admin email instead of per user
-        _publish_to_sns_topic(sns_topic_arn, subject, message)
+        _publish_to_sns_topic(sns_topic_arn, subject, message, attributes)
 
     elif old_total_usage < soft_limit <= formatted_total_usage:
         logger.info(
@@ -689,6 +701,7 @@ def _workspaces_set_total_usage(body, path_params, api_key):
 
 
 ################################################################################
+
 
 ################################ Helper Methods ################################
 def _get_workspace_request_status_and_email(workspace_request_id):
@@ -730,9 +743,14 @@ def _get_workspace_request_status_and_email(workspace_request_id):
 
 #  TODO: Publish to admin email instead of per user
 #  TODO: Create this admin SNS topic via CDK so we only subscribe to a single topic per environment.
-def _publish_to_sns_topic(topic_arn, subject, message):
+def _publish_to_sns_topic(topic_arn, subject, message, attributes={}):
     sns = boto3.client("sns")
-    sns.publish(TopicArn=topic_arn, Subject=subject, Message=message)
+    sns.publish(
+        TopicArn=topic_arn,
+        Subject=subject,
+        Message=message,
+        MessageAttributes=attributes,
+    )
 
 
 def _get_dynamodb_index_name():
@@ -763,7 +781,6 @@ class DecimalEncoder(json.JSONEncoder):
 
 
 def get_secret(secret_name):
-
     # secret_name = "/brh/fence_client_secret"
 
     # Create a Secrets Manager client
