@@ -354,6 +354,7 @@ def _workspace_provision(body, path_params):
         Tags=[{"Key": "bmh_workspace_id", "Value": workspace_id}],
     )
     topic_arn = response["TopicArn"]
+
     # Commenting this out since we don't want to use this as notification.
     # TODO: Remove this once we are confident
     # email_domain = os.environ.get("email_domain", None)
@@ -368,6 +369,18 @@ def _workspace_provision(body, path_params):
     lambda_arn = _get_param(os.environ["api_usage_id_param_name"])
     if lambda_arn:
         sns.subscribe(TopicArn=topic_arn, Protocol="lambda", Endpoint=lambda_arn)
+
+    # Add permission to the function to allow SNS to invoke it
+    lambda_client = boto3.client("lambda")
+    total_usage_trigger_lambda = lambda_client.get_function()
+    lambda_response = lambda_client.add_permission(
+        FunctionName=_get_total_usage_trigger_lambda_arn(),
+        StatementId=f"sns-trigger-{workspace_id}",
+        Action="lambda:InvokeFunction",
+        Principal="sns.amazonaws.com",
+        SourceArn=topic_arn,
+    )
+    logger.info(lambda_response)
 
     # Get the dynamodb table name from SSM Parameter Store
     dynamodb_table_name = _get_dynamodb_table_name()
@@ -674,6 +687,7 @@ def _workspaces_set_total_usage(body, path_params, api_key):
         """
         attributes = {
             "workspace_id": {"DataType": "String", "StringValue": workspace_id},
+            "user_id": {"DataType": "String", "StringValue": user_id},
             "total_usage": {
                 "DataType": "String",
                 "StringValue": str(formatted_total_usage),
@@ -759,6 +773,10 @@ def _get_dynamodb_index_name():
 
 def _get_dynamodb_table_name():
     return _get_param(os.environ["dynamodb_table_param_name"])
+
+
+def _get_total_usage_trigger_lambda_arn():
+    return _get_param(os.environ["total_usage_trigger_lambda_arn"])
 
 
 def _get_param(param_name):
