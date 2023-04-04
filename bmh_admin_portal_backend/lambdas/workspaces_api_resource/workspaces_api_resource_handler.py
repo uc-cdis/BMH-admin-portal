@@ -603,6 +603,26 @@ def _workspaces_set_limits(body, path_params, user):
         else:
             raise e
 
+    sns_topic_arn = table_response["Attributes"]["sns-topic"]
+    total_usage = table_response["Attributes"]["total-usage"]
+
+    subject = f"Workspace {workspace_id}: Soft and Hard limits updated"
+    message = f"""The Workspace ({workspace_id}) has the following updated limits.
+    Total Usage: {total_usage}
+    Soft Usage Limit: {soft_limit}
+    Hard Usage Limit: {hard_limit}
+    """
+    attributes = {
+        "workspace_id": {"DataType": "String", "StringValue": workspace_id},
+        "user_id": {"DataType": "String", "StringValue": user},
+        "total_usage": {
+            "DataType": "String",
+            "StringValue": str(total_usage),
+        },
+        "hard_limit": {"DataType": "String", "StringValue": str(hard_limit)},
+    }
+    #  TODO: Publish to admin email instead of per user
+    _publish_to_sns_topic(sns_topic_arn, subject, message, attributes)
     return create_response(status_code=200, body=table_response["Attributes"])
 
 

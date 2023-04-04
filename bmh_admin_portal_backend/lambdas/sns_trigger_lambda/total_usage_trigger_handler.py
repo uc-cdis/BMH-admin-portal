@@ -10,6 +10,7 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger.setLevel(logging.INFO)
 
 OVER_THE_LIMIT_STATUS = "Over Limit"
+ACTIVE_STATUS = "Active"
 
 
 def handler(event, context):
@@ -28,13 +29,20 @@ def handler(event, context):
         logger.info(f"{attributes=}")
         workspace_id = attributes["workspace_id"]["Value"]
         user_id = attributes["user_id"]["Value"]
+        total_usage = attributes["total_usage"]["Value"]
+        hard_limit = attributes["hard_limit"]["Value"]
+        update_status = (
+            OVER_THE_LIMIT_STATUS
+            if float(total_usage) > float(hard_limit)
+            else ACTIVE_STATUS
+        )
         try:
             table_response = table.update_item(
                 Key={"bmh_workspace_id": workspace_id, "user_id": user_id},
                 UpdateExpression="set #req_stat = :status",
                 ConditionExpression="attribute_exists(bmh_workspace_id)",
                 ExpressionAttributeValues={
-                    ":status": OVER_THE_LIMIT_STATUS,
+                    ":status": update_status,
                 },
                 ExpressionAttributeNames={"#req_stat": "request_status"},
                 ReturnValues="ALL_NEW",
