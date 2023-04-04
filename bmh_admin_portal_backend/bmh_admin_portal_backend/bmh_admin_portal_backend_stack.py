@@ -205,6 +205,20 @@ class BmhAdminPortalBackendStack(core.Stack):
             },
         )
 
+        ## Grant read/write to all SSM Parameters in the /bmh namespace.
+        ## This is done to get rid of circular dependencies.
+        total_usage_trigger_lambda.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "ssm:DescribeParameters",
+                    "ssm:GetParameters",
+                    "ssm:GetParameter",
+                    "ssm:GetParameterHistory",
+                ],
+                resources=[f"arn:aws:ssm:{self.region}:{self.account}:parameter/bmh/*"],
+            )
+        )
+
         ## Lambda function which handles the API Gateway endpoints.
         workspaces_resource_lambda = lambda_.Function(
             self,
@@ -301,6 +315,7 @@ class BmhAdminPortalBackendStack(core.Stack):
 
         # Allow lambda to read the dynamodb table
         dynamodb_table.grant_read_write_data(workspaces_resource_lambda)
+        dynamodb_table.grant_read_write_data(total_usage_trigger_lambda)
 
         workspaces_resource_lambda_integration = apigateway.LambdaIntegration(
             handler=workspaces_resource_lambda

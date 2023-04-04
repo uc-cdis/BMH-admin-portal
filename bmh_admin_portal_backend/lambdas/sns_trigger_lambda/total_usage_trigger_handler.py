@@ -12,7 +12,7 @@ logger.setLevel(logging.INFO)
 OVER_THE_LIMIT_STATUS = "Over Limit"
 
 
-def lambda_handler(event, context):
+def handler(event, context):
     logger.info(json.dumps(event))
     records = event["Records"]
 
@@ -27,7 +27,7 @@ def lambda_handler(event, context):
 
         logger.info(f"{attributes=}")
         workspace_id = attributes["workspace_id"]["Value"]
-        user_id = attributes["workspace_id"]["Value"]
+        user_id = attributes["user_id"]["Value"]
         try:
             table_response = table.update_item(
                 Key={"bmh_workspace_id": workspace_id, "user_id": user_id},

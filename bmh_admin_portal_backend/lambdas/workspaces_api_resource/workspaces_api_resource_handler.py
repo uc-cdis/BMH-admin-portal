@@ -366,7 +366,7 @@ def _workspace_provision(body, path_params):
     # )
 
     # Adding a subscription to the Lambda function that updates dynamoDB if total-usage is over the hard-limit
-    lambda_arn = _get_param(os.environ["api_usage_id_param_name"])
+    lambda_arn = os.environ.get("total_usage_trigger_lambda_arn")
     if lambda_arn:
         sns.subscribe(TopicArn=topic_arn, Protocol="lambda", Endpoint=lambda_arn)
 
@@ -374,7 +374,7 @@ def _workspace_provision(body, path_params):
     lambda_client = boto3.client("lambda")
     total_usage_trigger_lambda = lambda_client.get_function()
     lambda_response = lambda_client.add_permission(
-        FunctionName=_get_total_usage_trigger_lambda_arn(),
+        FunctionName=lambda_arn,
         StatementId=f"sns-trigger-{workspace_id}",
         Action="lambda:InvokeFunction",
         Principal="sns.amazonaws.com",
@@ -773,10 +773,6 @@ def _get_dynamodb_index_name():
 
 def _get_dynamodb_table_name():
     return _get_param(os.environ["dynamodb_table_param_name"])
-
-
-def _get_total_usage_trigger_lambda_arn():
-    return _get_param(os.environ["total_usage_trigger_lambda_arn"])
 
 
 def _get_param(param_name):
