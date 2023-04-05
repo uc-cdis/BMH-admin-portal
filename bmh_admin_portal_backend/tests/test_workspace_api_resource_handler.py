@@ -59,7 +59,9 @@ def create_mock_lambda_function():
     with mock_lambda():
         lambda_client = boto3.client("lambda")
         lambda_client.create_function(
-            FunctionName=os.environ.get("total_usage_trigger_lambda_arn","Empty function"),
+            FunctionName=os.environ.get(
+                "total_usage_trigger_lambda_arn", "Empty function"
+            ),
             Runtime="python3.7",
             Role=create_mock_role(),
             Handler="my_lambda_function.lambda_handler",
