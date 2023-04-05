@@ -32,6 +32,17 @@ const WorkspaceAccountsAdmin = () => {
     setLoading(true);
     fetchAuthorized();
     getAdminWorkspaces((data) => {
+      data.sort((a, b) => {
+        let a_id = a.user_id;
+        let b_id = b.user_id;
+        if (a_id < b_id) {
+          return -1;
+        }
+        if (a_id > b_id) {
+          return 1;
+        }
+        return 0;
+      });
       setLoading(false)
       setWorkspaces(data)
     })
