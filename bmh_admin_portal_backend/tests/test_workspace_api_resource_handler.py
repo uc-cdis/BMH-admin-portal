@@ -5,6 +5,7 @@ import uuid
 import decimal
 import json
 import os
+import boto3
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 from boto3.dynamodb import table
