@@ -9,7 +9,7 @@ from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 from boto3.dynamodb import table
 from lambdas.workspaces_api_resource import workspaces_api_resource_handler
-from moto import mock_apigateway, mock_sns
+from moto import mock_apigateway, mock_sns, mock_lambda, mock_iam
 
 api_key = "testKey"
 test_email_1 = "test1@uchicago.com"
