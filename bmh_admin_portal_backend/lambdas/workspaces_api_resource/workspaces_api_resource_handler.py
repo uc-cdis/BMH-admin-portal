@@ -372,7 +372,6 @@ def _workspace_provision(body, path_params):
 
     # Add permission to the function to allow SNS to invoke it
     lambda_client = boto3.client("lambda")
-    total_usage_trigger_lambda = lambda_client.get_function()
     lambda_response = lambda_client.add_permission(
         FunctionName=lambda_arn,
         StatementId=f"sns-trigger-{workspace_id}",
