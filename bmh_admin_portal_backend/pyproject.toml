@@ -40,6 +40,7 @@ boto3 = "^1.26"
 warrant = "^0.6.1"
 
 [tool.poetry.dev-dependencies]
+docker = "^6.0.0"
 moto = "^4.1.1"
 openapi-core = "^0.17.0"
 pytest = "^6.0.0"
