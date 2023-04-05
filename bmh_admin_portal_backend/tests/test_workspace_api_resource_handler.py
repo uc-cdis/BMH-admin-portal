@@ -40,6 +40,31 @@ expression_attribute_names = {
     "#hardlimit": "hard-limit",
 }
 
+# Create a mock IAM role
+@mock_iam
+def create_mock_role():
+    iam = boto3.client("iam")
+    role_name = "mock-iam-role"
+
+    # Create the mock role
+    response = iam.create_role(
+        RoleName=role_name,
+        AssumeRolePolicyDocument='{"Version": "2012-10-17","Statement": [{"Effect": "Allow","Principal": {"Service": "lambda.amazonaws.com"},"Action": "sts:AssumeRole"}]}',
+    )
+
+    return response["Role"]["Arn"]
+
+
+@mock_lambda
+def create_mock_lambda_function():
+    lambda_client = boto3.client("lambda")
+    lambda_client.create_function(
+        FunctionName=os.environ.get("total_usage_trigger_lambda_arn"),
+        Runtime="python3.7",
+        Role=create_mock_role(),
+        Handler="my_lambda_function.lambda_handler",
+        Code={"ZipFile": b""},
+    )
 
 def test_get_tokens():
     # TODO:
