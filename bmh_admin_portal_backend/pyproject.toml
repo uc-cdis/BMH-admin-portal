@@ -41,6 +41,7 @@ warrant = "^0.6.1"
 
 [tool.poetry.dev-dependencies]
 moto = "^4.1.1"
+docker = "^6.0.0"
 openapi-core = "^0.17.0"
 pytest = "^6.0.0"
 pytest-cov = "*"
