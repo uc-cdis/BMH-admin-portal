@@ -68,6 +68,7 @@ def create_mock_lambda_function():
             Code={"ZipFile": b""},
         )
 
+
 def test_get_tokens():
     # TODO:
 
