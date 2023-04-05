@@ -42,7 +42,7 @@ expression_attribute_names = {
 
 # Create a mock IAM role
 def create_mock_role():
-    with mock_iam:
+    with mock_iam():
         iam = boto3.client("iam")
         role_name = "mock-iam-role"
 
@@ -56,7 +56,7 @@ def create_mock_role():
 
 
 def create_mock_lambda_function():
-    with mock_lambda:
+    with mock_lambda():
         lambda_client = boto3.client("lambda")
         lambda_client.create_function(
             FunctionName=os.environ.get("total_usage_trigger_lambda_arn"),
