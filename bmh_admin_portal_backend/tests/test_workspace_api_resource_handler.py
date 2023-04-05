@@ -42,7 +42,7 @@ expression_attribute_names = {
 
 # Create a mock IAM role
 def create_mock_role():
-    with mock_iam:
+    with mock_iam():
         iam = boto3.client("iam")
         role_name = "mock-iam-role"
 
@@ -56,10 +56,10 @@ def create_mock_role():
 
 
 def create_mock_lambda_function():
-    with mock_lambda:
+    with mock_lambda():
         lambda_client = boto3.client("lambda")
         lambda_client.create_function(
-            FunctionName=os.environ.get("total_usage_trigger_lambda_arn"),
+            FunctionName=os.environ.get("total_usage_trigger_lambda_arn","Empty function"),
             Runtime="python3.7",
             Role=create_mock_role(),
             Handler="my_lambda_function.lambda_handler",
@@ -200,6 +200,7 @@ def test_workspace_provision(dynamodb_table):
                 ) as mock_get_param:
                     with mock_apigateway():
                         with mock_sns():
+                            create_mock_lambda_function()
                             # Todo: Ensure apigateway's create_api_key and create_usage_plan_key is called with appropriate params
                             # Ensure sns's create_topic is called with suitable params and return a mock 'TopicArn' in response
                             mock_get_table_name.return_value = "testTable"
