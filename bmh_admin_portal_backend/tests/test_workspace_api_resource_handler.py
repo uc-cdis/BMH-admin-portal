@@ -45,7 +45,7 @@ def test_get_tokens():
 
     # Mock the urlopen method to return a preset value based on the input
     # Mock the environment variables auth_oidc_uri, auth_redirect_uri, auth_client_id, auth_client_secret_name
-    #  with some dummy values
+    #  with some dummy values.
     # Mock the get_secret method to return a certain value for the give client_secret_name
 
     # Success scenario#
