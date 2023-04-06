@@ -147,6 +147,7 @@ The `/provision` endpoint on the `/workspace` resource will generate a unique em
 
 ## Running Back End Unit Tests
 cd bmh_admin_portal_backend
+- Activate python virtual env
 pip install poetry
 poetry install -vv
 poetry run pytest -vv --cov-report xml tests
