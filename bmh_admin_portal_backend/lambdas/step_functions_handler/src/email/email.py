@@ -9,6 +9,7 @@ from ..util import Util
 from ..db.client import DBClient
 from ..constants import STRIDES_CREDIT, STRIDES_GRANT, DIRECT_PAY
 
+
 class EmailClient:
     def __init__(self):
         self.db_client = DBClient()
