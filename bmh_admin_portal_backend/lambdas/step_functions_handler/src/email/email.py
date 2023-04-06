@@ -7,7 +7,6 @@ ses = boto3.client("ses")
 
 from ..util import Util
 from ..db.client import DBClient
-from ..constants import STRIDES_CREDIT, STRIDES_GRANT, DIRECT_PAY
 
 
 class EmailClient:
@@ -38,9 +37,13 @@ class EmailClient:
             "TextPart": "Dear {{name}},\n\nYou recently requested a {{SITE}} {{ACCOUNT_TYPE}} workspace account. \n\nWe are pleased to let you know that your account has been approved and is ready to use for workspaces.\n\nTo launch workspaces, please log in to {{SITE_URL}}. \n\nPlease see the documentation to get started and learn about our workspaces: {{DOC_LINK}}\n\nBest regards\n{{SITE}} Team",
         }
 
+    def _get_template_name(self, workspace_type):
+        return workspace_type.replace(" ", "_").lower()
+
     def send_email(self, data):
         email = data["user_id"]
         workspace_type = data["workspace_type"]
+        template_name = self._get_template_name(workspace_type)
         site_settings = self.get_site_data()
         name = data["scientific_poc"] or f"{site_settings['site']} Workspace User"
         email_domain = os.environ.get("email_domain", None)
@@ -51,7 +54,7 @@ class EmailClient:
         try:
             response = ses.send_templated_email(
                 Source=from_addr,
-                Template=workspace_type,
+                Template=template_name,
                 Destination={"ToAddresses": [email]},
                 TemplateData=(
                     f'{{ "name":"{name}", "SITE": "{site_settings["site"]}", "ACCOUNT_TYPE":"{workspace_type}", "SITE_URL":"{site_settings["url"]}", "DOC_LINK":"{site_settings["doc_link"]}"}}'
@@ -90,9 +93,9 @@ class EmailClient:
         except Exception as e:
             print("error querying db for data from workspace_request_id")
             raise e
-
+        template_name = self._get_template_name(data["workspace_type"])
         # verify email template exists
-        self.email_template(self.template_name)
+        self.email_template(template_name)
 
         # send email using template
         self.send_email(data)
