@@ -17,6 +17,7 @@ import { authorizeAdmin } from '../util/auth';
 // Added this to avoid warning in unit tests.
 // Error: `Failed prop type: LoadingOverlayWrapper: prop type `styles.content` is invalid;`
 LoadingOverlay.propTypes = undefined;
+const DIRECT_PAY = 'Direct Pay';
 
 const WorkspaceAccountsAdmin = () => {
   const [workspaces, setWorkspaces] = useState([])
@@ -49,6 +50,7 @@ const WorkspaceAccountsAdmin = () => {
   }, [])
 
   const dollar_formatter = (cell, row) => "$" + cell
+  const total_amount_formatter = (cell, row) => (row['workspace_type'] === DIRECT_PAY) ?  "$" + row['direct_pay_limit'] : "$" + cell
   const editable_header_formatter = (col, colIndex, components) => (<span>{col.text} <BiEditAlt /></span>)
   const capitalize_word_formatter = (cell, row) => cell.charAt(0).toUpperCase() + cell.slice(1)
 
@@ -83,10 +85,18 @@ const WorkspaceAccountsAdmin = () => {
     formatter: dollar_formatter
   }, {
     dataField: 'strides-credits',
-    text: 'Strides Credits',
+    text: 'Total Funds',
     editable: false,
-    formatter: dollar_formatter
+    formatter: total_amount_formatter,
   }, {
+    dataField: 'ecs',
+    text: 'ECS',
+    editable: false
+  },{
+    dataField: 'subnet',
+    text: 'Subnet',
+    editable: false,
+  },{
     dataField: 'root_account_email',
     text: 'Root Email',
     editable: false,
