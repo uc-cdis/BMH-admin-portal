@@ -12,6 +12,8 @@ const tableData = [{
         "account_id": "9032657199",
         "strides-credits": 250,
         "workspace_type": "STRIDES Credits",
+        "ecs": true,
+        "subnet": 23,
         "root_account_email": "root_A2aaIH1d-e54I-AoeS-92DE-b93Be7e8A79B@planx-pla.net",
         "user_id": "sample@uchicago.edu",
         "bmh_workspace_id": "A2aaIH1d-e54I-AoeS-92DE-b93Be7e8A79B"
@@ -22,6 +24,8 @@ const tableData = [{
         "total-usage": 0,
         "account_id": "354484406138",
         "strides-credits": 250,
+        "ecs": false,
+        "subnet": 13,
         "workspace_type": "STRIDES Credits",
         "root_account_email": "root_a1s2dfdg-3I8S-2354-9og3-I422E4R8AW2a@planx-pla.net",
         "user_id": "another_sample@uchicago.edu",
@@ -34,6 +38,8 @@ const formattedData = {
     "request_status": "Active",
     "workspace_type": "STRIDES Credits",
     "total-usage": "$10",
+    "ecs": "true",
+    "subnet": "23",
     "strides-credits": "$250",
     "root_account_email": "root_A2aaIH1d-e54I-AoeS-92DE-b93Be7e8A79B@planx-pla.net",
     "account_id": "9032657199"
@@ -69,9 +75,19 @@ const columns = [
     },
     {
         dataField: 'strides-credits',
-        text: 'Strides Credits',
+        text: 'Total Funds',
         editable: false,
 
+    },
+    {
+        dataField: 'ecs',
+        text: 'ECS',
+        editable: false
+    },
+    {
+        dataField: 'subnet',
+        text: 'Subnet',
+        editable: false,
     },
     {
         dataField: 'root_account_email',
@@ -85,7 +101,7 @@ const columns = [
     }
 ]
 
-const NUMBER_OF_COLUMNS = 8
+const NUMBER_OF_COLUMNS = 10
 process.env.REACT_APP_OIDC_AUTH_URI = "https://fence.planx-pla.net/user/oauth2/authorize"
 
 const mountAccountsWrapper = (tableData, isAdmin = true) => {
