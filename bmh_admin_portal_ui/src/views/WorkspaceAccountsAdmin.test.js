@@ -33,16 +33,16 @@ const tableData = [{
     }
 ];
 const formattedData = {
-    "scientific_poc": "Random Sample",
-    "user_id": "sample@uchicago.edu",
-    "request_status": "Active",
+    "scientific_poc": "Another Sample",
+    "user_id": "another_sample@uchicago.edu",
+    "request_status": "Failed",
     "workspace_type": "STRIDES Credits",
-    "total-usage": "$10",
-    "ecs": "true",
-    "subnet": "23",
+    "total-usage": "$0",
+    "ecs": "false",
+    "subnet": "13",
     "strides-credits": "$250",
-    "root_account_email": "root_A2aaIH1d-e54I-AoeS-92DE-b93Be7e8A79B@planx-pla.net",
-    "account_id": "9032657199"
+    "root_account_email": "root_a1s2dfdg-3I8S-2354-9og3-I422E4R8AW2a@planx-pla.net",
+    "account_id": "354484406138"
 }
 
 const columns = [
