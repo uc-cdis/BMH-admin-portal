@@ -144,3 +144,10 @@ The `/provision` endpoint on the `/workspace` resource will generate a unique em
 2. Ensure your mx records are correctly configured for the domain (for domains registered with Route53, tested with the MX record set to inbound-smtp.us-east-1.amazonaws.com). *Note* SMTP inbound endpoints only exist in us-east-1, us-west-2 and eu-west-1 at the moment. For up-to-date information see [this page](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/regions.html#region-endpoints)
 3. Setup a receipt rule. You can setup all emails to be written to S3 and setup SNS notifications when a new email is received.
 4. Send a test email to ensure everything is configured correctly.
+
+## Running Back End Unit Tests
+cd bmh_admin_portal_backend
+- Activate python virtual env
+pip install poetry
+poetry install -vv
+poetry run pytest -vv --cov-report xml tests
