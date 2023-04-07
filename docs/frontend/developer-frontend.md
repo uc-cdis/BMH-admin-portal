@@ -4,7 +4,7 @@
 The BRH Portal FrontEnd component is a React application deployed using S3 hosting with a CloudFront distribution for a CDN. For instructions on deploying the frontend, see [Frontend Deployment Instructions](../bmh_admin_portal_ui/../../bmh_admin_portal_ui/README_DEPLOYMENT.md)
 
 ## Authentication (Fence)
-Authentication is performed by using [Fence](https://github.com/uc-cdis/fence). The site was tested using Google and RAS logins (this can be configured in `bmh_admin_portal_ui/src/config.json`). 
+Authentication is performed by using [Fence](https://github.com/uc-cdis/fence). The site was tested using Google and RAS logins (this can be configured in `bmh_admin_portal_ui/src/config.json`).
 
 ## Authorization (Arborist)
 Authorization is performed by using [Arborist](https://github.com/uc-cdis/arborist). There are 2 resources which apply to the BRH Admin Portal (these can be configured in `bmh_admin_portal_ui/src/config.json`).
@@ -19,3 +19,9 @@ The workspace page shows a list of requested workspaces, their statuses (Pending
 
 ## Request Workspace Page
 This page implements forms which are used to request a new workspace. The form provided will be sent directly to the configured emails (in the backend bmh_admin_portal_config.py file).
+
+## Running Front End Unit Tests
+cd bmh_admin_portal_ui
+npm ci
+npm run build --if-present
+npm test .
