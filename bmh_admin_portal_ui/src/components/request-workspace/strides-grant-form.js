@@ -23,6 +23,7 @@ const initialFormData = Object.freeze({
   nih_program_official_name: "",
   nih_program_official_email: "",
   keywords: "",
+  ecs: true,
   summary_and_justification: "",
   project_short_title: "",
   rcdc: "",
