@@ -270,7 +270,7 @@ it('verifies the values in each column are displayed correctly with formatting',
     const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable').filter({ keyField: 'directpay_workspace_id'});
     const directpayrows = directpaytable.find('SimpleRow');
     const directPayFirstRowCells = directpayrows.first().find('Cell');
-
+    console.log(directPayFirstRowCells);
     await waitFor(() => {
         columnsDirectPay.filter((column) => !column['isDummyField']).forEach((column) => {
             const cell = directPayFirstRowCells.find({ "column": column });

@@ -42,6 +42,7 @@ const getBillingIDFormData = directPayBilllingIDWrapper => {
     Implementing some IIFE + closure magic to fetch the value of formData
     from the scope of callExternalURL
     *******/
+    console.log("Here");
     let iifeFunction = (() => {
         return (formData, _) => {
             console.log(formData)
@@ -53,6 +54,7 @@ const getBillingIDFormData = directPayBilllingIDWrapper => {
     })();
     mockFunction.mockImplementation(iifeFunction);
     let submitFunc = directPayBilllingIDWrapper.prop('onSubmit');
+    console.log(submitFunc);
     submitFunc(
         occHelpURL,
         "post",
