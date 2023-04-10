@@ -42,8 +42,7 @@ const directPayTableData = [{
         "total-usage": 0,
         "hard-limit": 50,
         "soft-limit": 40,
-        "strides-credits": 50,
-
+        "strides-credits": 50
     }
 ];
 const formattedData = {
@@ -132,7 +131,7 @@ const columnsDirectPay = [
         editable: false,
     },
     {
-        dataField: 'direct_pay_limit',
+        dataField: 'strides-credits',
         text: 'Compute Purchased',
         editable: false,
     },
