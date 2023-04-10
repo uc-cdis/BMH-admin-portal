@@ -220,7 +220,7 @@ const WorkspaceAccounts = () => {
       </div>
 
       <div className="pt-5 text-center">
-        <BootstrapTable id='bmh_workspace_id' data={workspaces} columns={columns} noDataIndication={no_data_indication}
+        <BootstrapTable keyField='bmh_workspace_id' data={workspaces} columns={columns} noDataIndication={no_data_indication}
           hover={true} cellEdit={cellEdit} bordered={true}
           loading={loading} overlay={overlayFactory({ spinner: true, background: 'rgba(192,192,192,0.1)' })}
         />
@@ -232,7 +232,7 @@ const WorkspaceAccounts = () => {
         <h2>OCC Direct Pay Workspace Accounts</h2>
       </div>
       <div className="pt-5 text-center">
-        <BootstrapTable id='directpay_workspace_id' data={occworkspaces} columns={columnsdirectpay} noDataIndication={no_data_indication}
+        <BootstrapTable keyField='directpay_workspace_id' data={occworkspaces} columns={columnsdirectpay} noDataIndication={no_data_indication}
           hover={true} cellEdit={cellEdit} bordered={true}
           loading={loading} overlay={overlayFactory({ spinner: true, background: 'rgba(192,192,192,0.1)' })}
         />
