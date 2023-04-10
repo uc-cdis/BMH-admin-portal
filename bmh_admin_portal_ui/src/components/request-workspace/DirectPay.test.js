@@ -34,34 +34,24 @@ const updatedFirstFormData = Object.freeze({
     email: "tes", // assuming the email used here is test@test.com
 });
 
-const getBillingIDFormData = directPayBilllingIDWrapper => {
-    const mockFunction = jest.spyOn(apiUtils, 'callExternalURL');
+
+const getBillingIDFormData = directPayWrapper => {
+    const mockFunction = jest.spyOn(apiUtils, 'requestWorkspace');
     let formDataFromState;
 
     /*****
     Implementing some IIFE + closure magic to fetch the value of formData
-    from the scope of callExternalURL
+    from the scope of requestWorkspace
     *******/
-    console.log("Here");
     let iifeFunction = (() => {
         return (formData, _) => {
-            console.log(formData)
-            // formDataFromState = {
-            //     "billingID" : billingID,
-            //     "email" : email
-            // };
+            formDataFromState = formData;
         }
     })();
     mockFunction.mockImplementation(iifeFunction);
-    let submitFunc = directPayBilllingIDWrapper.prop('onSubmit');
+    let submitFunc = directPayWrapper.prop('onSubmit');
     console.log(submitFunc);
-    submitFunc(
-        occHelpURL,
-        "post",
-        {
-            'Content-Type': 'text/plain'
-        },
-        {
+    submitFunc({
         currentTarget: {
             checkValidity: () => true
         },
@@ -69,6 +59,41 @@ const getBillingIDFormData = directPayBilllingIDWrapper => {
     });
     return formDataFromState;
 }
+// const getBillingIDFormData = directPayBilllingIDWrapper => {
+//     const mockFunction = jest.spyOn(apiUtils, 'callExternalURL');
+//     let formDataFromState;
+
+//     /*****
+//     Implementing some IIFE + closure magic to fetch the value of formData
+//     from the scope of callExternalURL
+//     *******/
+//     console.log("Here");
+//     let iifeFunction = (() => {
+//         return (formData, _) => {
+//             console.log(formData)
+//             // formDataFromState = {
+//             //     "billingID" : billingID,
+//             //     "email" : email
+//             // };
+//         }
+//     })();
+//     mockFunction.mockImplementation(iifeFunction);
+//     let submitFunc = directPayBilllingIDWrapper.prop('onSubmit');
+//     console.log(submitFunc);
+//     submitFunc(
+//         occHelpURL,
+//         "post",
+//         {
+//             'Content-Type': 'text/plain'
+//         },
+//         {
+//         currentTarget: {
+//             checkValidity: () => true
+//         },
+//         preventDefault: () => null
+//     });
+//     return formDataFromState;
+// }
 
 
 // Verify that both forms are rendered correctly
