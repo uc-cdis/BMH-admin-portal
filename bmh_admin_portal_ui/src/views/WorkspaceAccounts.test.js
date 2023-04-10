@@ -180,6 +180,7 @@ const mountDirectPayAccountWrapper = (directPayTableData, isAdmin = false) => {
 it('renders WorkspaceAccounts table with no data', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper([]);
     const table = workspaceAccountsWrapper.find('BootstrapTable');
+    console.log(table);
     await waitFor(() => {
         expect(table).toHaveLength(1);
     });
