@@ -176,12 +176,12 @@ it('renders WorkspaceAccounts table with no data', async () => {
     expect(table.find('p').text()).toBe("No active workspaces to view.");
 
     //for OCC Direct Pay Workspace Accounts Table
-    const workspaceAccountsWrapper = mountAccountsWrapper([]);
-    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'directpay_workspace_id'});
+    const workspaceAccountsDirectPayWrapper = mountAccountsWrapper([]);
+    const directpaytable = workspaceAccountsDirectPayWrapper.find('BootstrapTable').filter({ keyField: 'directpay_workspace_id'});
     await waitFor(() => {
-        expect(table).toHaveLength(1);
+        expect(directpaytable).toHaveLength(1);
     });
-    expect(table.find('p').text()).toBe("No active workspaces to view.");
+    expect(directpaytable.find('p').text()).toBe("No active workspaces to view.");
 });
 
 
