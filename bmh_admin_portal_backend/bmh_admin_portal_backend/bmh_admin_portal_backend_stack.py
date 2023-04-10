@@ -191,6 +191,34 @@ class BmhAdminPortalBackendStack(core.Stack):
             secret_complete_arn=config["auth_client_secret_arn"],
         )
 
+        ## Lambda function which handles the Total Usage SNS trigger.
+        total_usage_trigger_lambda = lambda_.Function(
+            self,
+            "total-usage-trigger-handler-function",
+            runtime=lambda_.Runtime.PYTHON_3_8,
+            code=lambda_.Code.asset("lambdas/sns_trigger_lambda"),
+            handler="total_usage_trigger_handler.handler",
+            timeout=core.Duration.seconds(600),
+            description="Function which handles Total Usage SNS trigger for BRH Admin Portal",
+            environment={
+                "dynamodb_table_param_name": config["dynamodb_table_param_name"],
+            },
+        )
+
+        ## Grant read/write to all SSM Parameters in the /bmh namespace.
+        ## This is done to get rid of circular dependencies.
+        total_usage_trigger_lambda.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "ssm:DescribeParameters",
+                    "ssm:GetParameters",
+                    "ssm:GetParameter",
+                    "ssm:GetParameterHistory",
+                ],
+                resources=[f"arn:aws:ssm:{self.region}:{self.account}:parameter/bmh/*"],
+            )
+        )
+
         ## Lambda function which handles the API Gateway endpoints.
         workspaces_resource_lambda = lambda_.Function(
             self,
@@ -207,6 +235,7 @@ class BmhAdminPortalBackendStack(core.Stack):
                 "brh_asset_bucket": brh_workspace_assets_bucket.bucket_name,
                 "brh_portal_url": config["api_url_param_name"],
                 "state_machine_arn": step_fn_workflow.state_machine_arn,
+                "total_usage_trigger_lambda_arn": total_usage_trigger_lambda.function_arn,
                 "auth_redirect_uri": config["auth_redirect_uri"],
                 "auth_client_id": config["auth_client_id"],
                 "auth_client_secret_name": config["auth_client_secret_name"],
@@ -266,6 +295,19 @@ class BmhAdminPortalBackendStack(core.Stack):
             )
         )
 
+        # Allow this lambda function add_permissions to lambda functions
+        # This is needed to add sns triggers to handling lambda function
+        workspaces_resource_lambda.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "lambda:AddPermission",
+                ],
+                resources=[
+                    total_usage_trigger_lambda.function_arn,
+                ],
+            )
+        )
+
         ## The lambda will need to send emails using SES
         workspaces_resource_lambda.add_to_role_policy(
             iam.PolicyStatement(actions=["ses:*"], resources=["*"])
@@ -273,6 +315,7 @@ class BmhAdminPortalBackendStack(core.Stack):
 
         # Allow lambda to read the dynamodb table
         dynamodb_table.grant_read_write_data(workspaces_resource_lambda)
+        dynamodb_table.grant_read_write_data(total_usage_trigger_lambda)
 
         workspaces_resource_lambda_integration = apigateway.LambdaIntegration(
             handler=workspaces_resource_lambda
