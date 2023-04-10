@@ -57,6 +57,7 @@ const formattedData = {
 }
 
 const formattedDirectPayData = {
+    "bmh_workspace_id" : "0e88a315-axfs-4d77-cd34-110c5534bde3",
     "hard-limit": "$50",
     "total-usage": "$0",
     "request_status": "Failed",
@@ -228,7 +229,7 @@ it('verifies all the column headers are appearing correctly.', async () => {
     const directpayheaders = directpaytable.find('th');
     await waitFor(() => {
         directpayheaders.forEach((header, index) => {
-            expect(header.text().trim()).toBe(columns[index]['text']);
+            expect(header.text().trim()).toBe(columnsDirectPay[index]['text']);
         });
     });
 });
@@ -288,20 +289,6 @@ it('verifies the editability of each cell according to the defined columns', asy
     await waitFor(() => {
         columns.forEach((column) => {
             const cell = firstRowCells.find({ "column": column });
-            expect(cell.prop('editable')).toBe(column['editable']);
-        })
-    });
-
-    //for OCC Direct Pay Workspace Accounts Table, currently we dont have any columns editable
-    //but this code is added for future compatibility
-    const workspaceDirectPayAccountsWrapper = mountAccountsWrapper(directPayTableData);
-    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable').filter({ keyField: 'directpay_workspace_id'});
-    const directpayrows = directpaytable.find('SimpleRow');
-    const directPayFirstRowCells = directpayrows.first().find('Cell');
-
-    await waitFor(() => {
-        columns.forEach((column) => {
-            const cell = directPayFirstRowCells.find({ "column": column });
             expect(cell.prop('editable')).toBe(column['editable']);
         })
     });

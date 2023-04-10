@@ -24,33 +24,33 @@ const FIRST_FORM_FIELD_COUNT = 2;
 // const SECOND_FORM_FIELD_COUNT = 8;
 
 const firstFormData = Object.freeze({
-    billing_id: "",
-    first_three_letters_email: "",
+    billingID: "",
+    email: "",
     attestation: false,
 });
 
-// const secondFormData = Object.freeze({
-//     project_short_title: "",
-//     summary_and_justification: "",
-//     workspace_use: "",
-//     approved_creditcard: "",
-//     project_role: "",
-//     attestation: false,
-// });
+const secondFormData = Object.freeze({
+    project_short_title: "",
+    summary_and_justification: "",
+    workspace_use: "",
+    approved_creditcard: "",
+    project_role: "",
+    attestation: false,
+});
 
 const updatedFirstFormData = Object.freeze({
-    billing_id: "XXX12345",
-    first_three_letters_email: "tes", // assuming the email used here is test@test.com
+    billingID: "XXX12345",
+    email: "tes", // assuming the email used here is test@test.com
 });
 
 
-// const updatedSecondFormData = Object.freeze({
-//     project_short_title: "Test project title",
-//     summary_and_justification: "Test summary and justification",
-//     workspace_use: "Personal", // In the form, This field is a dropdown which can have value of either "Personal" or "Organizational"
-//     approved_creditcard: "Yes", // In the form, This field is dropdown with a "Yes" and "No" option
-//     project_role: "Test project role ",
-// });
+const updatedSecondFormData = Object.freeze({
+    project_short_title: "Test project title",
+    summary_and_justification: "Test summary and justification",
+    workspace_use: "Personal", // In the form, This field is a dropdown which can have value of either "Personal" or "Organizational"
+    approved_creditcard: "Yes", // In the form, This field is dropdown with a "Yes" and "No" option
+    project_role: "Test project role ",
+});
 
 
 const getBillingIDFormData = directPayBilllingIDWrapper => {
@@ -77,29 +77,29 @@ const getBillingIDFormData = directPayBilllingIDWrapper => {
     return formDataFromState;
 }
 
-// const getFormData = directPayWrapper => {
-//     const mockFunction = jest.spyOn(apiUtils, 'requestWorkspace');
-//     let formDataFromState;
+const getFormData = directPayWrapper => {
+    const mockFunction = jest.spyOn(apiUtils, 'requestWorkspace');
+    let formDataFromState;
 
-//     /*****
-//     Implementing some IIFE + closure magic to fetch the value of formData
-//     from the scope of requestWorkspace
-//     *******/
-//     let iifeFunction = (() => {
-//         return (formData, _) => {
-//             formDataFromState = formData;
-//         }
-//     })();
-//     mockFunction.mockImplementation(iifeFunction);
-//     let submitFunc = directPayWrapper.prop('onSubmit');
-//     submitFunc({
-//         currentTarget: {
-//             checkValidity: () => true
-//         },
-//         preventDefault: () => null
-//     });
-//     return formDataFromState;
-// }
+    /*****
+    Implementing some IIFE + closure magic to fetch the value of formData
+    from the scope of requestWorkspace
+    *******/
+    let iifeFunction = (() => {
+        return (formData, _) => {
+            formDataFromState = formData;
+        }
+    })();
+    mockFunction.mockImplementation(iifeFunction);
+    let submitFunc = directPayWrapper.prop('onSubmit');
+    submitFunc({
+        currentTarget: {
+            checkValidity: () => true
+        },
+        preventDefault: () => null
+    });
+    return formDataFromState;
+}
 
 
 // Verify that both forms are rendered correctly
@@ -157,25 +157,25 @@ it('verifies direct pay billingID form fields being updated appropriately', asyn
 });
 
 
-// it('verifies direct pay details form fields being updated appropriately', async () => {
-//     const directPayWrapper = shallow( <DirectPayForm/> );
-//     let input;
+it('verifies direct pay details form fields being updated appropriately', async () => {
+    const directPayWrapper = shallow( <DirectPayForm/> );
+    let input;
 
-//     for (let key in updatedSecondFormData) {
-//         input = directPayWrapper.find('FormControl').filter({
-//             'name': key
-//         }).filterWhere((n) => n.prop('onChange'));
-//         input.simulate('change', {
-//             target: {
-//                 name: key,
-//                 value: updatedSecondFormData[key],
-//                 setCustomValidity: () => {}
-//             }
-//         });
-//     }
+    for (let key in updatedSecondFormData) {
+        input = directPayWrapper.find('FormControl').filter({
+            'name': key
+        }).filterWhere((n) => n.prop('onChange'));
+        input.simulate('change', {
+            target: {
+                name: key,
+                value: updatedSecondFormData[key],
+                setCustomValidity: () => {}
+            }
+        });
+    }
 
-//     let formData = getFormData(directPayWrapper);
-//     for (let key in updatedSecondFormData) {
-//         expect(formData[key]).toBe(updatedSecondFormData[key]);
-//     }
-// });
+    let formData = getFormData(directPayWrapper);
+    for (let key in updatedSecondFormData) {
+        expect(formData[key]).toBe(updatedSecondFormData[key]);
+    }
+});
