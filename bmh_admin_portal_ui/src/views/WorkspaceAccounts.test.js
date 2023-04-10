@@ -31,7 +31,7 @@ const directPayTableData = [{
         "request_status": "failed",
         "workspace_type": "Direct Pay",
         "total-usage": 0,
-        "strides-credits": 50,
+        "direct_pay_limit": 50,
         "soft-limit": 40,
         "hard-limit": 50
     },
@@ -42,7 +42,7 @@ const directPayTableData = [{
         "total-usage": 0,
         "hard-limit": 50,
         "soft-limit": 40,
-        "strides-credits": 50
+        "direct_pay_limit": 50
     }
 ];
 const formattedData = {
@@ -62,6 +62,7 @@ const formattedDirectPayData = {
     "request_status": "Failed",
     "soft-limit": "$40",
     "strides-credits": "$50",
+    "direct_pay_limit" : "$50",
     "workspace_type": "Direct Pay"
 }
 
@@ -131,7 +132,7 @@ const columnsDirectPay = [
         editable: false,
     },
     {
-        dataField: 'strides-credits',
+        dataField: 'direct_pay_limit',
         text: 'Compute Purchased',
         editable: false,
     },
@@ -260,6 +261,7 @@ it('verifies the values in each column are displayed correctly with formatting',
     const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable').filter({ keyField: 'directpay_workspace_id'});
     const directpayrows = directpaytable.find('SimpleRow');
     const directPayFirstRowCells = directpayrows.first().find('Cell');
+
     await waitFor(() => {
         columnsDirectPay.filter((column) => !column['isDummyField']).forEach((column) => {
             const cell = directPayFirstRowCells.find({ "column": column });
