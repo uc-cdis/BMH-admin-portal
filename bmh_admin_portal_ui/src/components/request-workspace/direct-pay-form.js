@@ -33,7 +33,7 @@ const directpayinitialFormData = Object.freeze({
 const DirectPayForm = (props) => {
 
         const { updateRedirectHome } = props
-	    const [formData, updateFormData] = useState(directpayinitialFormData);
+	      const [formData, updateFormData] = useState(directpayinitialFormData);
         const [billingID, setBillingID] = useState('');
         const [email, setEmail] = useState('');
         const [requestApproved, setRequestApproved] = useState("");
