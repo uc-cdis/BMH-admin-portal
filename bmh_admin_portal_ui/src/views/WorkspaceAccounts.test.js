@@ -27,24 +27,24 @@ const tableData = [{
     }
 ];
 const directPayTableData = [{
-    "bmh_workspace_id": "13f9765f-e515-4349-909c-21313418132a",
-    "request_status": "failed",
-    "workspace_type": "Direct Pay",
-    "total-usage": 0,
-    "direct_pay_limit": 50,
-    "soft-limit": 40,
-    "hard-limit": 50
-},
-{
-    "bmh_workspace_id": "13f9765f-e515-4a49-909c-14043418132a",
-    "request_status": "success",
-    "workspace_type": "Direct Pay",
-    "total-usage": 0,
-    "hard-limit": 50,
-    "soft-limit": 40,
-    "direct_pay_limit": 50,
+        "bmh_workspace_id": "13f9765f-e515-4349-909c-21313418132a",
+        "request_status": "failed",
+        "workspace_type": "Direct Pay",
+        "total-usage": 0,
+        "strides-credits": 50,
+        "soft-limit": 40,
+        "hard-limit": 50
+    },
+    {
+        "bmh_workspace_id": "13f9765f-e515-4a49-909c-14043418132a",
+        "request_status": "success",
+        "workspace_type": "Direct Pay",
+        "total-usage": 0,
+        "hard-limit": 50,
+        "soft-limit": 40,
+        "strides-credits": 50,
 
-}
+    }
 ];
 const formattedData = {
     "hard-limit": "$225",

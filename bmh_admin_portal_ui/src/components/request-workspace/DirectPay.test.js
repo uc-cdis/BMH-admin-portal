@@ -51,6 +51,7 @@ const getBillingIDFormData = directPayBilllingIDWrapper => {
     })();
     mockFunction.mockImplementation(iifeFunction);
     let submitFunc = directPayBilllingIDWrapper.prop('onSubmit');
+    console.log(submitFunc);
     submitFunc({
         currentTarget: {
             checkValidity: () => true
