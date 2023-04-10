@@ -113,7 +113,7 @@ const columnsDirectPay = [
     {
         dataField: 'bmh_workspace_id',
         text: 'OCC Request ID',
-        editable: false
+        editable: false,
     },
     {
         dataField: 'request_status',
@@ -123,7 +123,7 @@ const columnsDirectPay = [
     {
         dataField: 'workspace_type',
         text: 'Workspace Type',
-        editable: false
+        editable: false,
     },
     {
         dataField: 'total-usage',
@@ -169,7 +169,15 @@ const mountAccountsWrapper = (tableData, isAdmin = false) => {
 
 it('renders WorkspaceAccounts table with no data', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper([]);
-    const table = workspaceAccountsWrapper.find('BootstrapTable');
+    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
+    await waitFor(() => {
+        expect(table).toHaveLength(1);
+    });
+    expect(table.find('p').text()).toBe("No active workspaces to view.");
+
+    //for OCC Direct Pay Workspace Accounts Table
+    const workspaceAccountsWrapper = mountAccountsWrapper([]);
+    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'directpay_workspace_id'});
     await waitFor(() => {
         expect(table).toHaveLength(1);
     });
@@ -196,7 +204,7 @@ it('renders workspaceAccounts table which has specific number of rows', async ()
 
 it('verifies all the column headers are appearing correctly.', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
-    const table = workspaceAccountsWrapper.find('BootstrapTable');
+    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
     const headers = table.find('th');
     await waitFor(() => {
         headers.forEach((header, index) => {
@@ -206,7 +214,7 @@ it('verifies all the column headers are appearing correctly.', async () => {
 
     //for OCC Direct Pay Workspace Accounts Table
     const workspaceDirectPayAccountsWrapper = mountAccountsWrapper(directPayTableData);
-    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable');
+    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable').filter({ keyField: 'directpay_workspace_id'});
     const directpayheaders = directpaytable.find('th');
     await waitFor(() => {
         directpayheaders.forEach((header, index) => {
@@ -236,7 +244,7 @@ it('verifies number of cells in a row are equal to NUMBER_OF_COLUMNS', async () 
 
 it('verifies the values in each column are displayed correctly with formatting', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
-    const table = workspaceAccountsWrapper.find('BootstrapTable');
+    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
     const rows = table.find('SimpleRow');
     const firstRowCells = rows.first().find('Cell');
 
@@ -249,7 +257,7 @@ it('verifies the values in each column are displayed correctly with formatting',
 
     //for OCC Direct Pay Workspace Accounts Table
     const workspaceDirectPayAccountsWrapper = mountAccountsWrapper(directPayTableData);
-    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable');
+    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable').filter({ keyField: 'directpay_workspace_id'});
     const directpayrows = directpaytable.find('SimpleRow');
     const directPayFirstRowCells = directpayrows.first().find('Cell');
     await waitFor(() => {
@@ -346,7 +354,7 @@ it('verifies the setWorkspaceLimits is called upon save correctly', async () => 
     const mockFunction = jest.spyOn(apiUtils, 'setWorkspaceLimits');
     mockFunction.mockImplementation(()=>{})
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
-    const table = workspaceAccountsWrapper.find('BootstrapTable');
+    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
     const rows = table.find('SimpleRow');
     const firstRowCells = rows.first().find('Cell');
 

@@ -156,7 +156,7 @@ const DirectPayForm = (props) => {
         if(requestApproved === "true"){
           componentToRender = (
           <div>
-                <Form onSubmit={handleRequest}>
+                <Form onSubmit={handleRequest} keyField='directpay_request_information'>
                   <Form.Row className="mb-3">
                   <Col>
                   <Form.Check type="checkbox" name="attestation" label={`By filling out this form below, I consent to be invoiced by OCC the amount of $${(directpaylimit)}  to provision that amount of compute for my workspace. If this value is incorrect, please contact OCC to update your request amount.`} required />
@@ -244,7 +244,7 @@ const DirectPayForm = (props) => {
 
         return(
             <div>
-              <Form onSubmit={handleSubmit}>
+              <Form onSubmit={handleSubmit} keyField='directpay_billingID_confirmation'>
                       <Form.Label> BillingID <span data-tip data-for="billingID_help"><BiHelpCircle /></span></Form.Label>
                       <ReactTooltip class="tooltip" id="billingID_help" place="top" effect="solid" multiline={true}>
                         Enter the Billing ID provided from registration through the Payment Solutions Portal. <br />
