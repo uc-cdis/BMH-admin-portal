@@ -20,6 +20,7 @@ import * as apiUtils from '../../util/api';
  * Verify all the client side validations for the forms are done correctly.
  **/
 
+const occHelpURL = process.env.REACT_APP_OCC_HELPER_URL
 const FIRST_FORM_FIELD_COUNT = 2;
 
 const firstFormData = Object.freeze({
@@ -43,16 +44,22 @@ const getBillingIDFormData = directPayBilllingIDWrapper => {
     *******/
     let iifeFunction = (() => {
         return (formData, _) => {
-            formDataFromState = {
-                "billingID" : billingID ,
-                "email" : email
-            };
+            console.log(formData)
+            // formDataFromState = {
+            //     "billingID" : billingID,
+            //     "email" : email
+            // };
         }
     })();
     mockFunction.mockImplementation(iifeFunction);
     let submitFunc = directPayBilllingIDWrapper.prop('onSubmit');
-    console.log(submitFunc);
-    submitFunc({
+    submitFunc(
+        occHelpURL,
+        "post",
+        {
+            'Content-Type': 'text/plain'
+        },
+        {
         currentTarget: {
             checkValidity: () => true
         },
