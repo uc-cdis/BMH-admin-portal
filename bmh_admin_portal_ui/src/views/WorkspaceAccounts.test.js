@@ -179,7 +179,7 @@ const mountDirectPayAccountWrapper = (directPayTableData, isAdmin = false) => {
 
 it('renders WorkspaceAccounts table with no data', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper([]);
-    const table = workspaceAccountsWrapper.find({ keyField: 'bmh_workspace_id'});
+    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
     await waitFor(() => {
         expect(table).toHaveLength(1);
     });
@@ -187,7 +187,7 @@ it('renders WorkspaceAccounts table with no data', async () => {
 
     //for OCC Direct Pay Workspace Accounts Table
     const workspaceDirectPayAccountsWrapper = mountDirectPayAccountWrapper([]);
-    const directpaytable = workspaceDirectPayAccountsWrapper.find({ keyField: 'directpay_workspace_id'});
+    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable').filter({ keyField: 'directpay_workspace_id'});
     await waitFor(() => {
         expect(directpaytable).toHaveLength(1);
     });
