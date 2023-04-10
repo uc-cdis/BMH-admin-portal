@@ -43,7 +43,10 @@ const getBillingIDFormData = directPayBilllingIDWrapper => {
     *******/
     let iifeFunction = (() => {
         return (formData, _) => {
-            formDataFromState = formData;
+            formDataFromState = {
+                "billingID" : billingID ,
+                "email" : email
+            };
         }
     })();
     mockFunction.mockImplementation(iifeFunction);
