@@ -13,13 +13,15 @@ import {
 
 const FORM_TYPES = {
     stridesGrant: "strides-grant",
-    stridesCredits: "strides-credits"
+    stridesCredits: "strides-credits",
+    directPay: "direct-pay"
 };
 const DEFAULT_FORM_TYPE = FORM_TYPES.stridesGrant;
 
 const FORM_TAGS = {
     "strides-grant": "StridesGrantForm",
-    "strides-credits": "StridesCreditForm"
+    "strides-credits": "StridesCreditForm",
+    "direct-pay" : "DirectPayForm"
 };
 
 const getRenderedFormTypesList = (wrapperTag) => {
