@@ -21,20 +21,10 @@ import * as apiUtils from '../../util/api';
  **/
 
 const FIRST_FORM_FIELD_COUNT = 2;
-// const SECOND_FORM_FIELD_COUNT = 8;
 
 const firstFormData = Object.freeze({
     billingID: "",
     email: "",
-    attestation: false,
-});
-
-const secondFormData = Object.freeze({
-    project_short_title: "",
-    summary_and_justification: "",
-    workspace_use: "",
-    approved_creditcard: "",
-    project_role: "",
     attestation: false,
 });
 
@@ -43,23 +33,13 @@ const updatedFirstFormData = Object.freeze({
     email: "tes", // assuming the email used here is test@test.com
 });
 
-
-const updatedSecondFormData = Object.freeze({
-    project_short_title: "Test project title",
-    summary_and_justification: "Test summary and justification",
-    workspace_use: "Personal", // In the form, This field is a dropdown which can have value of either "Personal" or "Organizational"
-    approved_creditcard: "Yes", // In the form, This field is dropdown with a "Yes" and "No" option
-    project_role: "Test project role ",
-});
-
-
 const getBillingIDFormData = directPayBilllingIDWrapper => {
     const mockFunction = jest.spyOn(apiUtils, 'callExternalURL');
     let formDataFromState;
 
     /*****
     Implementing some IIFE + closure magic to fetch the value of formData
-    from the scope of requestWorkspace
+    from the scope of callExternalURL
     *******/
     let iifeFunction = (() => {
         return (formData, _) => {
@@ -77,42 +57,12 @@ const getBillingIDFormData = directPayBilllingIDWrapper => {
     return formDataFromState;
 }
 
-const getFormData = directPayWrapper => {
-    const mockFunction = jest.spyOn(apiUtils, 'requestWorkspace');
-    let formDataFromState;
-
-    /*****
-    Implementing some IIFE + closure magic to fetch the value of formData
-    from the scope of requestWorkspace
-    *******/
-    let iifeFunction = (() => {
-        return (formData, _) => {
-            formDataFromState = formData;
-        }
-    })();
-    mockFunction.mockImplementation(iifeFunction);
-    let submitFunc = directPayWrapper.prop('onSubmit');
-    submitFunc({
-        currentTarget: {
-            checkValidity: () => true
-        },
-        preventDefault: () => null
-    });
-    return formDataFromState;
-}
-
 
 // Verify that both forms are rendered correctly
 it('verifies direct pay billingID form being rendered correctly', async() => {
     const directPayBilllingIDWrapper = shallow( <DirectPayForm/> );
     expect(directPayBilllingIDWrapper.find('FormControl')).toHaveLength(FIRST_FORM_FIELD_COUNT);
 });
-
-// it('verifies direct pay details form being rendered correctly', async() => {
-//     const directPayWrapper = shallow( <DirectPayForm/> );
-//     expect(directPayWrapper.find('FormControl')).toHaveLength(SECOND_FORM_FIELD_COUNT);
-// });
-
 
 // Verify that both forms are rendered with default values
 it('verifies direct pay billingID form renders with default values', async() => {
@@ -123,14 +73,6 @@ it('verifies direct pay billingID form renders with default values', async() => 
     }
 });
 
-
-// it('verifies direct pay details form renders with default values', async() => {
-//     const directPayWrapper = shallow( <DirectPayForm/> );
-//     let formData = getFormData(directPayWrapper);
-//     for (let key in secondFormData) {
-//         expect(formData[key]).toBe(secondFormData[key]);
-//     }
-// });
 
 // Verify that both forms are rendered with default values
 it('verifies direct pay billingID form fields being updated appropriately', async () => {
@@ -150,7 +92,7 @@ it('verifies direct pay billingID form fields being updated appropriately', asyn
         });
     }
 
-    let formData = getBillingIDFormData(directPayWrapper);
+    let formData = getBillingIDFormData(directPayBilllingIDWrapper);
     for (let key in updatedFirstFormData) {
         expect(formData[key]).toBe(updatedFirstFormData[key]);
     }

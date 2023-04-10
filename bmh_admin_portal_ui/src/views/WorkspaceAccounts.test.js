@@ -273,7 +273,7 @@ it('verifies the values in each column are displayed correctly with formatting',
     const directPayFirstRowCells = directpayrows.first().find('Cell');
 
     await waitFor(() => {
-        columns.filter((column) => !column['isDummyField']).forEach((column) => {
+        columnsDirectPay.filter((column) => !column['isDummyField']).forEach((column) => {
             const cell = directPayFirstRowCells.find({ "column": column });
             expect(cell.text()).toBe(formattedDirectPayData[column.dataField]);
         })
