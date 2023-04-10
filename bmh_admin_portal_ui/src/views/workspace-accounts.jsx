@@ -214,13 +214,13 @@ const WorkspaceAccounts = () => {
   })
 
   return (
-    <div className="container">
+    <div id="bmh_container" className="container">
       <div className="py-5 text-center">
         <h2>STRIDES Credit Workspace Accounts</h2>
       </div>
 
-      <div className="pt-5 text-center">
-        <BootstrapTable keyField='bmh_workspace_id' data={workspaces} columns={columns} noDataIndication={no_data_indication}
+      <div id="bmh_table" className="pt-5 text-center">
+        <BootstrapTable id="bmh_table" keyField='bmh_workspace_id' data={workspaces} columns={columns} noDataIndication={no_data_indication}
           hover={true} cellEdit={cellEdit} bordered={true}
           loading={loading} overlay={overlayFactory({ spinner: true, background: 'rgba(192,192,192,0.1)' })}
         />
@@ -231,8 +231,8 @@ const WorkspaceAccounts = () => {
        <div className="py-5 text-center">
         <h2>OCC Direct Pay Workspace Accounts</h2>
       </div>
-      <div key="direct_pay_table" className="pt-5 text-center">
-        <BootstrapTable keyField='directpay_workspace_id' data={occworkspaces} columns={columnsdirectpay} noDataIndication={no_data_indication}
+      <div id="direct_pay_table" className="pt-5 text-center">
+        <BootstrapTable id="direct_pay_table" keyField='directpay_workspace_id' data={occworkspaces} columns={columnsdirectpay} noDataIndication={no_data_indication}
           hover={true} cellEdit={cellEdit} bordered={true}
           loading={loading} overlay={overlayFactory({ spinner: true, background: 'rgba(192,192,192,0.1)' })}
         />

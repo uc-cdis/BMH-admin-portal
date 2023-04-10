@@ -197,15 +197,15 @@ it('renders WorkspaceAccounts table with no data', async () => {
 
 it('renders workspaceAccounts table which has specific number of rows', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
-    const table = workspaceAccountsWrapper.find('BootstrapTable');
+    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
     const rows = table.find('SimpleRow');
     await waitFor(() => {
         expect(rows).toHaveLength(tableData.length);
     });
 
     //for OCC Direct Pay Workspace Accounts Table
-    const workspaceDirectPayAccountsWrapper = mountDirectPayAccountWrapper(directPayTableData);
-    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable');
+    const workspaceDirectPayAccountsWrapper = mountAccountsWrapper(directPayTableData);
+    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable').filter({ keyField: 'directpay_workspace_id'});
     const directpayrows = directpaytable.find('SimpleRow');
     await waitFor(() => {
         expect(directpayrows).toHaveLength(directPayTableData.length);
@@ -214,7 +214,7 @@ it('renders workspaceAccounts table which has specific number of rows', async ()
 
 it('verifies all the column headers are appearing correctly.', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
-    const table = workspaceAccountsWrapper.find('BootstrapTable');
+    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
     const headers = table.find('th');
     await waitFor(() => {
         headers.forEach((header, index) => {
@@ -223,8 +223,8 @@ it('verifies all the column headers are appearing correctly.', async () => {
     });
 
     //for OCC Direct Pay Workspace Accounts Table
-    const workspaceDirectPayAccountsWrapper = mountDirectPayAccountWrapper(directPayTableData);
-    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable');
+    const workspaceDirectPayAccountsWrapper = mountAccountsWrapper(directPayTableData);
+    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable').filter({ keyField: 'directpay_workspace_id'});
     const directpayheaders = directpaytable.find('th');
     await waitFor(() => {
         directpayheaders.forEach((header, index) => {
@@ -235,7 +235,7 @@ it('verifies all the column headers are appearing correctly.', async () => {
 
 it('verifies number of cells in a row are equal to NUMBER_OF_COLUMNS', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
-    const table = workspaceAccountsWrapper.find('BootstrapTable');
+    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
     const rows = table.find('SimpleRow');
     const firstRowCells = rows.first().find('Cell');
     await waitFor(() => {
@@ -243,8 +243,8 @@ it('verifies number of cells in a row are equal to NUMBER_OF_COLUMNS', async () 
     });
 
     //for OCC Direct Pay Workspace Accounts Table
-    const workspaceDirectPayAccountsWrapper = mountDirectPayAccountWrapper(directPayTableData);
-    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable');
+    const workspaceDirectPayAccountsWrapper = mountAccountsWrapper(directPayTableData);
+    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable').filter({ keyField: 'directpay_workspace_id'});
     const directpayrows = directpaytable.find('SimpleRow');
     const directPayFirstRowCells = directpayrows.first().find('Cell');
     await waitFor(() => {
@@ -254,7 +254,7 @@ it('verifies number of cells in a row are equal to NUMBER_OF_COLUMNS', async () 
 
 it('verifies the values in each column are displayed correctly with formatting', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
-    const table = workspaceAccountsWrapper.find('BootstrapTable');
+    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
     const rows = table.find('SimpleRow');
     const firstRowCells = rows.first().find('Cell');
 
@@ -266,8 +266,8 @@ it('verifies the values in each column are displayed correctly with formatting',
     });
 
     //for OCC Direct Pay Workspace Accounts Table
-    const workspaceDirectPayAccountsWrapper = mountDirectPayAccountWrapper(directPayTableData);
-    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable');
+    const workspaceDirectPayAccountsWrapper = mountAccountsWrapper(directPayTableData);
+    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable').filter({ keyField: 'directpay_workspace_id'});
     const directpayrows = directpaytable.find('SimpleRow');
     const directPayFirstRowCells = directpayrows.first().find('Cell');
 
@@ -281,7 +281,7 @@ it('verifies the values in each column are displayed correctly with formatting',
 
 it('verifies the editability of each cell according to the defined columns', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
-    const table = workspaceAccountsWrapper.find('BootstrapTable');
+    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
     const rows = table.find('SimpleRow');
     const firstRowCells = rows.first().find('Cell');
 
@@ -294,8 +294,8 @@ it('verifies the editability of each cell according to the defined columns', asy
 
     //for OCC Direct Pay Workspace Accounts Table, currently we dont have any columns editable
     //but this code is added for future compatibility
-    const workspaceDirectPayAccountsWrapper = mountDirectPayAccountWrapper(directPayTableData);
-    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable');
+    const workspaceDirectPayAccountsWrapper = mountAccountsWrapper(directPayTableData);
+    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable').filter({ keyField: 'directpay_workspace_id'});
     const directpayrows = directpaytable.find('SimpleRow');
     const directPayFirstRowCells = directpayrows.first().find('Cell');
 
@@ -309,7 +309,7 @@ it('verifies the editability of each cell according to the defined columns', asy
 
 it('verifies the error message when soft-limit is incorrect', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
-    const table = workspaceAccountsWrapper.find('BootstrapTable');
+    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
     const rows = table.find('SimpleRow');
     const firstRowCells = rows.first().find('Cell');
     await waitFor(() => {
@@ -349,7 +349,7 @@ it('verifies the error message when soft-limit is incorrect', async () => {
 
 it('verifies the error message when hard-limit is incorrect', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
-    const table = workspaceAccountsWrapper.find('BootstrapTable');
+    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
     const rows = table.find('SimpleRow');
     const firstRowCells = rows.first().find('Cell');
     await waitFor(() => {
@@ -379,7 +379,7 @@ it('verifies the setWorkspaceLimits is called upon save correctly', async () => 
     const mockFunction = jest.spyOn(apiUtils, 'setWorkspaceLimits');
     mockFunction.mockImplementation(()=>{})
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
-    const table = workspaceAccountsWrapper.find('BootstrapTable');
+    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
     const rows = table.find('SimpleRow');
     const firstRowCells = rows.first().find('Cell');
 
@@ -417,7 +417,7 @@ it('verifies the Request Workspace link is applied correctly', async () => {
     expect(workspaceAccountsWrapper.find('Link').find({"to":"/request-workspace"}).text()).toBe("Request New Workspace");
 
     //for OCC Direct Pay Workspace Accounts Table
-    const workspaceDirectPayAccountsWrapper = mountDirectPayAccountWrapper(directPayTableData, false);
+    const workspaceDirectPayAccountsWrapper = mountAccountsWrapper(directPayTableData, false);
     await waitFor(() => {}); //Need to have this to avoid `act` errors due to async/await calls in adminAuthorized
     workspaceDirectPayAccountsWrapper.update();
     expect(workspaceDirectPayAccountsWrapper.find('Link')).toHaveLength(1);
@@ -433,7 +433,7 @@ it('verifies the Admin link is applied correctly', async () => {
     expect(workspaceAccountsWrapper.find('Link').find({"to":"/admin"}).text()).toBe("Administrate Workspace");
 
     //for OCC Direct Pay Workspace Accounts Table
-    const workspaceDirectPayAccountsWrapper = mountDirectPayAccountWrapper(directPayTableData, true);
+    const workspaceDirectPayAccountsWrapper = mountAccountsWrapper(directPayTableData, true);
     await waitFor(() => {}); //Need to have this to avoid `act` errors due to async/await calls in adminAuthorized
     workspaceDirectPayAccountsWrapper.update();
     expect(workspaceDirectPayAccountsWrapper.find('Link')).toHaveLength(2); //There are two links in the bottom if the user is admin
