@@ -44,7 +44,9 @@ const getBillingIDFormData = directPayWrapper => {
     from the scope of requestWorkspace
     *******/
     let iifeFunction = (() => {
-        return (formData, _) => {
+        return (billingID, email, _) => {
+            console.log("Billing ID: " + billingID);
+            console.log("email: " + email);
             formDataFromState = formData;
         }
     })();

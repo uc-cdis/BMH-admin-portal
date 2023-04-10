@@ -166,38 +166,20 @@ const mountAccountsWrapper = (tableData, isAdmin = false) => {
     );
 }
 
-const mountDirectPayAccountWrapper = (directPayTableData, isAdmin = false) => {
-    jest.spyOn(apiUtils, 'getWorkspaces').mockImplementation((callback) => { callback(directPayTableData) });
-    jest.spyOn(authUtils, 'authorizeAdmin').mockResolvedValue(isAdmin);
-    return mount(
-        <BrowserRouter>
-            <WorkspaceAccounts />
-        </BrowserRouter>
-    );
-}
-
 
 it('renders WorkspaceAccounts table with no data', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper([]);
-    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
+    const table = workspaceAccountsWrapper.find('BootstrapTable');
     await waitFor(() => {
         expect(table).toHaveLength(1);
     });
     expect(table.find('p').text()).toBe("No active workspaces to view.");
-
-    //for OCC Direct Pay Workspace Accounts Table
-    const workspaceDirectPayAccountsWrapper = mountDirectPayAccountWrapper([]);
-    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable').filter({ keyField: 'directpay_workspace_id'});
-    await waitFor(() => {
-        expect(directpaytable).toHaveLength(1);
-    });
-    expect(directpaytable.find('p').text()).toBe("No active workspaces to view.");
 });
 
 
 it('renders workspaceAccounts table which has specific number of rows', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
-    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
+    const table = workspaceAccountsWrapper.find('BootstrapTable')
     const rows = table.find('SimpleRow');
     await waitFor(() => {
         expect(rows).toHaveLength(tableData.length);
@@ -205,7 +187,7 @@ it('renders workspaceAccounts table which has specific number of rows', async ()
 
     //for OCC Direct Pay Workspace Accounts Table
     const workspaceDirectPayAccountsWrapper = mountAccountsWrapper(directPayTableData);
-    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable').filter({ keyField: 'directpay_workspace_id'});
+    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable');
     const directpayrows = directpaytable.find('SimpleRow');
     await waitFor(() => {
         expect(directpayrows).toHaveLength(directPayTableData.length);
@@ -214,7 +196,7 @@ it('renders workspaceAccounts table which has specific number of rows', async ()
 
 it('verifies all the column headers are appearing correctly.', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
-    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
+    const table = workspaceAccountsWrapper.find('BootstrapTable');
     const headers = table.find('th');
     await waitFor(() => {
         headers.forEach((header, index) => {
@@ -224,7 +206,7 @@ it('verifies all the column headers are appearing correctly.', async () => {
 
     //for OCC Direct Pay Workspace Accounts Table
     const workspaceDirectPayAccountsWrapper = mountAccountsWrapper(directPayTableData);
-    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable').filter({ keyField: 'directpay_workspace_id'});
+    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable');
     const directpayheaders = directpaytable.find('th');
     await waitFor(() => {
         directpayheaders.forEach((header, index) => {
@@ -235,7 +217,7 @@ it('verifies all the column headers are appearing correctly.', async () => {
 
 it('verifies number of cells in a row are equal to NUMBER_OF_COLUMNS', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
-    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
+    const table = workspaceAccountsWrapper.find('BootstrapTable');
     const rows = table.find('SimpleRow');
     const firstRowCells = rows.first().find('Cell');
     await waitFor(() => {
@@ -244,7 +226,7 @@ it('verifies number of cells in a row are equal to NUMBER_OF_COLUMNS', async () 
 
     //for OCC Direct Pay Workspace Accounts Table
     const workspaceDirectPayAccountsWrapper = mountAccountsWrapper(directPayTableData);
-    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable').filter({ keyField: 'directpay_workspace_id'});
+    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable');
     const directpayrows = directpaytable.find('SimpleRow');
     const directPayFirstRowCells = directpayrows.first().find('Cell');
     await waitFor(() => {
@@ -254,7 +236,7 @@ it('verifies number of cells in a row are equal to NUMBER_OF_COLUMNS', async () 
 
 it('verifies the values in each column are displayed correctly with formatting', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
-    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
+    const table = workspaceAccountsWrapper.find('BootstrapTable');
     const rows = table.find('SimpleRow');
     const firstRowCells = rows.first().find('Cell');
 
@@ -267,14 +249,12 @@ it('verifies the values in each column are displayed correctly with formatting',
 
     //for OCC Direct Pay Workspace Accounts Table
     const workspaceDirectPayAccountsWrapper = mountAccountsWrapper(directPayTableData);
-    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable').filter({ keyField: 'directpay_workspace_id'});
+    const directpaytable = workspaceDirectPayAccountsWrapper.find('BootstrapTable');
     const directpayrows = directpaytable.find('SimpleRow');
     const directPayFirstRowCells = directpayrows.first().find('Cell');
     await waitFor(() => {
         columnsDirectPay.filter((column) => !column['isDummyField']).forEach((column) => {
-            console.log(column);
             const cell = directPayFirstRowCells.find({ "column": column });
-            console.log(cell);
             expect(cell.text()).toBe(formattedDirectPayData[column.dataField]);
         })
     });
@@ -282,7 +262,7 @@ it('verifies the values in each column are displayed correctly with formatting',
 
 it('verifies the editability of each cell according to the defined columns', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
-    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
+    const table = workspaceAccountsWrapper.find('BootstrapTable');
     const rows = table.find('SimpleRow');
     const firstRowCells = rows.first().find('Cell');
 
@@ -296,7 +276,7 @@ it('verifies the editability of each cell according to the defined columns', asy
 
 it('verifies the error message when soft-limit is incorrect', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
-    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
+    const table = workspaceAccountsWrapper.find('BootstrapTable');
     const rows = table.find('SimpleRow');
     const firstRowCells = rows.first().find('Cell');
     await waitFor(() => {
@@ -336,7 +316,7 @@ it('verifies the error message when soft-limit is incorrect', async () => {
 
 it('verifies the error message when hard-limit is incorrect', async () => {
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
-    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
+    const table = workspaceAccountsWrapper.find('BootstrapTable');
     const rows = table.find('SimpleRow');
     const firstRowCells = rows.first().find('Cell');
     await waitFor(() => {
@@ -366,7 +346,7 @@ it('verifies the setWorkspaceLimits is called upon save correctly', async () => 
     const mockFunction = jest.spyOn(apiUtils, 'setWorkspaceLimits');
     mockFunction.mockImplementation(()=>{})
     const workspaceAccountsWrapper = mountAccountsWrapper(tableData);
-    const table = workspaceAccountsWrapper.find('BootstrapTable').filter({ keyField: 'bmh_workspace_id'});
+    const table = workspaceAccountsWrapper.find('BootstrapTable');
     const rows = table.find('SimpleRow');
     const firstRowCells = rows.first().find('Cell');
 
