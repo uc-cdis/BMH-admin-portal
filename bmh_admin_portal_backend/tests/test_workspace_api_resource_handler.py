@@ -5,11 +5,12 @@ import uuid
 import decimal
 import json
 import os
+import boto3
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 from boto3.dynamodb import table
 from lambdas.workspaces_api_resource import workspaces_api_resource_handler
-from moto import mock_apigateway, mock_sns
+from moto import mock_apigateway, mock_sns, mock_lambda, mock_iam
 
 api_key = "testKey"
 test_email_1 = "test1@uchicago.com"
@@ -38,6 +39,32 @@ expression_attribute_names = {
     "#softlimit": "soft-limit",
     "#hardlimit": "hard-limit",
 }
+
+# Create a mock IAM role
+def create_mock_role():
+    with mock_iam():
+        iam = boto3.client("iam")
+        role_name = "mock-iam-role"
+
+        # Create the mock role
+        response = iam.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument='{"Version": "2012-10-17","Statement": [{"Effect": "Allow","Principal": {"Service": "lambda.amazonaws.com"},"Action": "sts:AssumeRole"}]}',
+        )
+
+        return response["Role"]["Arn"]
+
+
+def create_mock_lambda_function():
+    with mock_lambda():
+        lambda_client = boto3.client("lambda")
+        lambda_client.create_function(
+            FunctionName=os.environ.get("total_usage_trigger_lambda_arn"),
+            Runtime="python3.7",
+            Role=create_mock_role(),
+            Handler="my_lambda_function.lambda_handler",
+            Code={"ZipFile": b""},
+        )
 
 
 def test_get_tokens():
@@ -174,6 +201,7 @@ def test_workspace_provision(dynamodb_table):
                 ) as mock_get_param:
                     with mock_apigateway():
                         with mock_sns():
+                            create_mock_lambda_function()
                             # Todo: Ensure apigateway's create_api_key and create_usage_plan_key is called with appropriate params
                             # Ensure sns's create_topic is called with suitable params and return a mock 'TopicArn' in response
                             mock_get_table_name.return_value = "testTable"
@@ -345,69 +373,73 @@ def test_workspaces_set_limits(dynamodb_table):
     with mock.patch.object(
         workspaces_api_resource_handler, "_get_dynamodb_table_name"
     ) as mock_get_table_name:
-        mock_get_table_name.return_value = "testTable"
+        with patch(
+            "lambdas.workspaces_api_resource.workspaces_api_resource_handler._publish_to_sns_topic"
+        ) as mock_sns:
+            mock_get_table_name.return_value = "testTable"
 
-        # Mock the Dynamodb table with an exiting workspace records
-        id1 = str(uuid.uuid4())
-        item1 = {
-            "workspace_request_id": id1,
-            "user_id": test_email_1,
-            "root_account_email": "ctds@uchicago.edu",
-            "bmh_workspace_id": id1,
-            "request_status": "pending",
-            "strides-credits": decimal.Decimal("0"),
-            "soft-limit": decimal.Decimal("0"),
-            "hard-limit": decimal.Decimal("0"),
-            "total-usage": 0,
-        }
+            # Mock the Dynamodb table with an exiting workspace records
+            id1 = str(uuid.uuid4())
+            item1 = {
+                "workspace_request_id": id1,
+                "user_id": test_email_1,
+                "root_account_email": "ctds@uchicago.edu",
+                "bmh_workspace_id": id1,
+                "request_status": "pending",
+                "strides-credits": decimal.Decimal("0"),
+                "soft-limit": decimal.Decimal("0"),
+                "hard-limit": decimal.Decimal("0"),
+                "total-usage": 0,
+                "sns-topic": "mock-sns-topic",
+            }
 
-        dynamodb_table.put_item(Item=item1)
+            dynamodb_table.put_item(Item=item1)
 
-        # Failure responses#
-        # Send path_params without workspace_id -- verify for AssertionError
-        body = {"soft-limit": "160", "hard-limit": "200"}
-        path_params = {}
-        with pytest.raises(AssertionError):
-            workspaces_api_resource_handler._workspaces_set_limits(
+            # Failure responses#
+            # Send path_params without workspace_id -- verify for AssertionError
+            body = {"soft-limit": "160", "hard-limit": "200"}
+            path_params = {}
+            with pytest.raises(AssertionError):
+                workspaces_api_resource_handler._workspaces_set_limits(
+                    body, path_params, test_email_1
+                )
+
+            # Send body without soft-limit (also hard-limit) -- verify for AssertionError
+            body = {}
+            path_params = {"workspace_id": id1}
+            with pytest.raises(AssertionError):
+                workspaces_api_resource_handler._workspaces_set_limits(
+                    body, path_params, test_email_1
+                )
+            # Send body without soft-limit >= hard-limit -- verify for ValueError
+            body = {"soft-limit": "200", "hard-limit": "160"}
+            path_params = {"workspace_id": id1}
+            with pytest.raises(ValueError):
+                workspaces_api_resource_handler._workspaces_set_limits(
+                    body, path_params, test_email_1
+                )
+
+            # Success Response
+            body = {"soft-limit": "160", "hard-limit": "200"}
+            path_params = {"workspace_id": id1}
+            resp = workspaces_api_resource_handler._workspaces_set_limits(
                 body, path_params, test_email_1
             )
+            assert resp["statusCode"] == 200
 
-        # Send body without soft-limit (also hard-limit) -- verify for AssertionError
-        body = {}
-        path_params = {"workspace_id": id1}
-        with pytest.raises(AssertionError):
-            workspaces_api_resource_handler._workspaces_set_limits(
-                body, path_params, test_email_1
+            # Query the table for item by email
+            response = dynamodb_table.query(
+                KeyConditionExpression=Key("user_id").eq(test_email_1),
+                ProjectionExpression=projection,
+                ExpressionAttributeNames=expression_attribute_names,
             )
-
-        # Send body without soft-limit >= hard-limit -- verify for ValueError
-        body = {"soft-limit": "200", "hard-limit": "160"}
-        path_params = {"workspace_id": id1}
-        with pytest.raises(ValueError):
-            workspaces_api_resource_handler._workspaces_set_limits(
-                body, path_params, test_email_1
+            retval = response.get("Items", [])
+            assert (
+                len(retval) == 1
+                and retval[0]["soft-limit"] == 160.0
+                and retval[0]["hard-limit"] == 200.0
             )
-
-        # Success Response
-        body = {"soft-limit": "160", "hard-limit": "200"}
-        path_params = {"workspace_id": id1}
-        resp = workspaces_api_resource_handler._workspaces_set_limits(
-            body, path_params, test_email_1
-        )
-        assert resp["statusCode"] == 200
-
-        # Query the table for item by email
-        response = dynamodb_table.query(
-            KeyConditionExpression=Key("user_id").eq(test_email_1),
-            ProjectionExpression=projection,
-            ExpressionAttributeNames=expression_attribute_names,
-        )
-        retval = response.get("Items", [])
-        assert (
-            len(retval) == 1
-            and retval[0]["soft-limit"] == 160.0
-            and retval[0]["hard-limit"] == 200.0
-        )
+            mock_sns.assert_called_once()
 
 
 def test_workspaces_set_limits_db_error():

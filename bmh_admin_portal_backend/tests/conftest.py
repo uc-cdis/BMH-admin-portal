@@ -11,7 +11,7 @@ from unittest import mock
 from unittest.mock import MagicMock, patch
 
 import boto3
-from moto import mock_dynamodb, mock_ssm
+from moto import mock_dynamodb
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -27,6 +27,7 @@ def setup_env_vars():
             "state_machine_arn": "testArn",
             "account_creation_asset_bucket_name": "testBucket",
             "api_usage_id_param_name": "testUsageId",
+            "total_usage_trigger_lambda_arn": "testTotalUsageArn",
         },
     ):
         yield
