@@ -249,7 +249,7 @@ const DirectPayForm = (props) => {
                       <Form.Label> BillingID <span data-tip data-for="billingID_help"><BiHelpCircle /></span></Form.Label>
                       <ReactTooltip class="tooltip" id="billingID_help" place="top" effect="solid" multiline={true}>
                         Enter the Billing ID provided from registration through the Payment Solutions Portal. <br />
-                        If you have not recieved a BillingID, please complete registration at: <a href="https://payments.occ-pla.net/">https://payments.occ-pla.net/</a>
+                        If you have not recieved a BillingID, please complete registration at: <a href="https://payments.occ-data.org/">https://payments.occ-data.org/</a>
                       </ReactTooltip>
                       <Form.Control type="text" name="billingID" disabled={formDisabled} onChange={event => setBillingID(event.target.value)} placeholder="Enter BillingID" />
                       <br></br>
