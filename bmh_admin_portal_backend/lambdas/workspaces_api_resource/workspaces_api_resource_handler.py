@@ -356,14 +356,9 @@ def _workspace_provision(body, path_params):
     topic_arn = response["TopicArn"]
 
     # Commenting this out since we don't want to use this as notification.
-    # TODO: Remove this once we are confident
-    # email_domain = os.environ.get("email_domain", None)
-    # # sns_email = f"request@{email_domain}"
-    # sns.subscribe(
-    #     TopicArn=topic_arn,
-    #     Protocol="email",
-    #     Endpoint=sns_email
-    # )
+    email_domain = os.environ.get("email_domain", None)
+    # sns_email = f"request@{email_domain}"
+    sns.subscribe(TopicArn=topic_arn, Protocol="email", Endpoint=email)
 
     # Adding a subscription to the Lambda function that updates dynamoDB if total-usage is over the hard-limit
     lambda_arn = os.environ.get("total_usage_trigger_lambda_arn")
@@ -372,14 +367,33 @@ def _workspace_provision(body, path_params):
 
     # Add permission to the function to allow SNS to invoke it
     lambda_client = boto3.client("lambda")
-    lambda_response = lambda_client.add_permission(
-        FunctionName=lambda_arn,
-        StatementId=f"sns-trigger-{workspace_id}",
-        Action="lambda:InvokeFunction",
-        Principal="sns.amazonaws.com",
-        SourceArn=topic_arn,
-    )
-    logger.info(lambda_response)
+    statement = {
+        "StatementId": f"sns-trigger-{workspace_id}",
+        "Action": "lambda:InvokeFunction",
+        "Principal": "sns.amazonaws.com",
+        "SourceArn": topic_arn,
+    }
+    # Check if the permission already exists
+    response = lambda_client.get_policy(FunctionName=lambda_arn)
+    policy = json.loads(response["Policy"])
+    if any(
+        policy_statement["Sid"] == statement["StatementId"]
+        and policy_statement["Action"] == statement["Action"]
+        and policy_statement["Principal"]["Service"] == statement["Principal"]
+        and policy_statement["Condition"]["ArnLike"]["AWS:SourceArn"]
+        == statement["SourceArn"]
+        for policy_statement in policy["Statement"]
+    ):
+        logger.info(f"Permission {statement['StatementId']} already exists")
+    else:
+        lambda_response = lambda_client.add_permission(
+            FunctionName=lambda_arn,
+            StatementId=statement["StatementId"],
+            Action=statement["Action"],
+            Principal=statement["Principal"],
+            SourceArn=statement["SourceArn"],
+        )
+        logger.info(lambda_response)
 
     # Get the dynamodb table name from SSM Parameter Store
     dynamodb_table_name = _get_dynamodb_table_name()
