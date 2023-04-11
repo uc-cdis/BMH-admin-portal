@@ -37,6 +37,8 @@ class SuccessHandler:
             logger.info("Could not find workspace request id. Not updating database.")
         else:
             self.db_client.set_status(workspace_request_id, "active")
+            self.db_client.set_subnet_id(workspace_request_id)
+            self.db_client.set_ecs(workspace_request_id, True)
 
         # Send something to an SNS topic for notifications
         sns_topic_arn = os.environ.get("provision_workspace_sns_topic", None)
