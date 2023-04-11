@@ -539,6 +539,8 @@ def test_workspaces_set_limits(dynamodb_table):
                 "sns-topic": "mock-sns-topic",
             }
 
+            dynamodb_table.put_item(Item=item2)
+
             # Failure responses#
             # Send path_params without workspace_id -- verify for AssertionError
             body = {"soft-limit": "160", "hard-limit": "200"}
