@@ -3,6 +3,7 @@ import {
 } from 'enzyme';
 import DirectPayForm from './direct-pay-form';
 import * as apiUtils from '../../util/api';
+import { render } from "@testing-library/react";
 
 /**
  * We have two forms in this process
@@ -43,10 +44,10 @@ const getBillingIDFormData = directPayWrapper => {
     from the scope of requestWorkspace
     *******/
     let iifeFunction = (() => {
-        return (url, method, headers, data, _) => {
+        return (occHelpURL, method, headers, data, _) => {
             formDataFromState = {
                 "billingID": data.queryStringParameters.brh_data.AGBillingID,
-                "email" : data.queryStringParameters.brh_data.Email
+                "email": data.queryStringParameters.brh_data.Email
             }
         }
     })();
@@ -62,14 +63,14 @@ const getBillingIDFormData = directPayWrapper => {
 };
 
 // Verify that both forms are rendered correctly
-it('verifies direct pay billingID form being rendered correctly', async() => {
-    const directPayBilllingIDWrapper = shallow( <DirectPayForm/> );
+it('verifies direct pay billingID form being rendered correctly', async () => {
+    const directPayBilllingIDWrapper = shallow( < DirectPayForm/> );
     expect(directPayBilllingIDWrapper.find('FormControl')).toHaveLength(FIRST_FORM_FIELD_COUNT);
 });
 
 // Verify that both forms are rendered with default values
 it('verifies form renders with default values', async () => {
-    const directPayBilllingIDWrapperforValues = shallow( <DirectPayForm/> );
+    const directPayBilllingIDWrapperforValues = shallow( < DirectPayForm/> );
     let formData = getBillingIDFormData(directPayBilllingIDWrapperforValues);
     for (let key in firstFormData) {
         expect(formData[key]).toBe(firstFormData[key]);
@@ -78,7 +79,7 @@ it('verifies form renders with default values', async () => {
 
 // Verify that both forms are rendered with default values
 it('verifies direct pay billingID form fields being updated appropriately', async () => {
-    const directPayBilllingIDWrapper = shallow( <DirectPayForm/> );
+    const directPayBilllingIDWrapper = shallow( < DirectPayForm/> );
     let input;
     for (let key in updatedFirstFormData) {
         input = directPayBilllingIDWrapper.find('FormControl').filter({
@@ -96,4 +97,25 @@ it('verifies direct pay billingID form fields being updated appropriately', asyn
     for (let key in updatedFirstFormData) {
         expect(formData[key]).toBe(updatedFirstFormData[key]);
     }
+});
+
+it('submits the form and makes a call to callExternalURL', () => {
+    const directPayWrapper = shallow(<DirectPayForm />);
+    const mockFunction = jest.spyOn(apiUtils, 'callExternalURL');
+    let submitFunc = directPayWrapper.find('Form').prop('onSubmit');
+
+    //ensure request Workspace is called when the checkValidity returns true
+    let custom_event_object = {
+        currentTarget: {
+            checkValidity: () => false
+        },
+        preventDefault: () => null
+    };
+    submitFunc(custom_event_object);
+    expect(mockFunction.mock.calls).toHaveLength(1);
+
+    //ensure request Workspace is called when the checkValidity returns true
+    custom_event_object.currentTarget.checkValidity = () => true;
+    submitFunc(custom_event_object);
+    expect(mockFunction).toHaveBeenCalled();
 });

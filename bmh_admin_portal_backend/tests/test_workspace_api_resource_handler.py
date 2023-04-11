@@ -15,6 +15,8 @@ from moto import mock_apigateway, mock_sns, mock_lambda, mock_iam
 api_key = "testKey"
 test_email_1 = "test1@uchicago.com"
 test_email_2 = "test2@uchicago.com"
+test_email_3 = "test3@occ-data.org"
+test_email_4 = "test4@occ-data.org"
 # Mock Dynamodb query parameters
 projection = ", ".join(
     [
@@ -38,6 +40,29 @@ expression_attribute_names = {
     "#stridescredits": "strides-credits",
     "#softlimit": "soft-limit",
     "#hardlimit": "hard-limit",
+}
+
+# Direct pay: Mock Dynamodb query parameters for directpay
+projection_directpay = ", ".join(
+    [
+        "#bmhworkspaceid",
+        "#requeststatus",
+        "#workspacetype",
+        "#totalusage",
+        "#softlimit",
+        "#hardlimit",
+        "#directpaylimit",
+    ]
+)
+
+expression_attribute_names_directpay = {
+    "#bmhworkspaceid": "bmh_workspace_id",
+    "#requeststatus": "request_status",
+    "#workspacetype": "workspace_type",
+    "#totalusage": "total-usage",
+    "#softlimit": "soft-limit",
+    "#hardlimit": "hard-limit",
+    "#directpaylimit": "direct_pay_limit",
 }
 
 # Create a mock IAM role
@@ -168,6 +193,70 @@ def test_workspaces_post(dynamodb_table):
             mock_email_client.send_grant_workspace_request_email.assert_called()
 
 
+def test_workspaces_post_direct_pay(dynamodb_table):
+
+    # Remove email_domain from OS settings and verify ValueError is being thrown
+    json = {"workspace_type": "Direct Pay"}
+    os.environ.pop("email_domain")
+    with pytest.raises(ValueError):
+        workspaces_api_resource_handler._workspaces_post(json, test_email_3)
+
+    # Remove email_domain from OS settings and verify ValueError is being thrown
+    json = {"workspace_type": "Direct Pay"}
+    os.environ.pop("occ_email_domain")
+    with pytest.raises(ValueError):
+        workspaces_api_resource_handler._workspaces_post(json, test_email_3)
+
+    # Email for Direct Pay
+    os.environ["occ_email_domain"] = "occ-data.org"
+    with patch.object(
+        workspaces_api_resource_handler, "_get_dynamodb_table_name"
+    ) as mock_get_table_name:
+        mock_get_table_name.return_value = "testTable"
+
+        assert (
+            workspaces_api_resource_handler._workspaces_post(
+                email=test_email_3, body=json
+            )["statusCode"]
+            == 200
+        )
+
+        # Query the table for item by email
+        response = dynamodb_table.query(
+            KeyConditionExpression=Key("user_id").eq(test_email_3),
+            ProjectionExpression=projection_directpay,
+            ExpressionAttributeNames=expression_attribute_names_directpay,
+        )
+        retval = response.get("Items", [])
+        assert (
+            len(retval) == 1
+            and retval[0]["workspace_type"] == "Direct Pay"
+            and retval[0]["request_status"] == "pending"
+        )
+
+        # Test grant type workspace request
+        json = {"workspace_type": "Direct Pay"}
+        assert (
+            workspaces_api_resource_handler._workspaces_post(
+                email=test_email_4, body=json
+            )["statusCode"]
+            == 200
+        )
+
+        # read the data from Table
+        response = dynamodb_table.query(
+            KeyConditionExpression=Key("user_id").eq(test_email_4),
+            ProjectionExpression=projection_directpay,
+            ExpressionAttributeNames=expression_attribute_names_directpay,
+        )
+        retval = response.get("Items", [])
+        assert (
+            len(retval) == 1
+            and retval[0]["workspace_type"] == "Direct Pay"
+            and retval[0]["request_status"] == "pending"
+        )
+
+
 def test_workspace_provision(dynamodb_table):
 
     # Mock the Dynamodb table with an exiting workspace records
@@ -179,6 +268,7 @@ def test_workspace_provision(dynamodb_table):
         "bmh_workspace_id": id1,
         "request_status": "pending",
         "strides-credits": decimal.Decimal("0"),
+        "direct_pay_limit": decimal.Decimal("0"),
         "soft-limit": decimal.Decimal("0"),
         "hard-limit": decimal.Decimal("0"),
         "total-usage": 0,
@@ -344,18 +434,49 @@ def test_workspaces_get(dynamodb_table):
         dynamodb_table.put_item(Item=item1)
         dynamodb_table.put_item(Item=item2)
 
+        ## Direct Pay: entries
+
+        id3 = str(uuid.uuid4())
+        item3 = {
+            "workspace_request_id": id3,
+            "user_id": test_email_3,
+            "root_account_email": "occ@occ-data.org",
+            "bmh_workspace_id": id3,
+            "request_status": "pending",
+            "direct_pay_limit": decimal.Decimal("50"),
+            "soft-limit": decimal.Decimal("40"),
+            "hard-limit": decimal.Decimal("50"),
+            "total-usage": 0,
+        }
+        id4 = str(uuid.uuid4())
+        item4 = item3.copy()
+        item4["user_id"] = test_email_4
+        item4["workspace_request_id"] = item4["bmh_workspace_id"] = id4
+
+        dynamodb_table.put_item(Item=item3)
+        dynamodb_table.put_item(Item=item4)
+
         # Scenario 1
         # Send `path_params` as None and the preset dummy email address
         # Verify the return table has all the records of the presented dummy email address
         resp = workspaces_api_resource_handler._workspaces_get(None, email=test_email_1)
         assert resp["statusCode"] == 200 and len(json.loads(resp["body"])) == 1
 
+        # Direct pay: Scenario 1
+        resp_directpay = workspaces_api_resource_handler._workspaces_get(
+            None, email=test_email_3
+        )
+        assert (
+            resp_directpay["statusCode"] == 200
+            and len(json.loads(resp_directpay["body"])) == 1
+        )
+
         # Scenario 2
         # Send `path_params` with `workspace_id` as admin_all
         # Verify the return table has all the records of the table
         param = {"workspace_id": "admin_all"}
         resp = workspaces_api_resource_handler._workspaces_get(param, None)
-        assert resp["statusCode"] == 200 and len(json.loads(resp["body"])) == 2
+        assert resp["statusCode"] == 200 and len(json.loads(resp["body"])) == 4
 
         # Scenario 3
         # Send `path_params` with `workspace_id` as one of the workspace_id of one of the rows
@@ -365,6 +486,14 @@ def test_workspaces_get(dynamodb_table):
         assert (
             resp["statusCode"] == 200
             and json.loads(resp["body"])["bmh_workspace_id"] == id2
+        )
+
+        # Direct pay: Scenario 3
+        param = {"workspace_id": id4}
+        resp = workspaces_api_resource_handler._workspaces_get(param, test_email_4)
+        assert (
+            resp["statusCode"] == 200
+            and json.loads(resp["body"])["bmh_workspace_id"] == id4
         )
 
 
@@ -395,6 +524,20 @@ def test_workspaces_set_limits(dynamodb_table):
 
             dynamodb_table.put_item(Item=item1)
 
+            id2 = str(uuid.uuid4())
+            item2 = {
+                "workspace_request_id": id2,
+                "user_id": test_email_3,
+                "root_account_email": "occ@occ-data.org",
+                "bmh_workspace_id": id2,
+                "request_status": "pending",
+                "direct_pay_limit": decimal.Decimal("50"),
+                "soft-limit": decimal.Decimal("40"),
+                "hard-limit": decimal.Decimal("50"),
+                "total-usage": 0,
+                "sns-topic": "mock-sns-topic",
+            }
+
             # Failure responses#
             # Send path_params without workspace_id -- verify for AssertionError
             body = {"soft-limit": "160", "hard-limit": "200"}
@@ -402,6 +545,11 @@ def test_workspaces_set_limits(dynamodb_table):
             with pytest.raises(AssertionError):
                 workspaces_api_resource_handler._workspaces_set_limits(
                     body, path_params, test_email_1
+                )
+            # Direct pay: end path_params without workspace_id -- verify for AssertionError
+            with pytest.raises(AssertionError):
+                workspaces_api_resource_handler._workspaces_set_limits(
+                    body, path_params, test_email_3
                 )
 
             # Send body without soft-limit (also hard-limit) -- verify for AssertionError
@@ -411,12 +559,23 @@ def test_workspaces_set_limits(dynamodb_table):
                 workspaces_api_resource_handler._workspaces_set_limits(
                     body, path_params, test_email_1
                 )
+            # Direct pay: Send body without soft-limit (also hard-limit) -- verify for AssertionError
+            with pytest.raises(AssertionError):
+                workspaces_api_resource_handler._workspaces_set_limits(
+                    body, {"workspace_id": id2}, test_email_3
+                )
+
             # Send body without soft-limit >= hard-limit -- verify for ValueError
             body = {"soft-limit": "200", "hard-limit": "160"}
             path_params = {"workspace_id": id1}
             with pytest.raises(ValueError):
                 workspaces_api_resource_handler._workspaces_set_limits(
                     body, path_params, test_email_1
+                )
+            # Direct Pay: Send body without soft-limit >= hard-limit -- verify for ValueError
+            with pytest.raises(ValueError):
+                workspaces_api_resource_handler._workspaces_set_limits(
+                    body, {"workspace_id": id2}, test_email_3
                 )
 
             # Success Response
@@ -427,11 +586,31 @@ def test_workspaces_set_limits(dynamodb_table):
             )
             assert resp["statusCode"] == 200
 
+            # Direct pay: Success Response for when soft and hard limits are set
+            resp = workspaces_api_resource_handler._workspaces_set_limits(
+                body, {"workspace_id": id2}, test_email_3
+            )
+            assert resp["statusCode"] == 200
+
             # Query the table for item by email
             response = dynamodb_table.query(
                 KeyConditionExpression=Key("user_id").eq(test_email_1),
                 ProjectionExpression=projection,
                 ExpressionAttributeNames=expression_attribute_names,
+            )
+            retval = response.get("Items", [])
+            assert (
+                len(retval) == 1
+                and retval[0]["soft-limit"] == 160.0
+                and retval[0]["hard-limit"] == 200.0
+            )
+            mock_sns.assert_called_once()
+
+            # Direct pay: Query the table for item by email
+            response = dynamodb_table.query(
+                KeyConditionExpression=Key("user_id").eq(test_email_3),
+                ProjectionExpression=projection_directpay,
+                ExpressionAttributeNames=expression_attribute_names_directpay,
             )
             retval = response.get("Items", [])
             assert (

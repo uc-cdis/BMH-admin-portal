@@ -68,6 +68,7 @@ const DirectPayForm = (props) => {
 
             callExternalURL(occHelpURL, "post", headers, data, (response) => {
                 if (response['statusCode'] !== 400 && response.body[0]["Message"]["statusCode"] === 200) {
+                  console.log("here");
                     setRequestApproved("true");
                     setDirectPayLimit(response.body[0]["Message"]["body"]);
                     setformDisabled(true);
@@ -248,7 +249,7 @@ const DirectPayForm = (props) => {
                       <Form.Label> BillingID <span data-tip data-for="billingID_help"><BiHelpCircle /></span></Form.Label>
                       <ReactTooltip class="tooltip" id="billingID_help" place="top" effect="solid" multiline={true}>
                         Enter the Billing ID provided from registration through the Payment Solutions Portal. <br />
-                        If you have not recieved a BillingID, please complete registration at: <href>https://payments.occ-pla.net/</href>
+                        If you have not recieved a BillingID, please complete registration at: <a href="https://payments.occ-pla.net/">https://payments.occ-pla.net/</a>
                       </ReactTooltip>
                       <Form.Control type="text" name="billingID" disabled={formDisabled} onChange={event => setBillingID(event.target.value)} placeholder="Enter BillingID" />
                       <br></br>
