@@ -595,6 +595,8 @@ def test_workspaces_set_limits(dynamodb_table):
             )
             assert resp["statusCode"] == 200
 
+            assert mock_sns.call_count == 2
+
             # Query the table for item by email
             response = dynamodb_table.query(
                 KeyConditionExpression=Key("user_id").eq(test_email_1),
@@ -607,7 +609,6 @@ def test_workspaces_set_limits(dynamodb_table):
                 and retval[0]["soft-limit"] == 160.0
                 and retval[0]["hard-limit"] == 200.0
             )
-            mock_sns.assert_called_once()
 
             # Direct pay: Query the table for item by email
             response = dynamodb_table.query(
@@ -621,7 +622,6 @@ def test_workspaces_set_limits(dynamodb_table):
                 and retval[0]["soft-limit"] == 160.0
                 and retval[0]["hard-limit"] == 200.0
             )
-            mock_sns.assert_called_once()
 
 
 def test_workspaces_set_limits_db_error():
