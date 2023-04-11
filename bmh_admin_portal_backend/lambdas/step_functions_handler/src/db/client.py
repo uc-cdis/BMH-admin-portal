@@ -30,6 +30,36 @@ class DBClient:
             "request_status", status, workspace_request_id, email
         )
 
+    def set_subnet_id(self, workspace_request_id, email=None):
+        """Given a workspace request ID this method set the value of subnet ID as the first available positive number.
+
+        args:
+            workspace_request_id: (string) Request ID which should already exist in database.
+            email: (string, optional) Email/user_id. If not provided, will look up in GSI.
+
+        return:
+            table_response (dict): response for update_item call
+
+        """
+        subnet_id = self._get_first_available_subnet_id()
+        return self._update_single_attribute(
+            "subnet", subnet_id, workspace_request_id, email
+        )
+
+    def set_ecs(self, workspace_request_id, ecs, email=None):
+        """Given a workspace request ID this method set the value of ecs attribute
+
+        args:
+            workspace_request_id: (string) Request ID which should already exist in database.
+            ecs: (Boolean) Whether or not this pay model record is of type ecs.
+            email: (string, optional) Email/user_id. If not provided, will look up in GSI.
+
+        return:
+            table_response (dict): response for update_item call
+
+        """
+        return self._update_single_attribute("ecs", ecs, workspace_request_id, email)
+
     def set_account_id(self, workspace_request_id, account_id, email=None):
         """Will set the account ID given a workspace request ID
 
@@ -151,6 +181,38 @@ class DBClient:
                 raise e
 
         return table_response
+
+    def _get_first_available_subnet_id(self):
+        """Scans the entire DynamoDB table are returns the first available subnet id.
+
+        args:
+            None
+
+        return:
+            subnet_id (Number): The first available subnet id from the table is returned
+        """
+        column_name = "subnet"
+        first_available_subnet_id = 1
+        # Query the Global Secondary Index to get the User.
+        try:
+            response = self.table.scan(
+                Select="SPECIFIC_ATTRIBUTES",
+                ProjectionExpression=column_name,
+                FilterExpression="attribute_exists(" + column_name + ")",
+            )
+        except ClientError as e:
+            raise e
+
+        # Not a scalable solution but works as a workaround due to the limitations of DynamoDB.
+        sorted_subnet = (
+            sorted(item[column_name] for item in response["Items"])
+            if response["Items"]
+            else []
+        )
+        while first_available_subnet_id in sorted_subnet:
+            first_available_subnet_id += 1
+
+        return first_available_subnet_id
 
 
 class InvalidWorkspaceRequestIdException(Exception):
