@@ -12,7 +12,7 @@ from boto3.dynamodb import table
 from lambdas.workspaces_api_resource import workspaces_api_resource_handler
 from moto import mock_apigateway, mock_sns, mock_lambda, mock_iam
 
-api_key = "testKey"
+api_key = "testKey"  # pragma: allowlist secret
 test_email_1 = "test1@uchicago.com"
 test_email_2 = "test2@uchicago.com"
 test_email_3 = "test3@occ-data.org"
@@ -208,6 +208,7 @@ def test_workspaces_post_direct_pay(dynamodb_table):
         workspaces_api_resource_handler._workspaces_post(json, test_email_3)
 
     # Email for Direct Pay
+    os.environ["email_domain"] = "uchicago.edu"
     os.environ["occ_email_domain"] = "occ-data.org"
     with patch.object(
         workspaces_api_resource_handler, "_get_dynamodb_table_name"
@@ -380,7 +381,7 @@ def test_workspace_provision_failures():
 
 def test_start_sfn_workflow():
     workspace_id = "testId"
-    api_key = "testApiKey"
+    api_key = "testApiKey"  # pragma: allowlist secret
     account_id = "testAccountId"
     # Mock Boto3 Client Api Call
     def mock_make_api_call(self, operation_name, kwarg):
