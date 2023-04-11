@@ -23,6 +23,7 @@ def setup_env_vars():
             "AWS_DEFAULT_REGION": "us-east-1",
             "dynamodb_index_param_name": "testIndex",
             "email_domain": "uchicago.edu",
+            "occ_email_domain": "occ-data.org",
             "strides_credits_request_email": "occ_test@uchicago.edu",
             "state_machine_arn": "testArn",
             "account_creation_asset_bucket_name": "testBucket",
