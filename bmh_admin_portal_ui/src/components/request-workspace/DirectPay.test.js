@@ -3,7 +3,9 @@ import {
 } from 'enzyme';
 import DirectPayForm from './direct-pay-form';
 import * as apiUtils from '../../util/api';
-import { render } from "@testing-library/react";
+const axios = require('axios');
+
+
 
 /**
  * We have two forms in this process
@@ -119,3 +121,41 @@ it('submits the form and makes a call to callExternalURL', () => {
     submitFunc(custom_event_object);
     expect(mockFunction).toHaveBeenCalled();
 });
+
+
+
+it('verifies return billing amount', async () => {
+
+    const directPayWrapper = shallow(<DirectPayForm />);
+    const mockFunction = jest.spyOn(apiUtils, 'callExternalURL');
+    mockFunction.mockResolvedValue({
+        "statusCode": 200,
+        "body":[
+           {
+              "Message":{
+                 "statusCode":200,
+                 "body": 50.0
+              },
+              "dataSize":0,
+              "Data":[
+
+              ]
+           }
+        ]
+     });
+    let submitFunc = directPayWrapper.find('Form').prop('onSubmit');
+
+    //ensure request Workspace is called when the checkValidity returns true
+    let custom_event_object = {
+        currentTarget: {
+            checkValidity: () => false
+        },
+        preventDefault: () => null
+    };
+
+    submitFunc(custom_event_object)
+    mockFunction((res) => res.json()).then(data => {
+        expect(data.statusCode).toBe(200);
+        expect(data.body[0]["Message"]["body"]).toBe(50);
+    });
+  });

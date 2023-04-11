@@ -68,7 +68,6 @@ const DirectPayForm = (props) => {
 
             callExternalURL(occHelpURL, "post", headers, data, (response) => {
                 if (response['statusCode'] !== 400 && response.body[0]["Message"]["statusCode"] === 200) {
-                  console.log("here");
                     setRequestApproved("true");
                     setDirectPayLimit(response.body[0]["Message"]["body"]);
                     setformDisabled(true);
