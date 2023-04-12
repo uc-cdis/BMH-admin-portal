@@ -531,6 +531,7 @@ def test_workspaces_set_limits(dynamodb_table):
                 "workspace_request_id": id2,
                 "user_id": test_email_3,
                 "root_account_email": "occ@occ-data.org",
+                "workspace_type": "Dummy Pay model",
                 "bmh_workspace_id": id2,
                 "request_status": "pending",
                 "direct_pay_limit": decimal.Decimal("50"),
