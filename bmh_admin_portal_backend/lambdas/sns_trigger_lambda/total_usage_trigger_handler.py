@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger.setLevel(logging.INFO)
 
-OVER_THE_LIMIT_STATUS = "over limit"
+OVER_THE_LIMIT_STATUS = "above limit"
 ACTIVE_STATUS = "active"
 
 

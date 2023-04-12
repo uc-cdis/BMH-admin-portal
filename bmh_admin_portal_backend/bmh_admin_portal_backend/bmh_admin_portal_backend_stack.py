@@ -301,6 +301,7 @@ class BmhAdminPortalBackendStack(core.Stack):
             iam.PolicyStatement(
                 actions=[
                     "lambda:AddPermission",
+                    "lambda:GetPolicy",
                 ],
                 resources=[
                     total_usage_trigger_lambda.function_arn,
