@@ -747,11 +747,16 @@ def _workspaces_set_total_usage(body, path_params, api_key):
             f"Surpassed the soft limit: {old_total_usage=} {formatted_total_usage=} {soft_limit=}"
         )
 
-        subject = f"Workspace {workspace_id}: exceeded usage soft limit"
-        message = f"""The Workspace ({workspace_id}) has exceeded the usage soft limit.
-        Total Usage: {formatted_total_usage}
-        Soft Usage Limit: {soft_limit}
-        Hard Usage Limit: {hard_limit}
+        subject = f"[{site_name}] Workspace : Total usage exceeds Soft limit"
+        message = f"""Total usage exceeds the set Soft limit for the following user in {site_name}.
+            Workspace info:
+            User ID : {user_id}
+            Workspace Type: {workspace_type}
+            workspace_id: {workspace_id}
+            Total Usage: {total_usage}
+            Soft Usage Limit: {soft_limit}
+            Hard Usage Limit: {hard_limit}
+
         """
         #  TODO: Publish to admin email instead of per user
         _publish_to_sns_topic(sns_topic_arn, subject, message)
@@ -827,7 +832,7 @@ def _get_param(param_name):
 
 
 def _get_site_info():
-    email_domain = os.environ("email_domain")
+    email_domain = os.environ["email_domain"]
     site_info = {
         "planx-pla.net": "QA-BRH",
         "brh-portal.org": "BRH",
