@@ -12,7 +12,7 @@ from boto3.dynamodb import table
 from lambdas.workspaces_api_resource import workspaces_api_resource_handler
 from moto import mock_apigateway, mock_sns, mock_lambda, mock_iam
 
-api_key = "testKey"
+api_key = "testKey"  # pragma: allowlist secret
 test_email_1 = "test1@uchicago.com"
 test_email_2 = "test2@uchicago.com"
 # Mock Dynamodb query parameters
@@ -290,7 +290,7 @@ def test_workspace_provision_failures():
 
 def test_start_sfn_workflow():
     workspace_id = "testId"
-    api_key = "testApiKey"
+    api_key = "testApiKey"  # pragma: allowlist secret
     account_id = "testAccountId"
     # Mock Boto3 Client Api Call
     def mock_make_api_call(self, operation_name, kwarg):
@@ -384,6 +384,7 @@ def test_workspaces_set_limits(dynamodb_table):
                 "workspace_request_id": id1,
                 "user_id": test_email_1,
                 "root_account_email": "ctds@uchicago.edu",
+                "workspace_type": "Dummy Pay model",
                 "bmh_workspace_id": id1,
                 "request_status": "pending",
                 "strides-credits": decimal.Decimal("0"),
@@ -503,6 +504,7 @@ def test_workspaces_set_total_usage(dynamodb_table):
                 "workspace_request_id": id1,
                 "user_id": test_email_1,
                 "root_account_email": "ctds@uchicago.edu",
+                "workspace_type": "Dummy Pay model",
                 "bmh_workspace_id": id1,
                 "request_status": "pending",
                 "strides-credits": decimal.Decimal("0"),
@@ -542,6 +544,7 @@ def test_workspaces_set_total_usage(dynamodb_table):
                 "workspace_request_id": id2,
                 "user_id": test_email_2,
                 "root_account_email": "ctds@uchicago.edu",
+                "workspace_type": "Dummy Pay model",
                 "bmh_workspace_id": id2,
                 "request_status": "pending",
                 "strides-credits": decimal.Decimal("0"),
