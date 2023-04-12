@@ -355,10 +355,8 @@ def _workspace_provision(body, path_params):
     )
     topic_arn = response["TopicArn"]
 
-    # Commenting this out since we don't want to use this as notification.
-    email_domain = os.environ.get("email_domain", None)
-    # sns_email = f"request@{email_domain}"
-    sns.subscribe(TopicArn=topic_arn, Protocol="email", Endpoint=email)
+    user_services_email = os.environ.get("user_services_email", None)
+    sns.subscribe(TopicArn=topic_arn, Protocol="email", Endpoint=user_services_email)
 
     # Adding a subscription to the Lambda function that updates dynamoDB if total-usage is over the hard-limit
     lambda_arn = os.environ.get("total_usage_trigger_lambda_arn")
@@ -618,12 +616,19 @@ def _workspaces_set_limits(body, path_params, user):
 
     sns_topic_arn = table_response["Attributes"]["sns-topic"]
     total_usage = table_response["Attributes"]["total-usage"]
+    workspace_type = table_response["Attributes"]["workspace_type"]
+    site_name = _get_site_info()
 
-    subject = f"Workspace {workspace_id}: Soft and Hard limits updated"
-    message = f"""The Workspace ({workspace_id}) has the following updated limits.
-    Total Usage: {total_usage}
-    Soft Usage Limit: {soft_limit}
-    Hard Usage Limit: {hard_limit}
+    subject = f"[{site_name}] Workspace : Soft and Hard limits updated"
+    message = f"""There has been an update in the limits for the following user in {site_name}.
+    Workspace info:
+        User ID : {user}
+        Workspace Type: {workspace_type}
+        workspace_id: {workspace_id}
+        Total Usage: {total_usage}
+        Soft Usage Limit: {soft_limit}
+        Hard Usage Limit: {hard_limit}
+
     """
     attributes = {
         "workspace_id": {"DataType": "String", "StringValue": workspace_id},
@@ -704,6 +709,8 @@ def _workspaces_set_total_usage(body, path_params, api_key):
     old_total_usage = table_response["Attributes"]["total-usage"]
     soft_limit = table_response["Attributes"]["soft-limit"]
     hard_limit = table_response["Attributes"]["hard-limit"]
+    workspace_type = table_response["Attributes"]["workspace_type"]
+    site_name = _get_site_info()
 
     sns_topic_arn = table_response["Attributes"]["sns-topic"]
     message = "Success"
@@ -712,11 +719,16 @@ def _workspaces_set_total_usage(body, path_params, api_key):
             f"Surpassed the hard limit: {old_total_usage=} {formatted_total_usage=} {hard_limit=}"
         )
 
-        subject = f"Workspace {workspace_id}: exceeded usage hard limit"
-        message = f"""The Workspace ({workspace_id}) has exceeded the usage hard limit.
-        Total Usage: {formatted_total_usage}
-        Soft Usage Limit: {soft_limit}
-        Hard Usage Limit: {hard_limit}
+        subject = f"[{site_name}] Workspace : Total usage exceeds Hard limit"
+        message = f"""Total usage exceeds the set Hard limit for the following user in {site_name}.
+            Workspace info:
+            User ID : {user_id}
+            Workspace Type: {workspace_type}
+            workspace_id: {workspace_id}
+            Total Usage: {total_usage}
+            Soft Usage Limit: {soft_limit}
+            Hard Usage Limit: {hard_limit}
+
         """
         attributes = {
             "workspace_id": {"DataType": "String", "StringValue": workspace_id},
@@ -812,6 +824,16 @@ def _get_param(param_name):
     ssm = boto3.client("ssm")
     param_info = ssm.get_parameter(Name=param_name)
     return param_info["Parameter"]["Value"]
+
+
+def _get_site_info():
+    email_domain = os.environ("email_domain")
+    site_info = {
+        "planx-pla.net": "QA-BRH",
+        "brh-portal.org": "BRH",
+        "healportal.org": "HEAL",
+    }
+    return site_info.get(email_domain, None)
 
 
 # Helper class to convert a DynamoDB item to JSON.

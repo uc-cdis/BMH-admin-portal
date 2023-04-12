@@ -44,4 +44,5 @@ class BMHAdminPortalBackendConfig:
             # https://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-email-addresses-procedure.html
             "strides_credits_request_email": "",
             "strides_grant_request_email": "",
+            "user_services_email": "",  # Emails regarding total_usage and updated limits are sent to user services from AWS SNS
         }
