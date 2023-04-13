@@ -25,7 +25,7 @@ const directpayinitialFormData = Object.freeze({
     summary_and_justification: "",
     project_short_title: "",
     workspace_use: " ",
-    approved_creditcard: " ",
+    approved_creditcard: false,
     project_role: " ",
     attestation: false,
 });
@@ -40,7 +40,7 @@ const DirectPayForm = (props) => {
         const [title, setTitle] = useState('');
         const [summary, setSummary] = useState('');
         const [workspace_use, setWorkspaceUse] = useState('');
-        const [creditCard, setCreditCard] = useState('');
+        const [approved_creditcard, setCreditCard] = useState(false);
         const [projectRole, setProjectRole] = useState('');
         const [directpaylimit, setDirectPayLimit] = useState('');
         const [buttonDisabled, setButtonDisabled] = useState(false);
@@ -93,7 +93,7 @@ const DirectPayForm = (props) => {
                 setWorkspaceUse(event.target.value)
             }
             if (event.target.name === 'approved_creditcard') {
-                setCreditCard(event.target.value)
+                setCreditCard(event.target.checked)
             }
             if (event.target.name === 'project_role') {
                 setProjectRole(event.target.value)
@@ -134,7 +134,7 @@ const DirectPayForm = (props) => {
                         "ProjectTitle": title,
                         "ProjectSummary": summary,
                         "WorkspaceUse": workspace_use,
-                        "ApprovedCreditCard": creditCard,
+                        "ApprovedCreditCard": approved_creditcard,
                         "ProjectRole": projectRole,
                         "RequestUUID": reqid
                     }
@@ -189,19 +189,7 @@ const DirectPayForm = (props) => {
                   </Form.Control.Feedback>
                   <br></br>
                   <br></br>
-                  <Form.Label> Do you have a credit card approved for use? <span data-tip data-for="approved_creditcard"><BiHelpCircle /></span></Form.Label>
-                  <ReactTooltip class="tooltip" id="approved_creditcard" place="top" effect="solid" multiline={true}>
-                    Please select whether or not you have a credit card approved for use.
-                  </ReactTooltip>
-                  <Form.Control as="select" name="approved_creditcard" onChange={handleChange} custom required >
-                    <option>{""}</option>
-                    <option>Yes</option>
-                    <option>No</option>
-                  </Form.Control>
-                  <Form.Control.Feedback type="invalid">
-                    Please select yes or no
-                  </Form.Control.Feedback>
-                  <br></br>
+                  <Form.Check type="checkbox" name="approved_creditcard" onChange={handleChange} label={`By selecting this check box, we will be issuing you a invoice that must be paid through credit card`}/>
                   <br></br>
                   <Form.Label> Role on Project <span data-tip data-for="project_role"><BiHelpCircle /></span></Form.Label>
                   <ReactTooltip class="tooltip" id="project_role" place="top" effect="solid" multiline={true}>
