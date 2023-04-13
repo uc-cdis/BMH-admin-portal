@@ -10,6 +10,8 @@ class EmailHandler:
         self.email_client = EmailClient()
 
     def handle(self, event):
+        # Can not send emails to users yet, FEDRAMP.
+        return  # Remove this line when the time is right.
         # Try to get the workspace request id to update the database.
         workspace_request_id = None
         try:
