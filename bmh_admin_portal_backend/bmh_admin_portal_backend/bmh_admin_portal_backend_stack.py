@@ -241,6 +241,7 @@ class BmhAdminPortalBackendStack(core.Stack):
                 "auth_client_secret_name": config["auth_client_secret_name"],
                 "auth_oidc_uri": config["auth_oidc_uri"],
                 "email_domain": config["email_domain"],
+                "occ_email_domain": config["occ_email_domain"],
                 "strides_credits_request_email": config[
                     "strides_credits_request_email"
                 ],

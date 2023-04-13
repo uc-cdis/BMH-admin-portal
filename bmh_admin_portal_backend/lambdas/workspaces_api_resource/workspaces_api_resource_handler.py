@@ -277,7 +277,7 @@ def _workspaces_post(body, email):
 
     occ_email_domain = os.environ.get("occ_email_domain", None)
     if not occ_email_domain:
-        raise ValueError("Could not find root account email domain.")
+        raise ValueError("Could not find root occ account email domain.")
 
     if workspace_type == DIRECT_PAY_WORKSPACE_TYPE:
         root_email = f"root_{workspace_request_id}@{occ_email_domain}"
