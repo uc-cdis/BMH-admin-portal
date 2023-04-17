@@ -93,7 +93,7 @@ const DirectPayForm = (props) => {
                 setWorkspaceUse(event.target.value)
             }
             if (event.target.name === 'approved_creditcard') {
-                setCreditCard(event.target.checked)
+                setCreditCard((event.target.checked === true) ? "Yes" : "No")
             }
             if (event.target.name === 'project_role') {
                 setProjectRole(event.target.value)
@@ -134,7 +134,7 @@ const DirectPayForm = (props) => {
                         "ProjectTitle": title,
                         "ProjectSummary": summary,
                         "WorkspaceUse": workspace_use,
-                        "ApprovedCreditCard": (approved_creditcard === true) ? "Yes" : "No",
+                        "ApprovedCreditCard": approved_creditcard,
                         "ProjectRole": projectRole,
                         "RequestUUID": reqid
                     }
