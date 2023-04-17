@@ -160,12 +160,11 @@ const DirectPayForm = (props) => {
                   <Form.Row className="mb-3">
                   <Col>
                   <Form.Check type="checkbox" name="attestation" required label={
-                    <strong>
-                      <span>
-                        By filling out this form below, I consent to be invoiced by OCC the amount of ${(directpaylimit)} to provision that amount of compute for my workspace. If this value is incorrect, please contact OCC
-                        (<a href="mailto:billing@occ-data.org">billing@occ-data.org</a>) to update your request amount.
-                      </span>
-                    </strong>}
+                    <span id="invoice_text">
+                      By filling out this form below, I consent to be invoiced by OCC the amount of ${(directpaylimit)} to provision that amount of compute for my workspace. If this value is incorrect, please contact OCC
+                      (<a href="mailto:billing@occ-data.org">billing@occ-data.org</a>) to update your request amount.
+                    </span>
+                  }
                   />
                   </Col>
                   </Form.Row>
