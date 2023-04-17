@@ -134,7 +134,7 @@ const DirectPayForm = (props) => {
                         "ProjectTitle": title,
                         "ProjectSummary": summary,
                         "WorkspaceUse": workspace_use,
-                        "ApprovedCreditCard": approved_creditcard,
+                        "ApprovedCreditCard": (approved_creditcard === true) ? "Yes" : "No",
                         "ProjectRole": projectRole,
                         "RequestUUID": reqid
                     }
