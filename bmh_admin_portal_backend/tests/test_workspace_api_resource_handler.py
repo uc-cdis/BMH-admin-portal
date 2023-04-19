@@ -239,6 +239,14 @@ def test_workspace_provision_failures():
             mock_get_index_name.return_value = "testIndex"
 
             # Failure responses#
+            # Remove user_services_email from OS Env Var and verify ValueError is being thrown
+            body = {"account_id": "dummy-account-id"}
+            path_params = {"workspace_id": "dummy_workspace_id"}
+            test_user_services_email = os.environ.pop("user_services_email")
+            with pytest.raises(ValueError):
+                workspaces_api_resource_handler._workspace_provision(body, path_params)
+            os.environ["user_services_email"] = test_user_services_email
+
             # Send path_params without workspace_id -- verify for AssertionError
             body = {"account_id": "testAccount"}
             path_params = {}
