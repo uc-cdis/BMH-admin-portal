@@ -246,6 +246,7 @@ class BmhAdminPortalBackendStack(core.Stack):
                     "strides_credits_request_email"
                 ],
                 "strides_grant_request_email": config["strides_grant_request_email"],
+                "user_services_email": config["user_services_email"],
                 "account_creation_asset_bucket_name": config[
                     "account_creation_asset_bucket_name"
                 ],

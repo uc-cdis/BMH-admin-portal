@@ -345,6 +345,10 @@ def _workspace_provision(body, path_params):
     assert "workspace_id" in path_params
     assert "account_id" in body
 
+    user_services_email = os.environ.get("user_services_email", None)
+    if user_services_email is None:
+        raise ValueError("Could not find user services email.")
+
     workspace_id = path_params["workspace_id"]
     account_id = body["account_id"]
 
@@ -381,7 +385,6 @@ def _workspace_provision(body, path_params):
     )
     topic_arn = response["TopicArn"]
 
-    user_services_email = os.environ.get("user_services_email", None)
     sns.subscribe(TopicArn=topic_arn, Protocol="email", Endpoint=user_services_email)
 
     # Adding a subscription to the Lambda function that updates dynamoDB if total-usage is over the hard-limit
