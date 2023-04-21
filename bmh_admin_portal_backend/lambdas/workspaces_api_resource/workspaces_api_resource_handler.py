@@ -400,27 +400,23 @@ def _workspace_provision(body, path_params):
         "Principal": "sns.amazonaws.com",
         "SourceArn": topic_arn,
     }
-    # Check if the permission already exists
-    response = lambda_client.get_policy(FunctionName=lambda_arn)
-    policy = json.loads(response["Policy"])
-    if any(
-        policy_statement["Sid"] == statement["StatementId"]
-        and policy_statement["Action"] == statement["Action"]
-        and policy_statement["Principal"]["Service"] == statement["Principal"]
-        and policy_statement["Condition"]["ArnLike"]["AWS:SourceArn"]
-        == statement["SourceArn"]
-        for policy_statement in policy["Statement"]
-    ):
-        logger.info(f"Permission {statement['StatementId']} already exists")
-    else:
-        lambda_response = lambda_client.add_permission(
+
+    # Add SNS permission
+    try:
+        response = lambda_client.add_permission(
             FunctionName=lambda_arn,
             StatementId=statement["StatementId"],
             Action=statement["Action"],
             Principal=statement["Principal"],
             SourceArn=statement["SourceArn"],
         )
-        logger.info(lambda_response)
+        logger.info("Policy statement added successfully")
+        logger.info(response)
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ResourceConflictException":
+            logger.info("Policy statement already exists")
+        else:
+            raise e
 
     # Get the dynamodb table name from SSM Parameter Store
     dynamodb_table_name = _get_dynamodb_table_name()
