@@ -33,9 +33,15 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger.setLevel(logging.INFO)
 
 DEFAULT_STRIDES_CREDITS_AMOUNT = 250
+
 STRIDES_CREDITS_WORKSPACE_TYPE = "STRIDES Credits"
 STRIDES_GRANT_WORKSPACE_TYPE = "STRIDES Grant"
-VALID_WORKSPACE_TYPES = [STRIDES_CREDITS_WORKSPACE_TYPE, STRIDES_GRANT_WORKSPACE_TYPE]
+DIRECT_PAY_WORKSPACE_TYPE = "Direct Pay"
+VALID_WORKSPACE_TYPES = [
+    STRIDES_CREDITS_WORKSPACE_TYPE,
+    STRIDES_GRANT_WORKSPACE_TYPE,
+    DIRECT_PAY_WORKSPACE_TYPE,
+]
 
 
 def handler(event, context):
@@ -89,6 +95,9 @@ def handler(event, context):
         },
         "/workspaces/{workspace_id}/provision": {
             "POST": lambda: _workspace_provision(body, path_params)
+        },
+        "/workspaces/{workspace_id}/direct-pay-limit": {
+            "PUT": lambda: _workspace_direct_pay_limit(body, path_params, user)
         },
     }
 
@@ -263,10 +272,17 @@ def _workspaces_post(body, email):
 
     # Generate email address for root account
     email_domain = os.environ.get("email_domain", None)
-    if email_domain is None:
+    if not email_domain:
         raise ValueError("Could not find root account email domain.")
 
-    root_email = f"root_{workspace_request_id}@{email_domain}"
+    occ_email_domain = os.environ.get("occ_email_domain", None)
+    if not occ_email_domain:
+        raise ValueError("Could not find root occ account email domain.")
+
+    if workspace_type == DIRECT_PAY_WORKSPACE_TYPE:
+        root_email = f"root_{workspace_request_id}@{occ_email_domain}"
+    else:
+        root_email = f"root_{workspace_request_id}@{email_domain}"
 
     item = {}
     if body is not None:
@@ -286,8 +302,12 @@ def _workspaces_post(body, email):
     else:
         item["strides-credits"] = decimal.Decimal(0)
 
-    item["soft-limit"] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * 0.5)
-    item["hard-limit"] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * 0.9)
+    if workspace_type == DIRECT_PAY_WORKSPACE_TYPE:
+        item["soft-limit"] = 0
+        item["hard-limit"] = 0
+    else:
+        item["soft-limit"] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * 0.5)
+        item["hard-limit"] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * 0.9)
     item["total-usage"] = 0
 
     # Get the dynamodb table name from SSM Parameter Store
@@ -303,7 +323,13 @@ def _workspaces_post(body, email):
     elif workspace_type == "STRIDES Grant":
         EmailHelper.send_grant_workspace_request_email(item)
 
-    return create_response(status_code=200, body={"message": "success"})
+    if workspace_type == "Direct Pay":
+        return create_response(
+            status_code=200,
+            body={"message": "success", "workspace_request_id": workspace_request_id},
+        )
+    else:
+        return create_response(status_code=200, body={"message": "success"})
 
 
 def _workspace_provision(body, path_params):
@@ -374,27 +400,23 @@ def _workspace_provision(body, path_params):
         "Principal": "sns.amazonaws.com",
         "SourceArn": topic_arn,
     }
-    # Check if the permission already exists
-    response = lambda_client.get_policy(FunctionName=lambda_arn)
-    policy = json.loads(response["Policy"])
-    if any(
-        policy_statement["Sid"] == statement["StatementId"]
-        and policy_statement["Action"] == statement["Action"]
-        and policy_statement["Principal"]["Service"] == statement["Principal"]
-        and policy_statement["Condition"]["ArnLike"]["AWS:SourceArn"]
-        == statement["SourceArn"]
-        for policy_statement in policy["Statement"]
-    ):
-        logger.info(f"Permission {statement['StatementId']} already exists")
-    else:
-        lambda_response = lambda_client.add_permission(
+
+    # Add SNS permission
+    try:
+        response = lambda_client.add_permission(
             FunctionName=lambda_arn,
             StatementId=statement["StatementId"],
             Action=statement["Action"],
             Principal=statement["Principal"],
             SourceArn=statement["SourceArn"],
         )
-        logger.info(lambda_response)
+        logger.info("Policy statement added successfully")
+        logger.info(response)
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ResourceConflictException":
+            logger.info("Policy statement already exists")
+        else:
+            raise e
 
     # Get the dynamodb table name from SSM Parameter Store
     dynamodb_table_name = _get_dynamodb_table_name()
@@ -501,6 +523,7 @@ def _workspaces_get(path_params, email, query_string_params=None):
 
     # Use expression attributes because dashes are not
     # allowed.
+
     projection = ", ".join(
         [
             "#bmhworkspaceid",
@@ -511,6 +534,7 @@ def _workspaces_get(path_params, email, query_string_params=None):
             "#stridescredits",
             "#softlimit",
             "#hardlimit",
+            "#directpaylimit",
         ]
     )
 
@@ -523,6 +547,7 @@ def _workspaces_get(path_params, email, query_string_params=None):
         "#stridescredits": "strides-credits",
         "#softlimit": "soft-limit",
         "#hardlimit": "hard-limit",
+        "#directpaylimit": "direct_pay_limit",
     }
 
     status_code = 200
@@ -765,6 +790,101 @@ def _workspaces_set_total_usage(body, path_params, api_key):
         _publish_to_sns_topic(sns_topic_arn, subject, message)
 
     return create_response(status_code=200, body={})
+
+
+def _workspace_direct_pay_limit(body, path_params, user):
+    logger.info(f"Called 'set limit': {body}")
+
+    # Validate body and path_params
+    assert "workspace_id" in path_params
+    assert "direct_pay_limit" in body
+
+    # User is None for requests made by an application using client_credentials.
+    if not user:
+        if "user" in body:
+            user = body["user"]
+        else:
+            raise Exception("Required `user` parameter in request body")
+
+    # Get the dynamodb table name from SSM Parameter Store
+    workspace_id = path_params["workspace_id"]
+    dynamodb_table_name = _get_dynamodb_table_name()
+    dynamodb = boto3.resource("dynamodb")
+    table = dynamodb.Table(dynamodb_table_name)
+    projection = ", ".join(
+        [
+            "#bmhworkspaceid",
+            "#requeststatus",
+            "#workspacetype",
+            "#totalusage",
+            "#softlimit",
+            "#hardlimit",
+            "#directpaylimit",
+        ]
+    )
+
+    expression_attribute_names = {
+        "#bmhworkspaceid": "bmh_workspace_id",
+        "#requeststatus": "request_status",
+        "#workspacetype": "workspace_type",
+        "#totalusage": "total-usage",
+        "#softlimit": "soft-limit",
+        "#hardlimit": "hard-limit",
+        "#directpaylimit": "direct_pay_limit",
+    }
+
+    try:
+        direct_pay_limit = round(decimal.Decimal(body["direct_pay_limit"]), 2)
+    except Exception as e:
+        raise ValueError(
+            "Direct pay limit must be a number, issue in converting direct_pay_limit from UI. Error: "
+            + str(e)
+        )
+
+    if direct_pay_limit < 0:
+        raise ValueError("Direct pay limit must be a positive number")
+
+    try:
+        response = table.get_item(
+            Key={"bmh_workspace_id": workspace_id, "user_id": user},
+            ProjectionExpression=projection,
+            ExpressionAttributeNames=expression_attribute_names,
+        )
+        retval = response.get("Item", None)
+    except Exception as e:
+        raise ValueError(
+            "Could not find record with existing workspace_id and user. Error:" + str(e)
+        )
+
+    if (
+        direct_pay_limit < retval["hard-limit"]
+        or direct_pay_limit < retval["soft-limit"]
+    ):
+        raise ValueError(
+            "The new direct pay amount is less than the soft limit or hard limit"
+        )
+    elif direct_pay_limit < retval["direct_pay_limit"]:
+        raise ValueError(
+            "The new direct pay amount is less than the old direct pay amount"
+        )
+
+    try:
+        table_response = table.update_item(
+            Key={"bmh_workspace_id": workspace_id, "user_id": user},
+            UpdateExpression="set #direct = :direct",
+            ConditionExpression="attribute_exists(bmh_workspace_id)",
+            ExpressionAttributeValues={":direct": direct_pay_limit},
+            ExpressionAttributeNames={"#direct": "direct_pay_limit"},
+            ReturnValues="ALL_NEW",
+        )
+        logger.info(f"Table response: {table_response}")
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
+            raise Exception("Could not find BMH Workspace " f"with id {workspace_id}")
+        else:
+            raise e
+
+    return create_response(status_code=200, body=table_response["Attributes"])
 
 
 ################################################################################

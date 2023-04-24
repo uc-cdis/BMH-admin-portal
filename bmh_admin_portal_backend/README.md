@@ -34,6 +34,7 @@ region and account).
    * email_domain - The domain used for auto generating emails to be used as root accounts.
    * strides_credits_request_email - Email to send requests to when a STRIDES credits account is requested.
    * strides_grant_request_email - Email to send requests to when a STRIDES Grant account type is request.
+   * occ_email_domain - The domain used for auto generating emails to be used as root accounts for direct pay.
 
 2. Run the following commands to deploy:
 

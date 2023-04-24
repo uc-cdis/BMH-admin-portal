@@ -1,3 +1,4 @@
+
 class BMHAdminPortalBackendConfig:
     """Convenience class used to store SSM Paramter names among other
     parameters which need to be internally consistent. Note: lambda functions
@@ -39,6 +40,8 @@ class BMHAdminPortalBackendConfig:
             # Used to automatically generate emails for root account access.
             # Also used as the from address for outgoing emails.
             "email_domain": "",
+            "occ_email_domain": "",
+
             # Where emails will be sent when a form is filled out.
             # *Note*: These email addresses will need to be verified before SES will allow sending email addresses to them.
             # https://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-email-addresses-procedure.html

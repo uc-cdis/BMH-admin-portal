@@ -83,7 +83,7 @@ def lambda_handler(event, context):
         policy.allowAllMethods()
     else:
         policy.allowMethod("PUT", "/workspaces/*/limits")
-        policy.allowMethod("PUT", "/workspaces/*/total-usage")
+        policy.allowMethod("PUT", "/workspaces/*/direct-pay-limit")
         policy.allowMethod("GET", "/workspaces/*")
 
     # Finally, build the policy

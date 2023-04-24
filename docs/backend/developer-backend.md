@@ -125,6 +125,29 @@ A Global Secondary Index is provided which uses bmh_workspace_id as the Partitio
 
 * **Response:** Will return 200 status code on success (with empty body '{}').
 
+### PUT api/workspaces/{workspace_id}/direct-pay-limit
+* **Authorization**: Required, API Key
+
+* **Description:** Used to set the direct pay limit of a single workspace. Stores new values in the DynamoDB table.
+
+* **Request:**
+
+      {
+          "direct_pay_limit": 250
+      }
+  * **NOTE:** If the request is being sent using an `access_token` fetched using client_credentials, the request body must have a parameter `user` with the value of the email address of the user linked with the `workspace_id`.
+
+  * **Request:**
+      ```
+      {
+          "direct_pay_limit": 250
+          "user": "abc@example.com"
+      }
+      ```
+
+* **Response:** Returns a full representation of the workspace (see above) with the new values for direct pay amount. 404 if the workspace was not found.
+
+
 ## Step Functions (Provisioning Workflow)
 <img src="../images/step-functions.png" alt="Step Functions" width="400" />
 

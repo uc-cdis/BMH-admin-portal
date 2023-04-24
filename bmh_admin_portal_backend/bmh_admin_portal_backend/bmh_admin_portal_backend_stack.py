@@ -241,6 +241,7 @@ class BmhAdminPortalBackendStack(core.Stack):
                 "auth_client_secret_name": config["auth_client_secret_name"],
                 "auth_oidc_uri": config["auth_oidc_uri"],
                 "email_domain": config["email_domain"],
+                "occ_email_domain": config["occ_email_domain"],
                 "strides_credits_request_email": config[
                     "strides_credits_request_email"
                 ],
@@ -378,6 +379,13 @@ class BmhAdminPortalBackendStack(core.Stack):
         total_usage.add_method(
             "PUT", workspaces_resource_lambda_integration, api_key_required=True
         )
+
+        ################ PUT workspaces/{workspace_id}/direct-pay-limit #############################
+        limits_resource = workspace_resource.add_resource("direct-pay-limit")
+        limits_put = limits_resource.add_method(
+            "PUT", workspaces_resource_lambda_integration, authorizer=token_authorizer
+        )
+        ######################################################################################
 
         default_usage_plan = apigateway.UsagePlan(
             self,
