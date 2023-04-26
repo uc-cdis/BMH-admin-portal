@@ -646,7 +646,7 @@ def _workspaces_set_limits(body, path_params, user):
     total_usage = table_response["Attributes"]["total-usage"]
     workspace_type = table_response["Attributes"]["workspace_type"]
     site_name = _get_site_info()
-    if not sns_topic_arn:
+    if sns_topic_arn:
         subject = f"[{site_name}] Workspace : Soft and Hard limits updated"
         message = f"""There has been an update in the limits for the following user in {site_name}.
         Workspace info:
