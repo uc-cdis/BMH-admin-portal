@@ -646,29 +646,36 @@ def _workspaces_set_limits(body, path_params, user):
     total_usage = table_response["Attributes"]["total-usage"]
     workspace_type = table_response["Attributes"]["workspace_type"]
     site_name = _get_site_info()
+    if not sns_topic_arn:
+        subject = f"[{site_name}] Workspace : Soft and Hard limits updated"
+        message = f"""There has been an update in the limits for the following user in {site_name}.
+        Workspace info:
+            User ID : {user}
+            Workspace Type: {workspace_type}
+            workspace_id: {workspace_id}
+            Total Usage: {total_usage}
+            Soft Usage Limit: {soft_limit}
+            Hard Usage Limit: {hard_limit}
 
-    subject = f"[{site_name}] Workspace : Soft and Hard limits updated"
-    message = f"""There has been an update in the limits for the following user in {site_name}.
-    Workspace info:
-        User ID : {user}
-        Workspace Type: {workspace_type}
-        workspace_id: {workspace_id}
-        Total Usage: {total_usage}
-        Soft Usage Limit: {soft_limit}
-        Hard Usage Limit: {hard_limit}
+        """
+        attributes = {
+            "workspace_id": {"DataType": "String", "StringValue": workspace_id},
+            "user_id": {"DataType": "String", "StringValue": user},
+            "total_usage": {
+                "DataType": "String",
+                "StringValue": str(total_usage),
+            },
+            "hard_limit": {"DataType": "String", "StringValue": str(hard_limit)},
+        }
+        #  TODO: Publish to admin email instead of per user
+        try:
+            _publish_to_sns_topic(sns_topic_arn, subject, message, attributes)
+        except ClientError as e:
+            logger.warning(f"SNS topic ARN exists but publishing SNS topic failed.")
+            logger.warning(e.response["Error"]["Code"])
+    else:
+        logger.warning(f"SNS topic ARN does not exist yet.")
 
-    """
-    attributes = {
-        "workspace_id": {"DataType": "String", "StringValue": workspace_id},
-        "user_id": {"DataType": "String", "StringValue": user},
-        "total_usage": {
-            "DataType": "String",
-            "StringValue": str(total_usage),
-        },
-        "hard_limit": {"DataType": "String", "StringValue": str(hard_limit)},
-    }
-    #  TODO: Publish to admin email instead of per user
-    _publish_to_sns_topic(sns_topic_arn, subject, message, attributes)
     return create_response(status_code=200, body=table_response["Attributes"])
 
 
