@@ -297,7 +297,9 @@ def _workspaces_post(body, email):
     item["bmh_workspace_id"] = workspace_request_id
     item["request_status"] = "pending"
     item["user_id"] = email
-    item["creation_date"] = datetime.now(timezone.utc)
+    # Storing timestamp in integer format because dynamodb does not support datetime type natively.
+    # Retrieval: datetime.fromtimestamp(int(item['creation_date']))
+    item["creation_date"] = int(datetime.utcnow().timestamp())
 
     if workspace_type == STRIDES_CREDITS_WORKSPACE_TYPE:
         item["strides-credits"] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT)
@@ -431,7 +433,7 @@ def _workspace_provision(body, path_params):
         ":snstopic": topic_arn,
         ":requeststatus": "provisioning",
         ":accountid": account_id,
-        ":provisiontime": datetime.now(timezone.utc),
+        ":provisiontime": int(datetime.utcnow().timestamp()),
     }
     expression_attribute_names = {
         "#apikey": "api-key",
@@ -630,12 +632,12 @@ def _workspaces_set_limits(body, path_params, user):
     try:
         table_response = table.update_item(
             Key={"bmh_workspace_id": workspace_id, "user_id": user},
-            UpdateExpression="set #hard = :hard, #soft = :soft, #updatetime = :limitupdatetime",
+            UpdateExpression="set #hard = :hard, #soft = :soft, #limitupdatetime = :limitupdatetime",
             ConditionExpression="attribute_exists(bmh_workspace_id)",
             ExpressionAttributeValues={
                 ":soft": round(decimal.Decimal(body["soft-limit"]), 2),
                 ":hard": round(decimal.Decimal(body["hard-limit"]), 2),
-                ":limitupdatetime": datetime.now(timezone.utc),
+                ":limitupdatetime": int(datetime.utcnow().timestamp()),
             },
             ExpressionAttributeNames={
                 "#soft": "soft-limit",
@@ -740,7 +742,7 @@ def _workspaces_set_total_usage(body, path_params, api_key):
             ConditionExpression="attribute_exists(bmh_workspace_id)",
             ExpressionAttributeValues={
                 ":totalUsage": formatted_total_usage,
-                ":usageupdatetime": datetime.now(timezone.utc),
+                ":usageupdatetime": int(datetime.utcnow().timestamp()),
             },
             ExpressionAttributeNames={
                 "#totalUsage": "total-usage",
