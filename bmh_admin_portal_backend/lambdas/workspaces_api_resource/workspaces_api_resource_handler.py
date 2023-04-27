@@ -642,7 +642,9 @@ def _workspaces_set_limits(body, path_params, user):
         else:
             raise e
 
-    if "sns-topic" in table_response["Attributes"]:
+    if not "sns-topic" in table_response["Attributes"]:
+        logger.warning(f"SNS topic ARN does not exist yet.")
+    else:
         sns_topic_arn = table_response["Attributes"]["sns-topic"]
         total_usage = table_response["Attributes"]["total-usage"]
         workspace_type = table_response["Attributes"]["workspace_type"]
@@ -672,10 +674,8 @@ def _workspaces_set_limits(body, path_params, user):
         try:
             _publish_to_sns_topic(sns_topic_arn, subject, message, attributes)
         except ClientError as e:
-            logger.warning(f"SNS topic ARN exists but publishing SNS topic failed.")
-            logger.warning(e.response["Error"]["Code"])
-    else:
-        logger.warning(f"SNS topic ARN does not exist yet.")
+            logger.error(f"SNS topic ARN exists but publishing SNS topic failed.")
+            logger.error(e)
 
     return create_response(status_code=200, body=table_response["Attributes"])
 
