@@ -40,7 +40,7 @@ const DirectPayForm = (props) => {
         const [title, setTitle] = useState('');
         const [summary, setSummary] = useState('');
         const [workspace_use, setWorkspaceUse] = useState('');
-        const [approved_creditcard, setCreditCard] = useState(false);
+        const [approved_creditcard, setCreditCard] = useState("No");
         const [projectRole, setProjectRole] = useState('');
         const [directpaylimit, setDirectPayLimit] = useState('');
         const [buttonDisabled, setButtonDisabled] = useState(false);
