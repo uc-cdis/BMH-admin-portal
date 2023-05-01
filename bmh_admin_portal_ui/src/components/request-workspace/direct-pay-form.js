@@ -25,7 +25,7 @@ const directpayinitialFormData = Object.freeze({
     summary_and_justification: "",
     project_short_title: "",
     workspace_use: " ",
-    approved_creditcard: false,
+    approved_creditcard: "No",
     project_role: " ",
     attestation: false,
 });
