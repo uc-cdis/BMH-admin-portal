@@ -25,7 +25,7 @@ const directpayinitialFormData = Object.freeze({
     summary_and_justification: "",
     project_short_title: "",
     workspace_use: " ",
-    approved_creditcard: false,
+    approved_creditcard: "No",
     project_role: " ",
     attestation: false,
 });
@@ -40,7 +40,7 @@ const DirectPayForm = (props) => {
         const [title, setTitle] = useState('');
         const [summary, setSummary] = useState('');
         const [workspace_use, setWorkspaceUse] = useState('');
-        const [approved_creditcard, setCreditCard] = useState(false);
+        const [approved_creditcard, setCreditCard] = useState("No");
         const [projectRole, setProjectRole] = useState('');
         const [directpaylimit, setDirectPayLimit] = useState('');
         const [buttonDisabled, setButtonDisabled] = useState(false);
