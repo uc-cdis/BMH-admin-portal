@@ -12,6 +12,7 @@ import traceback
 import decimal
 import os
 import base64
+from datetime import datetime, timezone
 from urllib.request import Request, urlopen
 
 import boto3
@@ -296,6 +297,9 @@ def _workspaces_post(body, email):
     item["bmh_workspace_id"] = workspace_request_id
     item["request_status"] = "pending"
     item["user_id"] = email
+    # Storing timestamp in integer format because dynamodb does not support datetime type natively.
+    # Retrieval: datetime.fromtimestamp(int(item['creation_date']))
+    item["creation_date"] = int(datetime.utcnow().timestamp())
 
     if workspace_type == STRIDES_CREDITS_WORKSPACE_TYPE:
         item["strides-credits"] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT)
@@ -423,18 +427,20 @@ def _workspace_provision(body, path_params):
     dynamodb = boto3.resource("dynamodb")
     table = dynamodb.Table(dynamodb_table_name)
 
-    update_expression = "set #apikey = :apikey, #snstopic = :snstopic, #requeststatus = :requeststatus, #accountid = :accountid"
+    update_expression = "set #apikey = :apikey, #snstopic = :snstopic, #requeststatus = :requeststatus, #accountid = :accountid, #provisiontime = :provisiontime"
     expression_attribute_values = {
         ":apikey": api_key,
         ":snstopic": topic_arn,
         ":requeststatus": "provisioning",
         ":accountid": account_id,
+        ":provisiontime": int(datetime.utcnow().timestamp()),
     }
     expression_attribute_names = {
         "#apikey": "api-key",
         "#snstopic": "sns-topic",
         "#requeststatus": "request_status",
         "#accountid": "account_id",
+        "#provisiontime": "provision_time",
     }
 
     if strides_credits_amount is not None:
@@ -626,13 +632,18 @@ def _workspaces_set_limits(body, path_params, user):
     try:
         table_response = table.update_item(
             Key={"bmh_workspace_id": workspace_id, "user_id": user},
-            UpdateExpression="set #hard = :hard, #soft = :soft",
+            UpdateExpression="set #hard = :hard, #soft = :soft, #limitupdatetime = :limitupdatetime",
             ConditionExpression="attribute_exists(bmh_workspace_id)",
             ExpressionAttributeValues={
                 ":soft": round(decimal.Decimal(body["soft-limit"]), 2),
                 ":hard": round(decimal.Decimal(body["hard-limit"]), 2),
+                ":limitupdatetime": int(datetime.utcnow().timestamp()),
             },
-            ExpressionAttributeNames={"#soft": "soft-limit", "#hard": "hard-limit"},
+            ExpressionAttributeNames={
+                "#soft": "soft-limit",
+                "#hard": "hard-limit",
+                "#limitupdatetime": "limit_update_time",
+            },
             ReturnValues="ALL_NEW",
         )
         logger.info(f"Table response: {table_response}")
@@ -727,12 +738,16 @@ def _workspaces_set_total_usage(body, path_params, api_key):
     try:
         table_response = table.update_item(
             Key={"bmh_workspace_id": workspace_id, "user_id": user_id},
-            UpdateExpression="set #totalUsage = :totalUsage",
+            UpdateExpression="set #totalUsage = :totalUsage, #usageupdatetime = :usageupdatetime",
             ConditionExpression="attribute_exists(bmh_workspace_id)",
             ExpressionAttributeValues={
                 ":totalUsage": formatted_total_usage,
+                ":usageupdatetime": int(datetime.utcnow().timestamp()),
             },
-            ExpressionAttributeNames={"#totalUsage": "total-usage"},
+            ExpressionAttributeNames={
+                "#totalUsage": "total-usage",
+                "#usageupdatetime": "usage_update_time",
+            },
             ReturnValues="ALL_OLD",
         )
         logger.info(f"Table response: {json.dumps(table_response, cls=DecimalEncoder)}")
