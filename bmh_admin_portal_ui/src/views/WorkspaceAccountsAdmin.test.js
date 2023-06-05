@@ -11,6 +11,9 @@ const tableData = [{
         "total-usage": 10,
         "account_id": "9032657199",
         "strides-credits": 250,
+        "soft-limit": 0,
+        "hard-limit": 0,
+        "direct_pay_limit": 0,
         "workspace_type": "STRIDES Credits",
         "ecs": true,
         "subnet": 23,
@@ -30,6 +33,22 @@ const tableData = [{
         "root_account_email": "root_a1s2dfdg-3I8S-2354-9og3-I422E4R8AW2a@planx-pla.net",
         "user_id": "another_sample@uchicago.edu",
         "bmh_workspace_id": "a1s2dfdg-3I8S-2354-9og3-I422E4R8AW2a",
+    },
+    {
+        "scientific_poc": "Direct Pay Sample",
+        "request_status": "Active",
+        "total-usage": 0,
+        "soft-limit": 60,
+        "hard-limit": 80,
+        "direct_pay_limit": 100,
+        "account_id": "454484406131",
+        "strides-credits": 0,
+        "ecs": false,
+        "subnet": 15,
+        "workspace_type": "Direct Pay",
+        "root_account_email": "root_123456-3I8S-2354-9og3-I422E4R8AW2a@planx-pla.net",
+        "user_id": "direct_pay_sample@uchicago.edu",
+        "bmh_workspace_id": "123456-3I8S-2354-9og3-I422E4R8AW2a",
     }
 ];
 const formattedData = {
@@ -38,6 +57,9 @@ const formattedData = {
     "request_status": "Failed",
     "workspace_type": "STRIDES Credits",
     "total-usage": "$0",
+    "direct_pay_limit": "",
+    "soft-limit": "",
+    "hard-limit": "",
     "ecs": "false",
     "subnet": "13",
     "strides-credits": "$250",
@@ -45,67 +67,62 @@ const formattedData = {
     "account_id": "354484406138"
 }
 
-const columns = [
-    {
-        dataField: 'scientific_poc',
-        text: 'Scientific POC',
-        editable: false
-    },
-    {
-        dataField: 'user_id',
-        text: 'User Id',
-        editable: false
-    },
-    {
-        dataField: 'request_status',
-        text: 'Request Status',
-        editable: false,
+const columns = [{
+    dataField: 'user_id',
+    text: 'User Id',
+    editable: false
+  },{
+    dataField: 'account_id',
+    text: 'AWS Account',
+    editable: true,
 
-    },
-    {
-        dataField: 'workspace_type',
-        text: 'Workspace Type',
-        editable: false
-    },
-    {
-        dataField: 'total-usage',
-        text: 'Total Usage',
-        editable: false,
+  },{
+    dataField: 'request_status',
+    text: 'Request Status',
+    editable: false,
+  },{
+    dataField: 'workspace_type',
+    text: 'Workspace Type',
+    editable: false
+  },{
+    dataField: 'total-usage',
+    text: 'Total Usage',
+    editable: false,
+  },{
+    dataField: 'soft-limit',
+    text: 'Soft Limit',
+    editable: false,
+  },{
+    dataField: 'hard-limit',
+    text: 'Hard Limit',
+    editable: false,
+  },{
+    dataField: 'strides-credits',
+    text: 'Total Funds',
+    editable: false,
+  },{
+    dataField: 'root_account_email',
+    text: 'Root Email',
+    editable: false,
+  },{
+    dataField: 'ecs',
+    text: 'ECS',
+    editable: false
+  },{
+    dataField: 'subnet',
+    text: 'Subnet',
+    editable: false,
+  },{
+    dataField: 'scientific_poc',
+    text: 'Scientific POC',
+    editable: false
+  }]
 
-    },
-    {
-        dataField: 'strides-credits',
-        text: 'Total Funds',
-        editable: false,
-
-    },
-    {
-        dataField: 'ecs',
-        text: 'ECS',
-        editable: false
-    },
-    {
-        dataField: 'subnet',
-        text: 'Subnet',
-        editable: false,
-    },
-    {
-        dataField: 'root_account_email',
-        text: 'Root Email',
-        editable: false,
-    },
-    {
-        dataField: 'account_id',
-        text: 'AWS Account',
-        editable: true,
-    }
-]
-
-const NUMBER_OF_COLUMNS = 10
+const NUMBER_OF_COLUMNS = 12
 process.env.REACT_APP_OIDC_AUTH_URI = "https://fence.planx-pla.net/user/oauth2/authorize"
 
 const mountAccountsWrapper = (tableData, isAdmin = true) => {
-    jest.spyOn(apiUtils, 'getAdminWorkspaces').mockImplementation((callback) => { callback(tableData) });
+    jest.spyOn(apiUtils, 'getAdminWorkspaces').mockImplementation((callback) => {callback(tableData) });
     jest.spyOn(authUtils, 'authorizeAdmin').mockResolvedValue(isAdmin);
     return mount(
         <BrowserRouter>
