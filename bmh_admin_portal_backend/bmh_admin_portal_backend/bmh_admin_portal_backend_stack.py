@@ -104,7 +104,7 @@ class BmhAdminPortalBackendStack(core.Stack):
             handler="lambda_handler",
             description="Lambda token authorizer function",
             environment={
-                "DD_LOGS_ENABLED": True,
+                "DD_LOGS_ENABLED": "true",
                 "auth_client_id": config["auth_client_id"],
                 "allowed_client_id_audience": config["allowed_client_id_audience"],
                 "auth_base_url": config["auth_oidc_uri"],
@@ -202,7 +202,7 @@ class BmhAdminPortalBackendStack(core.Stack):
             timeout=core.Duration.seconds(600),
             description="Function which handles Total Usage SNS trigger for BRH Admin Portal",
             environment={
-                "DD_LOGS_ENABLED": True,
+                "DD_LOGS_ENABLED": "true",
                 "dynamodb_table_param_name": config["dynamodb_table_param_name"],
             },
         )
@@ -231,7 +231,7 @@ class BmhAdminPortalBackendStack(core.Stack):
             timeout=core.Duration.seconds(600),
             description="Function which handles API Gateway requests for BRH Admin Portal",
             environment={
-                "DD_LOGS_ENABLED": True,
+                "DD_LOGS_ENABLED": "true",
                 "dynamodb_table_param_name": config["dynamodb_table_param_name"],
                 "dynamodb_index_param_name": config["dynamodb_index_param_name"],
                 "api_usage_id_param_name": config["api_usage_id_param_name"],
