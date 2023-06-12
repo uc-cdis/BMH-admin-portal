@@ -67,6 +67,7 @@ class ProvisioningWorkflow(core.Construct):
             handler="src.app.handler",
             description="Function which deploys BRH specific infrastructure (cost and usage, etc.) to member accounts.",
             environment={
+                "DD_LOGS_ENABLED": True,
                 "brh_asset_bucket_param_name": config["brh-workspace-assets-bucket"],
                 "brh_portal_url": config["api_url_param_name"],
                 "dynamodb_index_param_name": config["dynamodb_index_param_name"],
