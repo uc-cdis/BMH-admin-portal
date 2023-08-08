@@ -26,8 +26,7 @@ const directpayinitialFormData = Object.freeze({
     project_short_title: "",
     workspace_use: " ",
     approved_creditcard: "No",
-    project_role: " ",
-    attestation: false,
+    project_role: " "
 });
 
 const DirectPayForm = (props) => {
@@ -159,14 +158,18 @@ const DirectPayForm = (props) => {
                 <Form onSubmit={handleRequest} keyField='directpay_request_information'>
                   <Form.Row className="mb-3">
                   <Col>
-                  <Form.Check type="checkbox" name="attestation" required label={
+                  <Form.Check type="checkbox" name="approved_creditcard" onChange={handleChange} required label={
                     <span id="invoice_text">
-                      By filling out this form below, I consent to be invoiced by OCC the amount of ${(directpaylimit)} to provision that amount of compute for my workspace. If this value is incorrect, please contact OCC
-                      (<a href="mailto:billing@occ-data.org">billing@occ-data.org</a>) to update your request amount.
+                      By filling out this form below, I consent to be invoiced by OCC the amount of ${(directpaylimit)} to provision that amount of compute for my workspace.
+                      I confirm that I have a credit card that I am allowed to use for this purchase.
                     </span>
                   }
                   />
                   </Col>
+                  </Form.Row>
+                  <Form.Row>
+                    <Form.Label> If this value is incorrect, please contact OCC
+                      (<a href="mailto:billing@occ-data.org">billing@occ-data.org</a>) to update your request amount. </Form.Label>
                   </Form.Row>
                   <br></br>
                   <Form.Label> Project Brief Title? <span data-tip data-for="project_short_title"><BiHelpCircle /></span></Form.Label>
@@ -194,8 +197,6 @@ const DirectPayForm = (props) => {
                     Please select yes or no
                   </Form.Control.Feedback>
                   <br></br>
-                  <br></br>
-                  <Form.Check type="checkbox" name="approved_creditcard" onChange={handleChange} label={`By selecting this check box, we will be issuing you a invoice that must be paid through credit card`}/>
                   <br></br>
                   <Form.Label> Role on Project <span data-tip data-for="project_role"><BiHelpCircle /></span></Form.Label>
                   <ReactTooltip class="tooltip" id="project_role" place="top" effect="solid" multiline={true}>
