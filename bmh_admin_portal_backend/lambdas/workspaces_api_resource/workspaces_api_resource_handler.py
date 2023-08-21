@@ -780,6 +780,7 @@ def _workspaces_set_total_usage(body, path_params, api_key):
             Soft Usage Limit: {soft_limit}
             Hard Usage Limit: {hard_limit}
 
+            User services, please use this email template : https://docs.google.com/document/d/1BAkRsYlcJLyzGueVMEZ8xGiJgMd_yAzK6t5mmsiOW7E/edit?pli=1#heading=h.f36t295d0h33
         """
         attributes = {
             "workspace_id": {"DataType": "String", "StringValue": workspace_id},
@@ -807,6 +808,8 @@ def _workspaces_set_total_usage(body, path_params, api_key):
             Total Usage: {total_usage}
             Soft Usage Limit: {soft_limit}
             Hard Usage Limit: {hard_limit}
+
+            User services, please use this email template : https://docs.google.com/document/d/1BAkRsYlcJLyzGueVMEZ8xGiJgMd_yAzK6t5mmsiOW7E/edit?pli=1#heading=h.2c3nxovihdgc
 
         """
         #  TODO: Publish to admin email instead of per user
