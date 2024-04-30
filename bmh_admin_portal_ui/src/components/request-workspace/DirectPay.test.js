@@ -48,8 +48,8 @@ const getBillingIDFormData = directPayWrapper => {
     let iifeFunction = (() => {
         return (occHelpURL, method, headers, data, _) => {
             formDataFromState = {
-                "billingID": data.queryStringParameters.brh_data.AGBillingID,
-                "email": data.queryStringParameters.brh_data.Email
+                "billingID": data.queryStringParameters.pp_data.AGBillingID,
+                "email": data.queryStringParameters.pp_data.Email
             }
         }
     })();
