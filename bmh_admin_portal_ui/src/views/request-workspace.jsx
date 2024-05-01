@@ -86,7 +86,7 @@ const RequestWorkspace = () => {
       <Row className="mb-3"><h4>{"Request Form for OCC Direct Pay Account"}</h4></Row>
       <Row className="justify-content-left">
         <Col>
-          <DirectPayForm />
+          <DirectPayForm updateRedirectHome={setRedirectHome} />
         </Col>
       </Row>
     </div>)
