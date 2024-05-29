@@ -30,6 +30,8 @@ def setup_env_vars():
             "api_usage_id_param_name": "testUsageId",
             "total_usage_trigger_lambda_arn": "testTotalUsageArn",
             "user_services_email": "DummyUserServices@email.com",
+            "allowed_client_id_audience": "Valid test audience",
+            "auth_base_url": "https://mock.data-commons.org/user",
         },
     ):
         yield
