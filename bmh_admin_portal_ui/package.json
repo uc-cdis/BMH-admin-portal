@@ -27,7 +27,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test --transformIgnorePatterns \"node_modules/(?!axios)/\"",
+    "test": "react-scripts test",
     "eject": "react-scripts eject",
     "s3upload": "npm run build && aws s3 sync ./build s3://ctds-brh-website"
   },
@@ -66,5 +66,10 @@
   },
   "overrides": {
     "@svgr/webpack": "$@svgr/webpack"
+  },
+  "jest": {
+    "moduleNameMapper": {
+      "^axios$": "axios/dist/node/axios.cjs"
+    }
   }
 }
