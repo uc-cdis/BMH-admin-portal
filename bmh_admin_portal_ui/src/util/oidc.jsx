@@ -9,9 +9,10 @@
 
 import jwt_decode from 'jwt-decode';
 import { v4 as uuidv4 } from 'uuid';
-import axios from 'axios';
 
 import config from '../config.json';
+
+const axios = require('axios').default;
 
 export const isAuthenticated = () => {
   const access_token = getAccessToken();
