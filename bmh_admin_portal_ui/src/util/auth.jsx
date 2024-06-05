@@ -9,10 +9,10 @@
    purposes.
 */
 
+import axios from 'axios';
 import { getAccessToken, refresh, logout } from './oidc';
 import config from '../config.json';
 
-const axios = require('axios').default;
 const resources = config['authorization']['resources']
 
 export const authorizeLogin = async () => {
