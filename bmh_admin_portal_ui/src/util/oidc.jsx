@@ -13,7 +13,6 @@ import axios from 'axios';
 
 import config from '../config.json';
 
-
 export const isAuthenticated = () => {
   const access_token = getAccessToken();
   if( access_token ) {
