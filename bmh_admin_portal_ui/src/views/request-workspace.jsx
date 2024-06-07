@@ -38,10 +38,24 @@ const RequestWorkspace = () => {
   // const [grantsAuthorized, setGrantsAuthorized] = useState(false)
 
   useEffect(() => {
+    if (process.env.REACT_APP_DISABLED_FORMS) {
+      try {
+        const disabledForms = JSON.parse(process.env.REACT_APP_DISABLED_FORMS);
+        if (disabledForms && Array.isArray(disabledForms)) {
+          disabledForms.forEach((formName) => {
+            if (formName in FORM_OPTIONS) {
+              delete FORM_OPTIONS[formName]
+            }
+          })
+        }
+      } catch (err) {
+        console.error(`Unable to parse disabled forms config: ${err}`);
+      }
+    }
     async function fetchAuthorized() {
       const cAuthorized = await authorizeCredits();
       // const gAuthorized = await authorizeGrants();
-      if (cAuthorized) {
+      if (cAuthorized && FORM_OPTIONS.stridesCredits) {
         setFormToggle(FORM_OPTIONS.stridesCredits)
       }
       setCreditsAuthorized(cAuthorized);
@@ -103,9 +117,9 @@ const RequestWorkspace = () => {
           <div>
             <Row className="mb-5">
               <ToggleButtonGroup key={formToggle} type="radio" name="form-select" defaultValue={formToggle} onChange={handleChange}>
-                <ToggleButton variant="outline-primary" value={FORM_OPTIONS.stridesGrant}>STRIDES Grant/Award Funded</ToggleButton>
-                {(creditsAuthorized) ? <ToggleButton variant="outline-primary" value={FORM_OPTIONS.stridesCredits}>STRIDES Credits</ToggleButton> : null}
-                <ToggleButton variant="outline-success" value={FORM_OPTIONS.directPay}>OCC Direct Pay</ToggleButton>
+                {(FORM_OPTIONS.stridesGrant) ? <ToggleButton variant="outline-primary" value={FORM_OPTIONS.stridesGrant}>STRIDES Grant/Award Funded</ToggleButton> : null}
+                {(creditsAuthorized && FORM_OPTIONS.stridesCredits) ? <ToggleButton variant="outline-primary" value={FORM_OPTIONS.stridesCredits}>STRIDES Credits</ToggleButton> : null}
+                {(FORM_OPTIONS.directPay) ? <ToggleButton variant="outline-success" value={FORM_OPTIONS.directPay}>OCC Direct Pay</ToggleButton> : null}
               </ToggleButtonGroup>
             </Row>
           </div>
