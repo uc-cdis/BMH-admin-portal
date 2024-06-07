@@ -36,11 +36,9 @@ jobs:
       - name: Install poetry
         run: |
             cd bmh_admin_portal_backend
-            python -m pip install --upgrade pip
             pip --version
             pip install poetry
             poetry install -vv
-            pip install -r lambdas/lambda_authorizer/requirements.txt
       - name: Run test
         run: |
           cd bmh_admin_portal_backend
