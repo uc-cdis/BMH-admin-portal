@@ -155,7 +155,7 @@ const DirectPayForm = (props) => {
         if(requestApproved === "true"){
           componentToRender = (
           <div>
-                <Form onSubmit={handleRequest} keyField='directpay_request_information'>
+                <Form onSubmit={handleRequest} id='directpay_request_information'>
                   <Form.Row className="mb-3">
                   <Col>
                   <Form.Check type="checkbox" name="approved_creditcard" onChange={handleChange} required label={
@@ -239,7 +239,7 @@ const DirectPayForm = (props) => {
 
         return(
             <div>
-              <Form onSubmit={handleSubmit} keyField='directpay_billingID_confirmation'>
+              <Form onSubmit={handleSubmit} id='directpay_billingID_confirmation'>
                       <Form.Label> BillingID <span data-tip data-for="billingID_help"><BiHelpCircle /></span></Form.Label>
                       <ReactTooltip class="tooltip" id="billingID_help" place="top" effect="solid" multiline={true}>
                         Enter the Billing ID provided from registration through the Payment Solutions Portal. <br />
