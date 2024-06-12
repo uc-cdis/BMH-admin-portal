@@ -2,6 +2,8 @@ import pytest
 import io
 import json
 import jwt
+import time
+from jwt.exceptions import InvalidAudienceError, ExpiredSignatureError
 from unittest.mock import patch
 from lambdas.lambda_authorizer import lambda_authorizer
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -53,3 +55,42 @@ def test_validate_token():
         payload = lambda_authorizer.validate_token(mock_jwt_token)
 
     assert payload == mock_payload
+
+    # Verifying for invalid audience error
+    mock_payload = {"name": "Test name", "aud": "Random test audience"}
+
+    # Encode the payload using the private key generated above while sharing the public key info as a header
+    mock_jwt_token = jwt.encode(
+        payload=mock_payload,
+        algorithm="RS256",
+        key=private_key_pem,
+        headers={"kid": public_key_jwk["kid"]},
+    )
+    mock_keys_from_well_known_jwks = io.BytesIO(json.dumps({"keys": keys}).encode())
+
+    with patch.object(
+        lambda_authorizer, "urlopen", return_value=mock_keys_from_well_known_jwks
+    ):
+        with pytest.raises(InvalidAudienceError):
+            payload = lambda_authorizer.validate_token(mock_jwt_token)
+
+    # Verifying for a payload with a expiration less than the current time
+    mock_payload = {
+        "name": "Test name",
+        "aud": "Valid test audience",
+        "exp": int(time.time()) - 1,
+    }
+    # Encode the payload using the private key generated above while sharing the public key info as a header
+    mock_jwt_token = jwt.encode(
+        payload=mock_payload,
+        algorithm="RS256",
+        key=private_key_pem,
+        headers={"kid": public_key_jwk["kid"]},
+    )
+    mock_keys_from_well_known_jwks = io.BytesIO(json.dumps({"keys": keys}).encode())
+
+    with patch.object(
+        lambda_authorizer, "urlopen", return_value=mock_keys_from_well_known_jwks
+    ):
+        with pytest.raises(ExpiredSignatureError):
+            payload = lambda_authorizer.validate_token(mock_jwt_token)
