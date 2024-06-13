@@ -56,9 +56,10 @@ jobs:
           python-version: "3.9"
       - name: Install pip requirements
         run: |
-            cd bmh_admin_portal_backend/lambdas/lambda_authorizer
-            pip --version
-            pip install -r requirements.txt
+          cd bmh_admin_portal_backend/lambdas/lambda_authorizer
+          pip --version
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
       - name: Run test
         run: |
           cd bmh_admin_portal_backend/lambdas/lambda_authorizer
