@@ -6,7 +6,7 @@ import jwt
 import time
 from jwt.exceptions import InvalidAudienceError, ExpiredSignatureError
 from unittest.mock import patch
-from lambdas.lambda_authorizer import lambda_authorizer
+from lambda_authorizer import lambda_authorizer
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 from jwcrypto import jwk
