@@ -1,5 +1,6 @@
 import pytest
 import io
+import os
 import json
 import jwt
 import time
@@ -16,6 +17,8 @@ def test_validate_token():
     Tests the functionality of validate token by creating a dummy JWT token using RS256 algorithm.
     Note: We also create an RSA key pair and a JWK for the public key for the test.
     """
+    os.environ["allowed_client_id_audience"] = "Valid test audience"
+    os.environ["auth_base_url"] = "https://mock.data-commons.org/user"
 
     # Generate RSA private key
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
@@ -94,3 +97,7 @@ def test_validate_token():
     ):
         with pytest.raises(ExpiredSignatureError):
             payload = lambda_authorizer.validate_token(mock_jwt_token)
+
+    # teardown env vars
+    del os.environ["allowed_client_id_audience"]
+    del os.environ["auth_base_url"]

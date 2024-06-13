@@ -1989,21 +1989,6 @@ PyYAML = ">=5.1"
 typing-extensions = ">=4.3.0,<5.0.0"
 
 [[package]]
-name = "jwcrypto"
-version = "1.5.6"
-description = "Implementation of JOSE Web standards"
-optional = false
-python-versions = ">= 3.8"
-files = [
-    {file = "jwcrypto-1.5.6-py3-none-any.whl", hash = "sha256:150d2b0ebbdb8f40b77f543fb44ffd2baeff48788be71f67f03566692fd55789"},
-    {file = "jwcrypto-1.5.6.tar.gz", hash = "sha256:771a87762a0c081ae6166958a954f80848820b2ab066937dc8b8379d65b1b039"},
-]
-
-[package.dependencies]
-cryptography = ">=3.4"
-typing-extensions = ">=4.5.0"
-
-[[package]]
 name = "lazy-object-proxy"
 version = "1.9.0"
 description = "A fast and thorough lazy object proxy."
@@ -2330,23 +2315,6 @@ files = [
     {file = "pycryptodome-3.3.1-cp35-none-win_amd64.whl", hash = "sha256:4e83913f03358e66ec675d5963886335919e0c3efaadb4b6e920f44199fd2ab9"},
     {file = "pycryptodome-3.3.1.tar.gz", hash = "sha256:1b52d5643e243a6d5ba4b5706e6ae59ee61b14e800ff812c1e47ec4dfe8e4761"},
 ]
-
-[[package]]
-name = "pyjwt"
-version = "2.8.0"
-description = "JSON Web Token implementation in Python"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "PyJWT-2.8.0-py3-none-any.whl", hash = "sha256:59127c392cc44c2da5bb3192169a91f429924e17aff6534d70fdc02ab3e04320"},
-    {file = "PyJWT-2.8.0.tar.gz", hash = "sha256:57e28d156e3d5c10088e0c68abb90bfac3df82b40a71bd0daa20c65ccd5c23de"},
-]
-
-[package.extras]
-crypto = ["cryptography (>=3.4.0)"]
-dev = ["coverage[toml] (==5.0.4)", "cryptography (>=3.4.0)", "pre-commit", "pytest (>=6.0.0,<7.0.0)", "sphinx (>=4.5.0,<5.0.0)", "sphinx-rtd-theme", "zope.interface"]
-docs = ["sphinx (>=4.5.0,<5.0.0)", "sphinx-rtd-theme", "zope.interface"]
-tests = ["coverage[toml] (==5.0.4)", "pytest (>=6.0.0,<7.0.0)"]
 
 [[package]]
 name = "pyrsistent"
@@ -2769,4 +2737,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "f48d63e50184f94a2fbea0e517662c750f69055353c674c69ac25d604d83ef40"
+content-hash = "cecce52a0f50b53f29db395c01a7d6cf9763ed6da99f404c5639ceb2d6924ca1"
