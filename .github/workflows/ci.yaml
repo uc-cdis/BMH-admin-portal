@@ -65,4 +65,4 @@ jobs:
       - name: Run test
         run: |
           cd bmh_admin_portal_backend/lambdas/lambda_authorizer
-          pytest -vv --cov-report xml tests
+          pytest -vv tests
