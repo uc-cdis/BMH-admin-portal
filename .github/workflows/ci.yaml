@@ -43,3 +43,26 @@ jobs:
         run: |
           cd bmh_admin_portal_backend
           poetry run pytest -vv --cov-report xml tests
+
+  lambda_auth_unit_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: Install pip requirements
+        run: |
+          cd bmh_admin_portal_backend/lambdas/lambda_authorizer
+          pip --version
+          pip install -r requirements.txt
+          echo "Installing dependencies to run the unit tests"
+          pip install jwcrypto==1.5.6
+          pip install pytest
+      - name: Run test
+        run: |
+          cd bmh_admin_portal_backend/lambdas/lambda_authorizer
+          pytest -vv tests
