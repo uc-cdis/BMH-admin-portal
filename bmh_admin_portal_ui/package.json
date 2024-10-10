@@ -65,6 +65,21 @@
     "enzyme-adapter-react-16": "^1.15.7"
   },
   "overrides": {
-    "@svgr/webpack": "$@svgr/webpack"
+    "@svgr/webpack": "$@svgr/webpack",
+    "express": {
+      "body-parser": "1.20.3"
+    },
+    "webpack-dev-server": {
+      "express": {
+        "body-parser": "1.20.3"
+      }
+    },
+    "react-scripts": {
+      "webpack-dev-server": {
+        "express": {
+          "body-parser": "1.20.3"
+        }
+      }
+    }
   }
 }
