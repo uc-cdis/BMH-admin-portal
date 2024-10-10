@@ -27,7 +27,7 @@ class EmailHelper:
 
         to_addr = os.environ.get("strides_grant_request_email", None)
         if to_addr is None:
-            raise ValueError("Could not find strides credits request email")
+            raise ValueError("Could not find strides grants request email")
 
         cls.send_workspace_request_email(to_addr, from_addr, data)
 

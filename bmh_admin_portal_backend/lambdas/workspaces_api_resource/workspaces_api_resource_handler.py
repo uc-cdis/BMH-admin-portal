@@ -12,6 +12,7 @@ import traceback
 import decimal
 import os
 import base64
+from datetime import datetime, timezone
 from urllib.request import Request, urlopen
 
 import boto3
@@ -19,6 +20,9 @@ import botocore
 from botocore.exceptions import ClientError
 from boto3.dynamodb.conditions import Key
 from boto3.session import Session
+
+# Boilerplate code to have a workaround for unit tests and AWS deployment for relative imports
+sys.path.append(os.path.join(os.path.dirname(__file__)))
 
 from email_helper.email_helper import EmailHelper
 
@@ -30,9 +34,15 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger.setLevel(logging.INFO)
 
 DEFAULT_STRIDES_CREDITS_AMOUNT = 250
+
 STRIDES_CREDITS_WORKSPACE_TYPE = "STRIDES Credits"
 STRIDES_GRANT_WORKSPACE_TYPE = "STRIDES Grant"
-VALID_WORKSPACE_TYPES = [STRIDES_CREDITS_WORKSPACE_TYPE, STRIDES_GRANT_WORKSPACE_TYPE]
+DIRECT_PAY_WORKSPACE_TYPE = "Direct Pay"
+VALID_WORKSPACE_TYPES = [
+    STRIDES_CREDITS_WORKSPACE_TYPE,
+    STRIDES_GRANT_WORKSPACE_TYPE,
+    DIRECT_PAY_WORKSPACE_TYPE,
+]
 
 
 def handler(event, context):
@@ -86,6 +96,9 @@ def handler(event, context):
         },
         "/workspaces/{workspace_id}/provision": {
             "POST": lambda: _workspace_provision(body, path_params)
+        },
+        "/workspaces/{workspace_id}/direct-pay-limit": {
+            "PUT": lambda: _workspace_direct_pay_limit(body, path_params, user)
         },
     }
 
@@ -175,6 +188,7 @@ def _get_tokens(query_string_params, api_key):
     url = "{}/oauth2/token?grant_type={}&code={}&redirect_uri={}".format(
         base_url, grant_type, code, redirect_uri
     )
+
     logger.info(f"Requesting tokens: {url}")
     req = Request(url, data={})
     req.add_header("Content-Type", "application/x-www-form-urlencoded")
@@ -249,7 +263,6 @@ def _refresh_tokens(body, api_key):
 
 ####################### Functions to handle API Method Calls ###################
 def _workspaces_post(body, email):
-
     assert "workspace_type" in body
     workspace_type = body["workspace_type"]
 
@@ -260,10 +273,17 @@ def _workspaces_post(body, email):
 
     # Generate email address for root account
     email_domain = os.environ.get("email_domain", None)
-    if email_domain is None:
+    if not email_domain:
         raise ValueError("Could not find root account email domain.")
 
-    root_email = f"root_{workspace_request_id}@{email_domain}"
+    occ_email_domain = os.environ.get("occ_email_domain", None)
+    if not occ_email_domain:
+        raise ValueError("Could not find root occ account email domain.")
+
+    if workspace_type == DIRECT_PAY_WORKSPACE_TYPE:
+        root_email = f"root_{workspace_request_id}@{occ_email_domain}"
+    else:
+        root_email = f"root_{workspace_request_id}@{email_domain}"
 
     item = {}
     if body is not None:
@@ -277,14 +297,21 @@ def _workspaces_post(body, email):
     item["bmh_workspace_id"] = workspace_request_id
     item["request_status"] = "pending"
     item["user_id"] = email
+    # Storing timestamp in integer format because dynamodb does not support datetime type natively.
+    # Retrieval: datetime.fromtimestamp(int(item['creation_date']))
+    item["creation_date"] = int(datetime.utcnow().timestamp())
 
     if workspace_type == STRIDES_CREDITS_WORKSPACE_TYPE:
         item["strides-credits"] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT)
     else:
         item["strides-credits"] = decimal.Decimal(0)
 
-    item["soft-limit"] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * 0.5)
-    item["hard-limit"] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * 0.9)
+    if workspace_type == DIRECT_PAY_WORKSPACE_TYPE:
+        item["soft-limit"] = 0
+        item["hard-limit"] = 0
+    else:
+        item["soft-limit"] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * 0.5)
+        item["hard-limit"] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT * 0.9)
     item["total-usage"] = 0
 
     # Get the dynamodb table name from SSM Parameter Store
@@ -300,7 +327,13 @@ def _workspaces_post(body, email):
     elif workspace_type == "STRIDES Grant":
         EmailHelper.send_grant_workspace_request_email(item)
 
-    return create_response(status_code=200, body={"message": "success"})
+    if workspace_type == "Direct Pay":
+        return create_response(
+            status_code=200,
+            body={"message": "success", "workspace_request_id": workspace_request_id},
+        )
+    else:
+        return create_response(status_code=200, body={"message": "success"})
 
 
 def _workspace_provision(body, path_params):
@@ -315,6 +348,10 @@ def _workspace_provision(body, path_params):
     """
     assert "workspace_id" in path_params
     assert "account_id" in body
+
+    user_services_email = os.environ.get("user_services_email", None)
+    if user_services_email is None:
+        raise ValueError("Could not find user services email.")
 
     workspace_id = path_params["workspace_id"]
     account_id = body["account_id"]
@@ -343,7 +380,7 @@ def _workspace_provision(body, path_params):
     )
 
     # Create the SNS topic for communication back to the user.
-    # TODO: Make this SNS topic a single SNS topic that notifies the admin instead
+    # TODO: Make this SNS topic a single SNS topic that notifies the admin
     # instead of a topic per workspace.
     sns = boto3.client("sns")
     response = sns.create_topic(
@@ -351,33 +388,59 @@ def _workspace_provision(body, path_params):
         Tags=[{"Key": "bmh_workspace_id", "Value": workspace_id}],
     )
     topic_arn = response["TopicArn"]
-    # Commenting this out since we don't want to use this as notification.
-    # TODO: Remove this once we are confident
-    # email_domain = os.environ.get("email_domain", None)
-    # # sns_email = f"request@{email_domain}"
-    # sns.subscribe(
-    #     TopicArn=topic_arn,
-    #     Protocol="email",
-    #     Endpoint=sns_email
-    # )
+
+    sns.subscribe(TopicArn=topic_arn, Protocol="email", Endpoint=user_services_email)
+
+    # Adding a subscription to the Lambda function that updates dynamoDB if total-usage is over the hard-limit
+    lambda_arn = os.environ.get("total_usage_trigger_lambda_arn")
+    if lambda_arn:
+        sns.subscribe(TopicArn=topic_arn, Protocol="lambda", Endpoint=lambda_arn)
+
+    # Add permission to the function to allow SNS to invoke it
+    lambda_client = boto3.client("lambda")
+    statement = {
+        "StatementId": f"sns-trigger-{workspace_id}",
+        "Action": "lambda:InvokeFunction",
+        "Principal": "sns.amazonaws.com",
+        "SourceArn": topic_arn,
+    }
+
+    # Add SNS permission
+    try:
+        response = lambda_client.add_permission(
+            FunctionName=lambda_arn,
+            StatementId=statement["StatementId"],
+            Action=statement["Action"],
+            Principal=statement["Principal"],
+            SourceArn=statement["SourceArn"],
+        )
+        logger.info("Policy statement added successfully")
+        logger.info(response)
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ResourceConflictException":
+            logger.info("Policy statement already exists")
+        else:
+            raise e
 
     # Get the dynamodb table name from SSM Parameter Store
     dynamodb_table_name = _get_dynamodb_table_name()
     dynamodb = boto3.resource("dynamodb")
     table = dynamodb.Table(dynamodb_table_name)
 
-    update_expression = "set #apikey = :apikey, #snstopic = :snstopic, #requeststatus = :requeststatus, #accountid = :accountid"
+    update_expression = "set #apikey = :apikey, #snstopic = :snstopic, #requeststatus = :requeststatus, #accountid = :accountid, #provisiontime = :provisiontime"
     expression_attribute_values = {
         ":apikey": api_key,
         ":snstopic": topic_arn,
         ":requeststatus": "provisioning",
         ":accountid": account_id,
+        ":provisiontime": int(datetime.utcnow().timestamp()),
     }
     expression_attribute_names = {
         "#apikey": "api-key",
         "#snstopic": "sns-topic",
         "#requeststatus": "request_status",
         "#accountid": "account_id",
+        "#provisiontime": "provision_time",
     }
 
     if strides_credits_amount is not None:
@@ -466,6 +529,7 @@ def _workspaces_get(path_params, email, query_string_params=None):
 
     # Use expression attributes because dashes are not
     # allowed.
+
     projection = ", ".join(
         [
             "#bmhworkspaceid",
@@ -476,6 +540,7 @@ def _workspaces_get(path_params, email, query_string_params=None):
             "#stridescredits",
             "#softlimit",
             "#hardlimit",
+            "#directpaylimit",
         ]
     )
 
@@ -488,6 +553,7 @@ def _workspaces_get(path_params, email, query_string_params=None):
         "#stridescredits": "strides-credits",
         "#softlimit": "soft-limit",
         "#hardlimit": "hard-limit",
+        "#directpaylimit": "direct_pay_limit",
     }
 
     status_code = 200
@@ -544,6 +610,13 @@ def _workspaces_set_limits(body, path_params, user):
         else:
             raise Exception("Required `user` parameter in request body")
 
+    # User is None for requests made by an application using client_credentials.
+    if not user:
+        if "user" in body:
+            user = body["user"]
+        else:
+            raise Exception("Required `user` parameter in request body")
+
     # Get the dynamodb table name from SSM Parameter Store
     workspace_id = path_params["workspace_id"]
     dynamodb_table_name = _get_dynamodb_table_name()
@@ -559,13 +632,18 @@ def _workspaces_set_limits(body, path_params, user):
     try:
         table_response = table.update_item(
             Key={"bmh_workspace_id": workspace_id, "user_id": user},
-            UpdateExpression="set #hard = :hard, #soft = :soft",
+            UpdateExpression="set #hard = :hard, #soft = :soft, #limitupdatetime = :limitupdatetime",
             ConditionExpression="attribute_exists(bmh_workspace_id)",
             ExpressionAttributeValues={
                 ":soft": round(decimal.Decimal(body["soft-limit"]), 2),
                 ":hard": round(decimal.Decimal(body["hard-limit"]), 2),
+                ":limitupdatetime": int(datetime.utcnow().timestamp()),
             },
-            ExpressionAttributeNames={"#soft": "soft-limit", "#hard": "hard-limit"},
+            ExpressionAttributeNames={
+                "#soft": "soft-limit",
+                "#hard": "hard-limit",
+                "#limitupdatetime": "limit_update_time",
+            },
             ReturnValues="ALL_NEW",
         )
         logger.info(f"Table response: {table_response}")
@@ -574,6 +652,41 @@ def _workspaces_set_limits(body, path_params, user):
             raise Exception("Could not find BMH Workspace " f"with id {workspace_id}")
         else:
             raise e
+
+    if not "sns-topic" in table_response["Attributes"]:
+        logger.warning(f"SNS topic ARN does not exist yet.")
+    else:
+        sns_topic_arn = table_response["Attributes"]["sns-topic"]
+        total_usage = table_response["Attributes"]["total-usage"]
+        workspace_type = table_response["Attributes"]["workspace_type"]
+        site_name = _get_site_info()
+
+        subject = f"[{site_name}] Workspace : Soft and Hard limits updated"
+        message = f"""There has been an update in the limits for the following user in {site_name}.
+        Workspace info:
+            User ID : {user}
+            Workspace Type: {workspace_type}
+            workspace_id: {workspace_id}
+            Total Usage: {total_usage}
+            Soft Usage Limit: {soft_limit}
+            Hard Usage Limit: {hard_limit}
+
+        """
+        attributes = {
+            "workspace_id": {"DataType": "String", "StringValue": workspace_id},
+            "user_id": {"DataType": "String", "StringValue": user},
+            "total_usage": {
+                "DataType": "String",
+                "StringValue": str(total_usage),
+            },
+            "hard_limit": {"DataType": "String", "StringValue": str(hard_limit)},
+        }
+        #  TODO: Publish to admin email instead of per user
+        try:
+            _publish_to_sns_topic(sns_topic_arn, subject, message, attributes)
+        except ClientError as e:
+            logger.error(f"SNS topic ARN exists but publishing SNS topic failed.")
+            logger.error(e)
 
     return create_response(status_code=200, body=table_response["Attributes"])
 
@@ -625,12 +738,16 @@ def _workspaces_set_total_usage(body, path_params, api_key):
     try:
         table_response = table.update_item(
             Key={"bmh_workspace_id": workspace_id, "user_id": user_id},
-            UpdateExpression="set #totalUsage = :totalUsage",
+            UpdateExpression="set #totalUsage = :totalUsage, #usageupdatetime = :usageupdatetime",
             ConditionExpression="attribute_exists(bmh_workspace_id)",
             ExpressionAttributeValues={
                 ":totalUsage": formatted_total_usage,
+                ":usageupdatetime": int(datetime.utcnow().timestamp()),
             },
-            ExpressionAttributeNames={"#totalUsage": "total-usage"},
+            ExpressionAttributeNames={
+                "#totalUsage": "total-usage",
+                "#usageupdatetime": "usage_update_time",
+            },
             ReturnValues="ALL_OLD",
         )
         logger.info(f"Table response: {json.dumps(table_response, cls=DecimalEncoder)}")
@@ -643,33 +760,57 @@ def _workspaces_set_total_usage(body, path_params, api_key):
     old_total_usage = table_response["Attributes"]["total-usage"]
     soft_limit = table_response["Attributes"]["soft-limit"]
     hard_limit = table_response["Attributes"]["hard-limit"]
+    workspace_type = table_response["Attributes"]["workspace_type"]
+    site_name = _get_site_info()
 
     sns_topic_arn = table_response["Attributes"]["sns-topic"]
     message = "Success"
-    if old_total_usage < hard_limit and formatted_total_usage >= hard_limit:
+    if old_total_usage < hard_limit <= formatted_total_usage:
         logger.info(
             f"Surpassed the hard limit: {old_total_usage=} {formatted_total_usage=} {hard_limit=}"
         )
 
-        subject = f"Workspace {workspace_id}: exceeded usage hard limit"
-        message = f"""The Workspace ({workspace_id}) has exceeded the usage hard limit.
-        Total Usage: {formatted_total_usage}
-        Soft Usage Limit: {soft_limit}
-        Hard Usage Limit: {hard_limit}
-        """
-        #  TODO: Publish to admin email instead of per user
-        _publish_to_sns_topic(sns_topic_arn, subject, message)
+        subject = f"[{site_name}] Workspace : Total usage exceeds Hard limit"
+        message = f"""Total usage exceeds the set Hard limit for the following user in {site_name}.
+            Workspace info:
+            User ID : {user_id}
+            Workspace Type: {workspace_type}
+            workspace_id: {workspace_id}
+            Total Usage: {total_usage}
+            Soft Usage Limit: {soft_limit}
+            Hard Usage Limit: {hard_limit}
 
-    elif old_total_usage < soft_limit and formatted_total_usage >= soft_limit:
+            User services, please use this email template : https://docs.google.com/document/d/1BAkRsYlcJLyzGueVMEZ8xGiJgMd_yAzK6t5mmsiOW7E/edit?pli=1#heading=h.f36t295d0h33
+        """
+        attributes = {
+            "workspace_id": {"DataType": "String", "StringValue": workspace_id},
+            "user_id": {"DataType": "String", "StringValue": user_id},
+            "total_usage": {
+                "DataType": "String",
+                "StringValue": str(formatted_total_usage),
+            },
+            "hard_limit": {"DataType": "String", "StringValue": str(hard_limit)},
+        }
+        #  TODO: Publish to admin email instead of per user
+        _publish_to_sns_topic(sns_topic_arn, subject, message, attributes)
+
+    elif old_total_usage < soft_limit <= formatted_total_usage:
         logger.info(
-            f"Surpassed the hard limit: {old_total_usage=} {formatted_total_usage=} {soft_limit=}"
+            f"Surpassed the soft limit: {old_total_usage=} {formatted_total_usage=} {soft_limit=}"
         )
 
-        subject = f"Workspace {workspace_id}: exceeded usage soft limit"
-        message = f"""The Workspace ({workspace_id}) has exceeded the usage soft limit.
-        Total Usage: {formatted_total_usage}
-        Soft Usage Limit: {soft_limit}
-        Hard Usage Limit: {hard_limit}
+        subject = f"[{site_name}] Workspace : Total usage exceeds Soft limit"
+        message = f"""Total usage exceeds the set Soft limit for the following user in {site_name}.
+            Workspace info:
+            User ID : {user_id}
+            Workspace Type: {workspace_type}
+            workspace_id: {workspace_id}
+            Total Usage: {total_usage}
+            Soft Usage Limit: {soft_limit}
+            Hard Usage Limit: {hard_limit}
+
+            User services, please use this email template : https://docs.google.com/document/d/1BAkRsYlcJLyzGueVMEZ8xGiJgMd_yAzK6t5mmsiOW7E/edit?pli=1#heading=h.2c3nxovihdgc
+
         """
         #  TODO: Publish to admin email instead of per user
         _publish_to_sns_topic(sns_topic_arn, subject, message)
@@ -677,7 +818,103 @@ def _workspaces_set_total_usage(body, path_params, api_key):
     return create_response(status_code=200, body={})
 
 
+def _workspace_direct_pay_limit(body, path_params, user):
+    logger.info(f"Called 'set limit': {body}")
+
+    # Validate body and path_params
+    assert "workspace_id" in path_params
+    assert "direct_pay_limit" in body
+
+    # User is None for requests made by an application using client_credentials.
+    if not user:
+        if "user" in body:
+            user = body["user"]
+        else:
+            raise Exception("Required `user` parameter in request body")
+
+    # Get the dynamodb table name from SSM Parameter Store
+    workspace_id = path_params["workspace_id"]
+    dynamodb_table_name = _get_dynamodb_table_name()
+    dynamodb = boto3.resource("dynamodb")
+    table = dynamodb.Table(dynamodb_table_name)
+    projection = ", ".join(
+        [
+            "#bmhworkspaceid",
+            "#requeststatus",
+            "#workspacetype",
+            "#totalusage",
+            "#softlimit",
+            "#hardlimit",
+            "#directpaylimit",
+        ]
+    )
+
+    expression_attribute_names = {
+        "#bmhworkspaceid": "bmh_workspace_id",
+        "#requeststatus": "request_status",
+        "#workspacetype": "workspace_type",
+        "#totalusage": "total-usage",
+        "#softlimit": "soft-limit",
+        "#hardlimit": "hard-limit",
+        "#directpaylimit": "direct_pay_limit",
+    }
+
+    try:
+        direct_pay_limit = round(decimal.Decimal(body["direct_pay_limit"]), 2)
+    except Exception as e:
+        raise ValueError(
+            "Direct pay limit must be a number, issue in converting direct_pay_limit from UI. Error: "
+            + str(e)
+        )
+
+    if direct_pay_limit < 0:
+        raise ValueError("Direct pay limit must be a positive number")
+
+    try:
+        response = table.get_item(
+            Key={"bmh_workspace_id": workspace_id, "user_id": user},
+            ProjectionExpression=projection,
+            ExpressionAttributeNames=expression_attribute_names,
+        )
+        retval = response.get("Item", None)
+    except Exception as e:
+        raise ValueError(
+            "Could not find record with existing workspace_id and user. Error:" + str(e)
+        )
+
+    if (
+        direct_pay_limit < retval["hard-limit"]
+        or direct_pay_limit < retval["soft-limit"]
+    ):
+        raise ValueError(
+            "The new direct pay amount is less than the soft limit or hard limit"
+        )
+    elif direct_pay_limit < retval["direct_pay_limit"]:
+        raise ValueError(
+            "The new direct pay amount is less than the old direct pay amount"
+        )
+
+    try:
+        table_response = table.update_item(
+            Key={"bmh_workspace_id": workspace_id, "user_id": user},
+            UpdateExpression="set #direct = :direct",
+            ConditionExpression="attribute_exists(bmh_workspace_id)",
+            ExpressionAttributeValues={":direct": direct_pay_limit},
+            ExpressionAttributeNames={"#direct": "direct_pay_limit"},
+            ReturnValues="ALL_NEW",
+        )
+        logger.info(f"Table response: {table_response}")
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
+            raise Exception("Could not find BMH Workspace " f"with id {workspace_id}")
+        else:
+            raise e
+
+    return create_response(status_code=200, body=table_response["Attributes"])
+
+
 ################################################################################
+
 
 ################################ Helper Methods ################################
 def _get_workspace_request_status_and_email(workspace_request_id):
@@ -719,9 +956,14 @@ def _get_workspace_request_status_and_email(workspace_request_id):
 
 #  TODO: Publish to admin email instead of per user
 #  TODO: Create this admin SNS topic via CDK so we only subscribe to a single topic per environment.
-def _publish_to_sns_topic(topic_arn, subject, message):
+def _publish_to_sns_topic(topic_arn, subject, message, attributes={}):
     sns = boto3.client("sns")
-    sns.publish(TopicArn=topic_arn, Subject=subject, Message=message)
+    sns.publish(
+        TopicArn=topic_arn,
+        Subject=subject,
+        Message=message,
+        MessageAttributes=attributes,
+    )
 
 
 def _get_dynamodb_index_name():
@@ -738,6 +980,16 @@ def _get_param(param_name):
     return param_info["Parameter"]["Value"]
 
 
+def _get_site_info():
+    email_domain = os.environ["email_domain"]
+    site_info = {
+        "planx-pla.net": "QA-BRH",
+        "brh-portal.org": "BRH",
+        "healportal.org": "HEAL",
+    }
+    return site_info.get(email_domain, None)
+
+
 # Helper class to convert a DynamoDB item to JSON.
 class DecimalEncoder(json.JSONEncoder):
     # Usage explained here:
@@ -752,7 +1004,6 @@ class DecimalEncoder(json.JSONEncoder):
 
 
 def get_secret(secret_name):
-
     # secret_name = "/brh/fence_client_secret"
 
     # Create a Secrets Manager client

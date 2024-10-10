@@ -280,7 +280,6 @@ it('submits the form and makes a call to requestWorkspace', () => {
         preventDefault: () => null
     };
     submitFunc(custom_event_object);
-    // mockFunction.mockImplementation(()=>{});
     expect(mockFunction.mock.calls).toHaveLength(0);
 
     //ensure request Workspace is called when the checkValidity returns true

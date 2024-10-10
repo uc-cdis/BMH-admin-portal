@@ -5,7 +5,7 @@
 // Customer and either Amazon Web Services, Inc. or Amazon Web Services EMEA SARL or both.
 
 import React, { useState, useEffect } from 'react';
-import { BiEditAlt } from 'react-icons/bi';
+import { BiEditAlt, BiSortAlt2 } from 'react-icons/bi';
 import BootstrapTable from 'react-bootstrap-table-next';
 import cellEditFactory from 'react-bootstrap-table2-editor';
 import overlayFactory from 'react-bootstrap-table2-overlay';
@@ -17,10 +17,12 @@ import { authorizeAdmin } from '../util/auth';
 // Added this to avoid warning in unit tests.
 // Error: `Failed prop type: LoadingOverlayWrapper: prop type `styles.content` is invalid;`
 LoadingOverlay.propTypes = undefined;
+const DIRECT_PAY = 'Direct Pay';
 
 const WorkspaceAccountsAdmin = () => {
   const [workspaces, setWorkspaces] = useState([])
   const [loading, setLoading] = useState(true)
+  /* eslint-disable */
   const [adminAuthorized, setAdminAuthorized] = useState(false)
 
   useEffect(() => {
@@ -31,14 +33,41 @@ const WorkspaceAccountsAdmin = () => {
     setLoading(true);
     fetchAuthorized();
     getAdminWorkspaces((data) => {
+      data.sort((a, b) => {
+        let a_id = a.user_id;
+        let b_id = b.user_id;
+        if (a_id < b_id) {
+          return -1;
+        }
+        if (a_id > b_id) {
+          return 1;
+        }
+        return 0;
+      });
       setLoading(false)
       setWorkspaces(data)
     })
   }, [])
 
-  const dollar_formatter = (cell, row) => "$" + cell
+  const dollar_formatter = (cell, row) => {if (typeof cell != "undefined") {return "$" + cell} else return ""}
+  const total_amount_formatter = (cell, row) =>
+  {
+    if (row['workspace_type'] === DIRECT_PAY && typeof row['direct_pay_limit'] != "undefined")
+    {
+      return "$" + row['direct_pay_limit']
+    }
+    else if (typeof cell != "undefined")
+    {
+      return "$" + cell
+    }
+    else
+    {
+      return ""
+    }
+  }
   const editable_header_formatter = (col, colIndex, components) => (<span>{col.text} <BiEditAlt /></span>)
   const capitalize_word_formatter = (cell, row) => cell.charAt(0).toUpperCase() + cell.slice(1)
+  const sortable_header_formatter = (col, colIndex, components) => (<span>{col.text} <BiSortAlt2 /></span>)
 
   const no_data_indication = () => {
     return (
@@ -46,49 +75,83 @@ const WorkspaceAccountsAdmin = () => {
     )
   }
 
-
-  const selectRow = {
-    mode: 'radio',
-    clickToSelect: true,
-    clickToExpand: true
-  };
-
   const columns = [{
-    dataField: 'scientific_poc',
-    text: 'Scientific POC',
-    editable: false
-  },{
     dataField: 'user_id',
     text: 'User Id',
-    editable: false
-  }, {
-    dataField: 'request_status',
-    text: 'Request Status',
     editable: false,
-    formatter: capitalize_word_formatter
-  }, {
-    dataField: 'workspace_type',
-    text: 'Workspace Type',
-    editable: false
-  }, {
-    dataField: 'total-usage',
-    text: 'Total Usage',
-    editable: false,
-    formatter: dollar_formatter
-  }, {
-    dataField: 'strides-credits',
-    text: 'Strides Credits',
-    editable: false,
-    formatter: dollar_formatter
-  }, {
-    dataField: 'root_account_email',
-    text: 'Root Email',
-    editable: false,
-  }, {
+    sort: true,
+    headerFormatter : sortable_header_formatter
+  },{
     dataField: 'account_id',
     text: 'AWS Account',
     editable: true,
-    headerFormatter: editable_header_formatter,
+    sort: true,
+    headerFormatter: editable_header_formatter
+  },{
+    dataField: 'request_status',
+    text: 'Request Status',
+    editable: false,
+    sort: true,
+    headerFormatter : sortable_header_formatter,
+    formatter: capitalize_word_formatter
+  },{
+    dataField: 'workspace_type',
+    text: 'Workspace Type',
+    editable: false,
+    sort: true,
+    headerFormatter : sortable_header_formatter
+  },{
+    dataField: 'total-usage',
+    text: 'Total Usage',
+    editable: false,
+    sort: true,
+    formatter: dollar_formatter,
+    headerFormatter : sortable_header_formatter
+  },{
+    dataField: 'soft-limit',
+    text: 'Soft Limit',
+    editable: false,
+    sort: true,
+    formatter: dollar_formatter,
+    headerFormatter : sortable_header_formatter
+  },{
+    dataField: 'hard-limit',
+    text: 'Hard Limit',
+    editable: false,
+    sort: true,
+    formatter: dollar_formatter,
+    headerFormatter : sortable_header_formatter
+  },{
+    dataField: 'strides-credits',
+    text: 'Total Funds',
+    editable: false,
+    sort: true,
+    formatter: total_amount_formatter,
+    headerFormatter : sortable_header_formatter
+  },{
+    dataField: 'root_account_email',
+    text: 'Root Email',
+    editable: false,
+    sort: true,
+    headerFormatter : sortable_header_formatter
+  },{
+    dataField: 'ecs',
+    text: 'ECS',
+    editable: false,
+    sort: true,
+    headerFormatter : sortable_header_formatter
+  },{
+    dataField: 'subnet',
+    text: 'Subnet',
+    editable: false,
+    sort: true,
+    headerFormatter : sortable_header_formatter
+  },{
+    dataField: 'scientific_poc',
+    text: 'Scientific POC',
+    editable: false,
+    sort: true,
+    headerFormatter : sortable_header_formatter
   }]
 
   const cellEdit = cellEditFactory({

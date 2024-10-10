@@ -99,11 +99,12 @@ class BmhAdminPortalBackendStack(core.Stack):
             self,
             "workspaces-auth-lambda",
             runtime=lambda_.Runtime.PYTHON_3_8,
-            entry="lambda/lambda_authorizer",
+            entry="lambdas/lambda_authorizer",
             index="lambda_authorizer.py",
             handler="lambda_handler",
             description="Lambda token authorizer function",
             environment={
+                "DD_LOGS_ENABLED": "true",
                 "auth_client_id": config["auth_client_id"],
                 "allowed_client_id_audience": config["allowed_client_id_audience"],
                 "auth_base_url": config["auth_oidc_uri"],
@@ -191,31 +192,64 @@ class BmhAdminPortalBackendStack(core.Stack):
             secret_complete_arn=config["auth_client_secret_arn"],
         )
 
+        ## Lambda function which handles the Total Usage SNS trigger.
+        total_usage_trigger_lambda = lambda_.Function(
+            self,
+            "total-usage-trigger-handler-function",
+            runtime=lambda_.Runtime.PYTHON_3_8,
+            code=lambda_.Code.asset("lambdas/sns_trigger_lambda"),
+            handler="total_usage_trigger_handler.handler",
+            timeout=core.Duration.seconds(600),
+            description="Function which handles Total Usage SNS trigger for BRH Admin Portal",
+            environment={
+                "DD_LOGS_ENABLED": "true",
+                "dynamodb_table_param_name": config["dynamodb_table_param_name"],
+            },
+        )
+
+        ## Grant read/write to all SSM Parameters in the /bmh namespace.
+        ## This is done to get rid of circular dependencies.
+        total_usage_trigger_lambda.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "ssm:DescribeParameters",
+                    "ssm:GetParameters",
+                    "ssm:GetParameter",
+                    "ssm:GetParameterHistory",
+                ],
+                resources=[f"arn:aws:ssm:{self.region}:{self.account}:parameter/bmh/*"],
+            )
+        )
+
         ## Lambda function which handles the API Gateway endpoints.
         workspaces_resource_lambda = lambda_.Function(
             self,
             "workspaces-resource-function",
             runtime=lambda_.Runtime.PYTHON_3_8,
-            code=lambda_.Code.asset("lambda/workspaces_api_resource"),
+            code=lambda_.Code.asset("lambdas/workspaces_api_resource"),
             handler="workspaces_api_resource_handler.handler",
             timeout=core.Duration.seconds(600),
             description="Function which handles API Gateway requests for BRH Admin Portal",
             environment={
+                "DD_LOGS_ENABLED": "true",
                 "dynamodb_table_param_name": config["dynamodb_table_param_name"],
                 "dynamodb_index_param_name": config["dynamodb_index_param_name"],
                 "api_usage_id_param_name": config["api_usage_id_param_name"],
                 "brh_asset_bucket": brh_workspace_assets_bucket.bucket_name,
                 "brh_portal_url": config["api_url_param_name"],
                 "state_machine_arn": step_fn_workflow.state_machine_arn,
+                "total_usage_trigger_lambda_arn": total_usage_trigger_lambda.function_arn,
                 "auth_redirect_uri": config["auth_redirect_uri"],
                 "auth_client_id": config["auth_client_id"],
                 "auth_client_secret_name": config["auth_client_secret_name"],
                 "auth_oidc_uri": config["auth_oidc_uri"],
                 "email_domain": config["email_domain"],
+                "occ_email_domain": config["occ_email_domain"],
                 "strides_credits_request_email": config[
                     "strides_credits_request_email"
                 ],
                 "strides_grant_request_email": config["strides_grant_request_email"],
+                "user_services_email": config["user_services_email"],
                 "account_creation_asset_bucket_name": config[
                     "account_creation_asset_bucket_name"
                 ],
@@ -266,6 +300,20 @@ class BmhAdminPortalBackendStack(core.Stack):
             )
         )
 
+        # Allow this lambda function add_permissions to lambda functions
+        # This is needed to add sns triggers to handling lambda function
+        workspaces_resource_lambda.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "lambda:AddPermission",
+                    "lambda:GetPolicy",
+                ],
+                resources=[
+                    total_usage_trigger_lambda.function_arn,
+                ],
+            )
+        )
+
         ## The lambda will need to send emails using SES
         workspaces_resource_lambda.add_to_role_policy(
             iam.PolicyStatement(actions=["ses:*"], resources=["*"])
@@ -273,6 +321,7 @@ class BmhAdminPortalBackendStack(core.Stack):
 
         # Allow lambda to read the dynamodb table
         dynamodb_table.grant_read_write_data(workspaces_resource_lambda)
+        dynamodb_table.grant_read_write_data(total_usage_trigger_lambda)
 
         workspaces_resource_lambda_integration = apigateway.LambdaIntegration(
             handler=workspaces_resource_lambda
@@ -333,6 +382,13 @@ class BmhAdminPortalBackendStack(core.Stack):
         total_usage.add_method(
             "PUT", workspaces_resource_lambda_integration, api_key_required=True
         )
+
+        ################ PUT workspaces/{workspace_id}/direct-pay-limit #############################
+        limits_resource = workspace_resource.add_resource("direct-pay-limit")
+        limits_put = limits_resource.add_method(
+            "PUT", workspaces_resource_lambda_integration, authorizer=token_authorizer
+        )
+        ######################################################################################
 
         default_usage_plan = apigateway.UsagePlan(
             self,

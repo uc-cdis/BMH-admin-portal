@@ -76,6 +76,9 @@ The react application expects certain environment variables to be present during
 * REACT_APP_HELP_EMAIL: help@brh.org
 * REACT_APP_ROOT_EMAIL_DOMAIN: brh.org
 * REACT_APP_DISPLAY_NAME: "STRIDES Portal"
+* REACT_APP_OCC_EMAIL_DOMAIN: occ-data.org
+* REACT_APP_OCC_HELPER_URL: API Gateway Endpoint deployed in backend for OCC
+* REACT_APP_DISABLED_FORMS: Optional, an array of form names that to be hidden from the UI (e.g. `["stridesCredits", "directPay"]`)
 
 ### Build and deploy static files
 

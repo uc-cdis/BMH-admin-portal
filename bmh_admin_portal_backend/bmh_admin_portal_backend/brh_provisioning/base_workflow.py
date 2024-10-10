@@ -63,10 +63,11 @@ class ProvisioningWorkflow(core.Construct):
             "stepfn-handler",
             runtime=lambda_.Runtime.PYTHON_3_8,
             timeout=core.Duration.seconds(600),
-            code=lambda_.Code.asset("lambda/step_functions_handler"),
+            code=lambda_.Code.asset("lambdas/step_functions_handler"),
             handler="src.app.handler",
             description="Function which deploys BRH specific infrastructure (cost and usage, etc.) to member accounts.",
             environment={
+                "DD_LOGS_ENABLED": "true",
                 "brh_asset_bucket_param_name": config["brh-workspace-assets-bucket"],
                 "brh_portal_url": config["api_url_param_name"],
                 "dynamodb_index_param_name": config["dynamodb_index_param_name"],

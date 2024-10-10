@@ -52,7 +52,6 @@ A Global Secondary Index is provided which uses bmh_workspace_id as the Partitio
           "user_id": "researcher@university.edu",
           "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde101",
           "soft-limit": 150,
-          "total-usage": 7.43,
           "request_status": "active",
           "workspace_type": "STRIDES Credits",
           "nih_funded_award_number": "4325534543"
@@ -75,7 +74,6 @@ A Global Secondary Index is provided which uses bmh_workspace_id as the Partitio
           "user_id": "researcher@university.edu",
           "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde101",
           "soft-limit": 150,
-          "total-usage": 7.43,
           "request_status": "active",
           "workspace_type": "STRIDES Credits",
           "nih_funded_award_number": "4325534543"
@@ -127,6 +125,29 @@ A Global Secondary Index is provided which uses bmh_workspace_id as the Partitio
 
 * **Response:** Will return 200 status code on success (with empty body '{}').
 
+### PUT api/workspaces/{workspace_id}/direct-pay-limit
+* **Authorization**: Required, API Key
+
+* **Description:** Used to set the direct pay limit of a single workspace. Stores new values in the DynamoDB table.
+
+* **Request:**
+
+      {
+          "direct_pay_limit": 250
+      }
+  * **NOTE:** If the request is being sent using an `access_token` fetched using client_credentials, the request body must have a parameter `user` with the value of the email address of the user linked with the `workspace_id`.
+
+  * **Request:**
+      ```
+      {
+          "direct_pay_limit": 250
+          "user": "abc@example.com"
+      }
+      ```
+
+* **Response:** Returns a full representation of the workspace (see above) with the new values for direct pay amount. 404 if the workspace was not found.
+
+
 ## Step Functions (Provisioning Workflow)
 <img src="../images/step-functions.png" alt="Step Functions" width="400" />
 
@@ -146,3 +167,10 @@ The `/provision` endpoint on the `/workspace` resource will generate a unique em
 2. Ensure your mx records are correctly configured for the domain (for domains registered with Route53, tested with the MX record set to inbound-smtp.us-east-1.amazonaws.com). *Note* SMTP inbound endpoints only exist in us-east-1, us-west-2 and eu-west-1 at the moment. For up-to-date information see [this page](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/regions.html#region-endpoints)
 3. Setup a receipt rule. You can setup all emails to be written to S3 and setup SNS notifications when a new email is received.
 4. Send a test email to ensure everything is configured correctly.
+
+## Running Back End Unit Tests
+cd bmh_admin_portal_backend
+- Activate python virtual env
+pip install poetry
+poetry install -vv
+poetry run pytest -vv --cov-report xml tests
