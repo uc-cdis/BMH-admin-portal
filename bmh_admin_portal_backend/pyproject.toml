@@ -38,7 +38,7 @@ boto3 = "^1.26"
 "aws-cdk.aws-secretsmanager" = "*"
 "aws-cdk.aws-sns" = "*"
 warrant = "^0.6.1"
-requests = ">=2.32.4"
+requests = ">=2.32.4,<3"
 
 [tool.poetry.dev-dependencies]
 moto = "^4.1.1"
