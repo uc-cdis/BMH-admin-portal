@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bmh_admin_portal_backend"
-version = "0.1.0"
+version = "0.1.1"
 description = "BMH Payment Management Portal"
 authors = ["CTDS"]
 classifiers=[
@@ -38,6 +38,7 @@ boto3 = "^1.26"
 "aws-cdk.aws-secretsmanager" = "*"
 "aws-cdk.aws-sns" = "*"
 warrant = "^0.6.1"
+requests = ">=2.32.4"
 
 [tool.poetry.dev-dependencies]
 moto = "^4.1.1"
