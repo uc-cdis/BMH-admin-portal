@@ -146,9 +146,8 @@ const DirectPayForm = (props) => {
 
             callExternalURL(occHelpURL, "post", headers, data, (response) => {
                 console.log(JSON.stringify(response));
+				window.location = '/';
             });
-
-            window.location = '/';
         }
 
 
