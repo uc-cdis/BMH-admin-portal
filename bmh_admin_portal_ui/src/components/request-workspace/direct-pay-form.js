@@ -66,8 +66,8 @@ const DirectPayForm = (props) => {
             }
 
             callExternalURL(occHelpURL, "post", headers, data, (response) => {
-           	  if (response?.statusCode !== 400 &&  response?.body?.[0]?.Message?.statusCode === 200) {
-	            setRequestApproved("true");
+                if (response?.statusCode !== 400 &&  response?.body?.[0]?.Message?.statusCode === 200) {
+                    setRequestApproved("true");
                     setDirectPayLimit(response.body[0]["Message"]["body"]);
                     setformDisabled(true);
                     setButtonDisabledtoo(true);
@@ -146,7 +146,7 @@ const DirectPayForm = (props) => {
             callExternalURL(occHelpURL, "post", headers, data, (response) => {
                 console.log(JSON.stringify(response));
             	window.location = '/';
-	    });
+            });
         }
 
 
@@ -229,7 +229,7 @@ const DirectPayForm = (props) => {
         else if(requestApproved === "false"){
           componentToRender = (<div>
               <Alert key= 'danger' variant='danger'>
-                  Cannot confirm BillingID. Please correct the BillingID number you entered and/or the email characters and try again, or contact OCC at ag@occ-data.org
+                  Cannot confirm BillingID. Please correct the BillingID number you entered and/or the email characters and try again, or contact OCC at pp@occ-data.org
               </Alert>
             </div>
           )

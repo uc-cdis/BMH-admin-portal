@@ -85,7 +85,7 @@ The react application expects certain environment variables to be present during
 Navigate to the following directory:
 
 ```sh
-cd nih-project
+cd bmh_admin_portal_ui
 ```
 
 Open the **package.json** file in a text editor. Under the **scripts** section of the file, you will need to update the **s3upload** script. You will enter the name of the s3 bucket that will hold your website files. In the example below, the name of the s3 bucket is **nih-site-2**.
@@ -107,5 +107,11 @@ npm install
 ```
 
 Once the packages are installed, you can run the **s3upload** script. This command will package your React application into static files and then load them to the S3 bucket that will hold your website files.
+
+```sh
+npm run s3upload
+```
+
+
 
 Once the script completes execution, open your web browser and navigate to **www.tls-endpoint.com** to verify that the site deployed correctly.
