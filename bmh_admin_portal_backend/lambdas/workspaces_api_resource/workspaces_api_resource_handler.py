@@ -610,13 +610,6 @@ def _workspaces_set_limits(body, path_params, user):
         else:
             raise Exception("Required `user` parameter in request body")
 
-    # User is None for requests made by an application using client_credentials.
-    if not user:
-        if "user" in body:
-            user = body["user"]
-        else:
-            raise Exception("Required `user` parameter in request body")
-
     # Get the dynamodb table name from SSM Parameter Store
     workspace_id = path_params["workspace_id"]
     dynamodb_table_name = _get_dynamodb_table_name()
@@ -630,19 +623,34 @@ def _workspaces_set_limits(body, path_params, user):
         raise ValueError("Hard limit must be larger than soft limit")
 
     try:
+        update_expression = (
+            "SET "
+            "#soft = :soft, "
+            "#hard = :hard, "
+            "#limitupdatetime = :limitupdatetime, "
+            "#ecs = :ecs, "
+            "#local = :local, "
+            "#status = :status"
+        )
         table_response = table.update_item(
             Key={"bmh_workspace_id": workspace_id, "user_id": user},
-            UpdateExpression="set #hard = :hard, #soft = :soft, #limitupdatetime = :limitupdatetime",
+            UpdateExpression=update_expression,
             ConditionExpression="attribute_exists(bmh_workspace_id)",
             ExpressionAttributeValues={
                 ":soft": round(decimal.Decimal(body["soft-limit"]), 2),
                 ":hard": round(decimal.Decimal(body["hard-limit"]), 2),
                 ":limitupdatetime": int(datetime.utcnow().timestamp()),
+                ":ecs": bool(False),
+                ":local": bool(True),
+                ":status": "active",
             },
             ExpressionAttributeNames={
                 "#soft": "soft-limit",
                 "#hard": "hard-limit",
                 "#limitupdatetime": "limit_update_time",
+                "#ecs": "ecs",
+                "#local": "local",
+                "#status": "request_status",
             },
             ReturnValues="ALL_NEW",
         )
