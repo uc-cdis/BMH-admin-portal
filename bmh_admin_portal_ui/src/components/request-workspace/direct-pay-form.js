@@ -66,8 +66,8 @@ const DirectPayForm = (props) => {
             }
 
             callExternalURL(occHelpURL, "post", headers, data, (response) => {
-                if (response['statusCode'] !== 400 &&  response?.body?.[0]?.Message?.statusCode === 200) {
-                    setRequestApproved("true");
+           	  if (response?.statusCode !== 400 &&  response?.body?.[0]?.Message?.statusCode === 200) {
+	            setRequestApproved("true");
                     setDirectPayLimit(response.body[0]["Message"]["body"]);
                     setformDisabled(true);
                     setButtonDisabledtoo(true);
@@ -75,7 +75,6 @@ const DirectPayForm = (props) => {
                     console.log("handle error");
                     setRequestApproved("false");
                 }
-                updateRedirectHome(true);
             });
         }
 
@@ -146,9 +145,8 @@ const DirectPayForm = (props) => {
 
             callExternalURL(occHelpURL, "post", headers, data, (response) => {
                 console.log(JSON.stringify(response));
-            });
-
-            window.location = '/';
+            	window.location = '/';
+	    });
         }
 
 
