@@ -28,6 +28,8 @@ projection = ", ".join(
         "#stridescredits",
         "#softlimit",
         "#hardlimit",
+        "#ecs",
+        "#local",
     ]
 )
 
@@ -40,6 +42,8 @@ expression_attribute_names = {
     "#stridescredits": "strides-credits",
     "#softlimit": "soft-limit",
     "#hardlimit": "hard-limit",
+    "#ecs": "ecs",
+    "#local": "local",
 }
 
 # Direct pay: Mock Dynamodb query parameters for directpay
@@ -52,6 +56,8 @@ projection_directpay = ", ".join(
         "#softlimit",
         "#hardlimit",
         "#directpaylimit",
+        "#ecs",
+        "#local",
     ]
 )
 
@@ -63,6 +69,8 @@ expression_attribute_names_directpay = {
     "#softlimit": "soft-limit",
     "#hardlimit": "hard-limit",
     "#directpaylimit": "direct_pay_limit",
+    "#ecs": "ecs",
+    "#local": "local",
 }
 
 # Create a mock IAM role
@@ -618,6 +626,9 @@ def test_workspaces_set_limits(dynamodb_table):
                 len(retval) == 1
                 and retval[0]["soft-limit"] == 160.0
                 and retval[0]["hard-limit"] == 200.0
+                and retval[0]["request_status"] == "active"
+                and retval[0]["ecs"] is False
+                and retval[0]["local"] is True
             )
 
             # Direct pay: Query the table for item by email
@@ -631,6 +642,9 @@ def test_workspaces_set_limits(dynamodb_table):
                 len(retval) == 1
                 and retval[0]["soft-limit"] == 160.0
                 and retval[0]["hard-limit"] == 200.0
+                and retval[0]["request_status"] == "active"
+                and retval[0]["ecs"] is False
+                and retval[0]["local"] is True
             )
 
 
