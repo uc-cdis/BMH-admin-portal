@@ -202,11 +202,28 @@ const callExternalURLFunc = async (url, externalURLMethod, externalURLHeaders, e
     logout();
   }
 
-
-  const response = await fetch(url, {
+console.log("Request:", {
+  url,
+  method: externalURLMethod,
+  headers: externalURLHeaders,
+  body: externalURLMethod === "GET" ? undefined : externalURLData,
+});
+let response;
+try {
+   response = await fetch(url, {
     method: externalURLMethod,
-    body: JSON.stringify(externalURLData),
-    headers: externalURLHeaders
-  })
+    headers: externalURLHeaders,
+    body: externalURLMethod === "GET" ? undefined : JSON.stringify(externalURLData),
+  });
+
+  if (!response.ok) {
+    console.error(`Request failed with status ${response.status}`);
+  } else {
+    console.log("Response received:", response);
+  }
+} catch (error) {
+  console.error("Network error:", error);
+}
+
   return response
 }

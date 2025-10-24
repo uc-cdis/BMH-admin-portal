@@ -75,7 +75,6 @@ const DirectPayForm = (props) => {
                     console.log("handle error");
                     setRequestApproved("false");
                 }
-                updateRedirectHome(true);
             });
         }
 
@@ -146,7 +145,7 @@ const DirectPayForm = (props) => {
 
             callExternalURL(occHelpURL, "post", headers, data, (response) => {
                 console.log(JSON.stringify(response));
-				window.location = '/';
+            	window.location = '/';
             });
         }
 
