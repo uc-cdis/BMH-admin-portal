@@ -32,7 +32,7 @@ jobs:
       - name: Set up python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.9"
+          python-version: "3.13"
       - name: Install poetry
         run: |
             cd bmh_admin_portal_backend
@@ -53,7 +53,7 @@ jobs:
       - name: Set up python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.9"
+          python-version: "3.13"
       - name: Install pip requirements
         run: |
           cd bmh_admin_portal_backend/lambdas/lambda_authorizer
