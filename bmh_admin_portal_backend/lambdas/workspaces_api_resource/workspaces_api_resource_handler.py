@@ -24,7 +24,7 @@ from boto3.session import Session
 # Boilerplate code to have a workaround for unit tests and AWS deployment for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 
-from email_helper.email_helper import EmailHelper
+from .email_helper.email_helper import EmailHelper
 
 
 import logging
