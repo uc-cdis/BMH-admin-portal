@@ -15,7 +15,7 @@ This stack generates the CloudFormation templates which deploy the following res
 ## Deployment
 ### Dependencies
 * AWS CDK - [go here](https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html) for instructions on how to install CDK.
-* Python >= 3.6 (with virtualenv)
+* Python >= 3.13 (with virtualenv)
 * AWS default profile (appropriate configuration for the AWS CLI, with default
 region and account).
 * The OCC/DDI Account Vending Automation ([DDI Github](https://github.com/occ-data/ddi-pay-per-compute/tree/main/account_creation_automation))
