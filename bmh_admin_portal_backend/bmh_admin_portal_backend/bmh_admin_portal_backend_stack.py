@@ -3,7 +3,8 @@ import os
 import subprocess
 
 from aws_cdk import (
-    core,
+    Stack,
+    Duration,
     aws_lambda as lambda_,
     aws_apigateway as apigateway,
     aws_logs as logs,
@@ -14,14 +15,15 @@ from aws_cdk import (
     aws_s3_deployment as s3_deployment,
     aws_secretsmanager as secretsmanager,
 )
-from aws_cdk.aws_lambda_python import PythonFunction
+from constructs import Construct
+from aws_cdk.aws_lambda_python_alpha import PythonFunction
 
 from .bmh_admin_portal_config import BMHAdminPortalBackendConfig
 from .brh_provisioning.base_workflow import ProvisioningWorkflow
 
 
-class BmhAdminPortalBackendStack(core.Stack):
-    def __init__(self, scope: core.Construct, construct_id: str, **kwargs) -> None:
+class BmhAdminPortalBackendStack(Stack):
+    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         config = BMHAdminPortalBackendConfig.get_config()
@@ -98,7 +100,7 @@ class BmhAdminPortalBackendStack(core.Stack):
         auth_fn = PythonFunction(
             self,
             "workspaces-auth-lambda",
-            runtime=lambda_.Runtime.PYTHON_3_8,
+            runtime=lambda_.Runtime.PYTHON_3_9,
             entry="lambdas/lambda_authorizer",
             index="lambda_authorizer.py",
             handler="lambda_handler",
@@ -196,10 +198,10 @@ class BmhAdminPortalBackendStack(core.Stack):
         total_usage_trigger_lambda = lambda_.Function(
             self,
             "total-usage-trigger-handler-function",
-            runtime=lambda_.Runtime.PYTHON_3_8,
+            runtime=lambda_.Runtime.PYTHON_3_9,
             code=lambda_.Code.asset("lambdas/sns_trigger_lambda"),
             handler="total_usage_trigger_handler.handler",
-            timeout=core.Duration.seconds(600),
+            timeout=Duration.seconds(600),
             description="Function which handles Total Usage SNS trigger for BRH Admin Portal",
             environment={
                 "DD_LOGS_ENABLED": "true",
@@ -225,10 +227,10 @@ class BmhAdminPortalBackendStack(core.Stack):
         workspaces_resource_lambda = lambda_.Function(
             self,
             "workspaces-resource-function",
-            runtime=lambda_.Runtime.PYTHON_3_8,
+            runtime=lambda_.Runtime.PYTHON_3_9,
             code=lambda_.Code.asset("lambdas/workspaces_api_resource"),
             handler="workspaces_api_resource_handler.handler",
-            timeout=core.Duration.seconds(600),
+            timeout=Duration.seconds(600),
             description="Function which handles API Gateway requests for BRH Admin Portal",
             environment={
                 "DD_LOGS_ENABLED": "true",

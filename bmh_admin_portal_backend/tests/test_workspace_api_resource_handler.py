@@ -93,7 +93,7 @@ def create_mock_lambda_function():
         lambda_client = boto3.client("lambda")
         lambda_client.create_function(
             FunctionName=os.environ.get("total_usage_trigger_lambda_arn"),
-            Runtime="python3.7",
+            Runtime="python3.9",
             Role=create_mock_role(),
             Handler="my_lambda_function.lambda_handler",
             Code={"ZipFile": b""},

@@ -7,13 +7,13 @@
 ## DEPRECATED. This is not currently being used. It was originally used to demo
 ## authentication capabilities.
 
-from aws_cdk import core, aws_ssm as ssm, aws_cognito as cognito
-
+from aws_cdk import Duration, aws_ssm as ssm, aws_cognito as cognito
+from constructs import Construct
 from bmh_admin_portal_backend.bmh_admin_portal_config import BMHAdminPortalBackendConfig
 
 
-class BMHAdminPortalCognitoUserPool(core.Construct):
-    def __init__(self, scope: core.Construct, construct_id: str, **kwargs) -> None:
+class BMHAdminPortalCognitoUserPool(Construct):
+    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         config = BMHAdminPortalBackendConfig.get_config()
@@ -42,9 +42,9 @@ class BMHAdminPortalCognitoUserPool(core.Construct):
         app_client = pool.add_client(
             "bmh-portal-client",
             auth_flows=cognito.AuthFlow(user_srp=True),
-            access_token_validity=core.Duration.hours(8),
-            id_token_validity=core.Duration.hours(8),
-            refresh_token_validity=core.Duration.days(30),
+            access_token_validity=Duration.hours(8),
+            id_token_validity=Duration.hours(8),
+            refresh_token_validity=Duration.days(30),
         )
 
         # Store the AppClient ID to SSM
