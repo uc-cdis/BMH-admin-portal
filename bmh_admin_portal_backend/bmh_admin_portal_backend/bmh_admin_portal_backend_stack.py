@@ -98,7 +98,7 @@ class BmhAdminPortalBackendStack(core.Stack):
         auth_fn = PythonFunction(
             self,
             "workspaces-auth-lambda",
-            runtime=lambda_.Runtime.PYTHON_3_8,
+            runtime=lambda_.Runtime.PYTHON_3_9,
             entry="lambdas/lambda_authorizer",
             index="lambda_authorizer.py",
             handler="lambda_handler",
@@ -196,7 +196,7 @@ class BmhAdminPortalBackendStack(core.Stack):
         total_usage_trigger_lambda = lambda_.Function(
             self,
             "total-usage-trigger-handler-function",
-            runtime=lambda_.Runtime.PYTHON_3_8,
+            runtime=lambda_.Runtime.PYTHON_3_9,
             code=lambda_.Code.asset("lambdas/sns_trigger_lambda"),
             handler="total_usage_trigger_handler.handler",
             timeout=core.Duration.seconds(600),
@@ -225,7 +225,7 @@ class BmhAdminPortalBackendStack(core.Stack):
         workspaces_resource_lambda = lambda_.Function(
             self,
             "workspaces-resource-function",
-            runtime=lambda_.Runtime.PYTHON_3_8,
+            runtime=lambda_.Runtime.PYTHON_3_9,
             code=lambda_.Code.asset("lambdas/workspaces_api_resource"),
             handler="workspaces_api_resource_handler.handler",
             timeout=core.Duration.seconds(600),

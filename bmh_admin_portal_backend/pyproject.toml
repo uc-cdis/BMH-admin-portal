@@ -18,8 +18,10 @@ classifiers=[
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9"
-boto3 = "^1.26"
+python = ">=3.13,<4"
+boto3 = ">=1.40.2"
+botocore = "*"
+jwt = ">=1,<2"
 "aws-cdk.core" = "^1.196.0"
 "aws-cdk.aws-apigateway" = "*"
 "aws-cdk.aws-logs" = "*"
@@ -37,17 +39,21 @@ boto3 = "^1.26"
 "aws-cdk.aws-lambda-python" = "*"
 "aws-cdk.aws-secretsmanager" = "*"
 "aws-cdk.aws-sns" = "*"
+urllib3 = ">=2.6.0"
 warrant = "^0.6.1"
-requests = ">=2.32.4,<3"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 moto = "^4.1.1"
 docker = "^6.0.0"
 openapi-core = "^0.17.0"
 pytest = "^6.0.0"
 pytest-cov = "*"
 pyyaml = "^6.0.0"
+deptry = "^0.24.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.deptry]
+extend_exclude = ["lambdas/lambda_authorizer/tests"]
