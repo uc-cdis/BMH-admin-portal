@@ -42,9 +42,9 @@ export function useAuth() {
     performLogout();
   }, []);
 
-  const getToken = useCallback(() => {
-    return getAccessToken();
-  }, []);
+  // const getToken = useCallback(() => {
+  //   return getAccessToken();
+  // }, []);
 
   return {
     authenticated,
@@ -52,6 +52,5 @@ export function useAuth() {
     loading,
     login,
     logout,
-    getToken,
   };
 }

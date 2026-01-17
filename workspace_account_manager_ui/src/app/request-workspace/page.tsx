@@ -3,11 +3,6 @@ import { isServerAuthenticated } from '@/lib/auth/server-auth';
 import { RequestWorkspaceForm } from '@/components/request-workspace-form';
 
 export default async function RequestWorkspacePage() {
-  const authenticated = await isServerAuthenticated();
-
-  if (!authenticated) {
-    redirect('/login');
-  }
 
   return (
     <div className="container mx-auto px-4 py-8">

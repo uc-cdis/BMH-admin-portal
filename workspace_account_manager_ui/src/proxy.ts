@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAuthenticated } from './lib/auth/oidc';
 
 export function proxy(request: NextRequest) {
-  const accessToken = request.cookies.get('access_token');
+  const authenticated = isAuthenticated();
   const { pathname } = request.nextUrl;
 
   // Public routes
-  const publicRoutes = ['/login', '/api/auth/callback'];
+  const publicRoutes = ['/login', '/login/callback'];
   if (publicRoutes.includes(pathname)) {
     return NextResponse.next();
   }
 
   // Redirect to login if not authenticated
-  if (!accessToken) {
+  if (!authenticated) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 

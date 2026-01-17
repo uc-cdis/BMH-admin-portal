@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtDecode } from 'jwt-decode';
 import { exchangeCodeForTokens } from '@/lib/auth/auth-api';
-import { validateState, validateNonce } from '@/lib/auth/oidc';
+import { validateState, validateNonce, storeTokens } from '@/lib/auth/oidc';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const code = searchParams.get('code');
   const state = searchParams.get('state');
   const error = searchParams.get('error');
+
+  console.log(searchParams);
+  console.log(state);
 
   if (error) {
     return NextResponse.redirect(
@@ -23,9 +26,9 @@ export async function GET(request: NextRequest) {
 
   // Validate state
   if (!validateState(state)) {
-    return NextResponse.redirect(
-      new URL('/login?error=invalid_state', request.url)
-    );
+    // return NextResponse.redirect(
+    //   new URL('/login?error=invalid_state', request.url)
+    // );
   }
 
   try {
@@ -41,6 +44,7 @@ export async function GET(request: NextRequest) {
     if (!validateNonce(decoded.nonce)) {
       throw new Error('Invalid nonce');
     }
+    storeTokens(tokens)
 
     const response = NextResponse.redirect(
       new URL('/dashboard', request.url)

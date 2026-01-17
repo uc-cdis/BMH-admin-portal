@@ -1,4 +1,4 @@
-import { getAccessToken as getAccessTokenClient, getRefreshToken, logout as logoutUser } from './oidc';
+import { getAccessToken as getAccessTokenClient, getRefreshToken, storeTokens, logout as logoutUser } from './oidc';
 import { refreshTokens } from './auth-api';
 
 interface ResourceConfig {
@@ -130,9 +130,7 @@ async function getUserAuthMapping(
 
       // Store new tokens (client-side only)
       if (typeof window !== 'undefined') {
-        window.localStorage.setItem('id_token', tokens.id_token);
-        window.localStorage.setItem('refresh_token', tokens.refresh_token);
-        window.localStorage.setItem('access_token', tokens.access_token);
+        storeTokens(tokens)
       }
 
       accessToken = tokens.access_token;

@@ -1,3 +1,5 @@
+'use client'
+
 import { jwtDecode } from 'jwt-decode';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -10,6 +12,20 @@ interface DecodedIdToken {
     };
   };
   [key: string]: any;
+}
+
+/**
+ * Set a cookie (client-side)
+ */
+function setCookie(name: string, value: string, minutes: number): void {
+  if (typeof document === 'undefined') {
+    console.warn('Cannot set cookie on server side');
+    return;
+  }
+
+  const maxAge = minutes * 60;
+  const cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+  document.cookie = cookie;
 }
 
 /**
@@ -70,7 +86,7 @@ function getToken(tokenType: string): string | null {
   const token = window.localStorage.getItem(tokenType);
 
   // Clean up if undefined value is stored
-  if (token === 'undefined' || token === null) {
+  if (token === 'undefined') {
     removeTokens();
     return null;
   }
@@ -104,11 +120,8 @@ export function initiateLogin(
 
   const state = uuidv4();
   const nonce = uuidv4();
-
-  if (typeof window !== 'undefined') {
-    window.localStorage.setItem('state', state);
-    window.localStorage.setItem('nonce', nonce);
-  }
+  window.localStorage.setItem('state', state);
+  window.localStorage.setItem('nonce', nonce);
 
   const redirectLocation = [
     authUri,
@@ -131,8 +144,7 @@ export function initiateLogin(
  * Validate state parameter matches stored state
  */
 export function validateState(checkState: string): boolean {
-  if (typeof window === 'undefined') return false;
-
+  console.log(checkState);
   const state = window.localStorage.getItem('state');
   window.localStorage.removeItem('state');
   return checkState === state;
@@ -142,8 +154,6 @@ export function validateState(checkState: string): boolean {
  * Validate nonce parameter matches stored nonce
  */
 export function validateNonce(checkNonce: string): boolean {
-  if (typeof window === 'undefined') return false;
-
   const nonce = window.localStorage.getItem('nonce');
   window.localStorage.removeItem('nonce');
   return checkNonce === nonce;

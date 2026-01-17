@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/use-auth';
 export default function LoginPage() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
-  const { authenticated } = useAuth();
+  const { authenticated, login } = useAuth();
 
   // Redirect to home if already authenticated
   useEffect(() => {
@@ -18,12 +18,7 @@ export default function LoginPage() {
   }, [authenticated]);
 
   const handleLogin = () => {
-    initiateLogin(
-      process.env.NEXT_PUBLIC_OIDC_AUTH_URI!,
-      process.env.NEXT_PUBLIC_OIDC_CLIENT_ID!,
-      process.env.NEXT_PUBLIC_OIDC_REDIRECT_URI!,
-      process.env.NEXT_PUBLIC_AUTH_SERVICE!
-    );
+    login()
   };
 
   return (
