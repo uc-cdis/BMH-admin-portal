@@ -1,4 +1,4 @@
-import { getAccessToken as getAccessTokenClient, getRefreshToken, storeTokens, logout as logoutUser } from './oidc';
+import { getAccessToken as getAccessTokenClient, getRefreshToken, logout as logoutUser } from './oidc';
 import { refreshTokens } from './auth-api';
 
 interface ResourceConfig {
@@ -127,11 +127,6 @@ async function getUserAuthMapping(
 
     try {
       const tokens = await refreshTokens(refreshToken, apiEndpoint, apiKey);
-
-      // Store new tokens (client-side only)
-      if (typeof window !== 'undefined') {
-        storeTokens(tokens)
-      }
 
       accessToken = tokens.access_token;
       userAuthMapping = await fetchUserAuthMapping(arboristUri, accessToken);

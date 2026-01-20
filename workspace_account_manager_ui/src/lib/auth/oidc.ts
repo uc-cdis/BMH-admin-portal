@@ -3,7 +3,7 @@
 import { jwtDecode } from 'jwt-decode';
 import { v4 as uuidv4 } from 'uuid';
 
-interface DecodedIdToken {
+interface DecodedToken {
   nonce: string;
   context: {
     user: {
@@ -29,15 +29,101 @@ function setCookie(name: string, value: string, minutes: number): void {
 }
 
 /**
- * Check if user is authenticated by verifying access token exists
+ * Get a cookie value (client-side)
  */
-export function isAuthenticated(): boolean {
-  const accessToken = getAccessToken();
-  return !!accessToken;
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+
+  if (parts.length === 2) {
+    const cookieValue = parts.pop()?.split(';').shift();
+    return cookieValue ? decodeURIComponent(cookieValue) : null;
+  }
+
+  return null;
 }
 
 /**
- * Extract user name from access token
+ * Delete a cookie (client-side)
+ */
+function deleteCookie(name: string): void {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${name}=; path=/; max-age=0`;
+}
+
+/**
+ * Get all cookies as an object (client-side)
+ */
+function getAllCookies(): Record<string, string> {
+  if (typeof document === 'undefined') return {};
+
+  return document.cookie.split('; ').reduce((acc, cookie) => {
+    const [name, value] = cookie.split('=');
+    if (name && value) {
+      acc[name] = decodeURIComponent(value);
+    }
+    return acc;
+  }, {} as Record<string, string>);
+}
+
+// ============================================================================
+// TOKEN GETTERS (CLIENT-SIDE)
+// ============================================================================
+
+/**
+ * Get access token from cookies (client-side)
+ */
+export function getAccessToken(): string | null {
+  return getCookie('access_token');
+}
+
+/**
+ * Get ID token from cookies (client-side)
+ */
+export function getIdToken(): string | null {
+  return getCookie('id_token');
+}
+
+/**
+ * Get refresh token from cookies (client-side)
+ */
+export function getRefreshToken(): string | null {
+  return getCookie('refresh_token');
+}
+
+/**
+ * Get all auth tokens from cookies (client-side)
+ */
+export function getAllTokens(): {
+  accessToken: string | null;
+  idToken: string | null;
+  refreshToken: string | null;
+} {
+  return {
+    accessToken: getAccessToken(),
+    idToken: getIdToken(),
+    refreshToken: getRefreshToken(),
+  };
+}
+
+// ============================================================================
+// AUTHENTICATION STATUS
+// ============================================================================
+
+/**
+ * Check if user is authenticated (client-side)
+ */
+export function isAuthenticated(): boolean {
+  const accessToken = getAccessToken();
+  return !!accessToken && accessToken !== 'undefined';
+}
+
+/**
+ * Get user name from token (client-side)
  */
 export function getName(): string | null {
   const accessToken = getAccessToken();
@@ -46,65 +132,55 @@ export function getName(): string | null {
   }
 
   try {
-    const decoded = jwtDecode<DecodedIdToken>(accessToken);
+    const decoded = jwtDecode<DecodedToken>(accessToken);
     return decoded.context?.user?.name ?? 'Unknown';
   } catch (err) {
-    console.error('Could not retrieve name from id token:', err);
+    console.error('Error decoding token:', err);
     return 'Unknown';
   }
 }
 
 /**
- * Get access token from localStorage
+ * Get user email from token (client-side)
  */
-export function getAccessToken(): string | null {
-  return getToken('access_token');
-}
-
-/**
- * Get ID token from localStorage
- */
-export function getIdToken(): string | null {
-  return getToken('id_token');
-}
-
-/**
- * Get refresh token from localStorage
- */
-export function getRefreshToken(): string | null {
-  return getToken('refresh_token');
-}
-
-/**
- * Generic token retrieval from localStorage
- */
-function getToken(tokenType: string): string | null {
-  if (typeof window === 'undefined') {
+export function getEmail(): string | null {
+  const idToken = getIdToken();
+  if (!idToken) {
     return null;
   }
 
-  const token = window.localStorage.getItem(tokenType);
-
-  // Clean up if undefined value is stored
-  if (token === 'undefined') {
-    removeTokens();
+  try {
+    const decoded = jwtDecode<DecodedToken>(idToken);
+    return decoded.email ?? null;
+  } catch (err) {
+    console.error('Error decoding token:', err);
     return null;
   }
-
-  return token;
 }
 
 /**
- * Remove all auth tokens from localStorage
+ * Check if token is expired (client-side)
  */
-export function removeTokens(): void {
-  if (typeof window === 'undefined') return;
+export function isTokenExpired(token: string): boolean {
+  try {
+    const decoded = jwtDecode<DecodedToken>(token);
+    if (!decoded.exp) return true;
 
-  window.localStorage.removeItem('id_token');
-  window.localStorage.removeItem('refresh_token');
-  window.localStorage.removeItem('access_token');
-  window.localStorage.removeItem('state');
-  window.localStorage.removeItem('nonce');
+    const expirationTime = decoded.exp * 1000; // Convert to milliseconds
+    return Date.now() >= expirationTime;
+  } catch (err) {
+    console.error('Error checking token expiration:', err);
+    return true;
+  }
+}
+
+/**
+ * Check if access token is expired (client-side)
+ */
+export function isAccessTokenExpired(): boolean {
+  const token = getAccessToken();
+  if (!token) return true;
+  return isTokenExpired(token);
 }
 
 /**
@@ -114,72 +190,95 @@ export function initiateLogin(
   authUri: string,
   clientId: string,
   redirectUri: string,
-  authService: string
+  authService: string,
+  redirectAfterLogin: string = '/'
 ): void {
-  removeTokens();
+  if (typeof window === 'undefined') {
+    console.error('❌ Cannot initiate login on server');
+    return;
+  }
 
   const state = uuidv4();
   const nonce = uuidv4();
-  window.localStorage.setItem('state', state);
-  window.localStorage.setItem('nonce', nonce);
 
-  const redirectLocation = [
-    authUri,
-    `?state=${state}&nonce=${nonce}`,
-    '&response_type=code',
-    `&client_id=${clientId}`,
-    `&redirect_uri=${redirectUri}`,
-    `&idp=${authService}`,
-    '&scope=openid%20user',
-  ].join('');
+  // Store OAuth state/nonce in cookies (10 minutes expiry)
+  setCookie('oauth_state', state, 10);
+  setCookie('oauth_nonce', nonce, 10);
+  setCookie('redirect_after_login', redirectAfterLogin, 10);
 
+  // Build authorization URL
+  const params = new URLSearchParams({
+    response_type: 'code',
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    state: state,
+    nonce: nonce,
+    scope: 'openid user',
+    idp: authService,
+  });
+
+  const redirectLocation = `${authUri}?${params.toString()}`;
   console.log('Redirecting to', redirectLocation);
 
   if (typeof window !== 'undefined') {
     window.location.assign(redirectLocation);
   }
 }
-
 /**
- * Validate state parameter matches stored state
- */
-export function validateState(checkState: string): boolean {
-  console.log(checkState);
-  const state = window.localStorage.getItem('state');
-  window.localStorage.removeItem('state');
-  return checkState === state;
-}
-
-/**
- * Validate nonce parameter matches stored nonce
- */
-export function validateNonce(checkNonce: string): boolean {
-  const nonce = window.localStorage.getItem('nonce');
-  window.localStorage.removeItem('nonce');
-  return checkNonce === nonce;
-}
-
-/**
- * Store tokens in localStorage after validation
- */
-export function storeTokens(tokens: {
-  id_token: string;
-  access_token: string;
-  refresh_token: string;
-}): void {
-  if (typeof window === 'undefined') return;
-
-  window.localStorage.setItem('id_token', tokens.id_token);
-  window.localStorage.setItem('refresh_token', tokens.refresh_token);
-  window.localStorage.setItem('access_token', tokens.access_token);
-}
-
-/**
- * Logout user and reload page
+ * Logout user (client-side)
  */
 export function logout(): void {
-  removeTokens();
-  if (typeof window !== 'undefined') {
-    window.location.href = '/login';
+  if (typeof window === 'undefined') {
+    console.warn('⚠️ Cannot logout on server side');
+    return;
+  }
+
+  console.log('👋 Logging out...');
+
+  // Delete auth cookies
+  deleteCookie('id_token');
+  deleteCookie('access_token');
+  deleteCookie('refresh_token');
+
+  // Delete OAuth cookies (in case they're still there)
+  deleteCookie('oauth_state');
+  deleteCookie('oauth_nonce');
+  deleteCookie('redirect_after_login');
+
+  // Redirect to login
+  window.location.href = '/login';
+}
+
+/**
+ * Refresh tokens (client-side)
+ * Calls the server API to refresh tokens
+ */
+export async function refreshTokens(): Promise<boolean> {
+  const refreshToken = getRefreshToken();
+
+  if (!refreshToken) {
+    console.error('❌ No refresh token available');
+    return false;
+  }
+
+  try {
+    const response = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Token refresh failed');
+    }
+
+    console.log('✅ Tokens refreshed successfully');
+    return true;
+  } catch (err) {
+    console.error('❌ Error refreshing tokens:', err);
+    logout();
+    return false;
   }
 }

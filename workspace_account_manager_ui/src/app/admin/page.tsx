@@ -13,7 +13,7 @@ export default async function AdminPage() {
   const authorized = await authorizeAdmin(
     { resource: '/admin', service: 'workspace_admin' },
     process.env.ARBORIST_URI!,
-    process.env.API_GW_ENDPOINT!,
+    process.env.NEXT_PUBLIC_API_GW_ENDPOINT!,
     process.env.API_KEY!
   );
 

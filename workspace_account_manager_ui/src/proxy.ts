@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isAuthenticated } from './lib/auth/oidc';
+import { isServerAuthenticated } from './lib/auth/server-auth';
 
 export function proxy(request: NextRequest) {
-  const authenticated = isAuthenticated();
+  const authenticated = isServerAuthenticated();
   const { pathname } = request.nextUrl;
 
   // Public routes

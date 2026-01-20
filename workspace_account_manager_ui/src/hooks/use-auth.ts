@@ -6,7 +6,8 @@ import {
   getName,
   initiateLogin,
   logout as performLogout,
-  getAccessToken
+  getAccessToken,
+  refreshTokens,
 } from '@/lib/auth/oidc';
 
 export function useAuth() {
@@ -42,9 +43,19 @@ export function useAuth() {
     performLogout();
   }, []);
 
-  // const getToken = useCallback(() => {
-  //   return getAccessToken();
-  // }, []);
+  const getToken = useCallback(() => {
+    return getAccessToken();
+  }, []);
+
+  const refresh = useCallback(async () => {
+    const success = await refreshTokens();
+    if (success) {
+      // Update state
+      setAuthenticated(isAuthenticated());
+      setUserName(getName());
+    }
+    return success;
+  }, []);
 
   return {
     authenticated,
@@ -52,5 +63,7 @@ export function useAuth() {
     loading,
     login,
     logout,
+    getToken,
+    refresh,
   };
 }
