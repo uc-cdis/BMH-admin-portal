@@ -1,5 +1,3 @@
-import { redirect } from 'next/navigation';
-import { isServerAuthenticated } from '@/lib/auth/server-auth';
 import { RequestWorkspaceForm } from '@/components/request-workspace-form';
 
 export default async function RequestWorkspacePage() {

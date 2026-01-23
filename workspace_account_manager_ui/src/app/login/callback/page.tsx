@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
@@ -10,7 +11,7 @@ import {
   storeTokens,
 } from '@/lib/auth/oidc';
 
-export default function LoginCallbackPage() {
+function LoginCallbackContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -125,5 +126,22 @@ export default function LoginCallbackPage() {
         <p className="mt-2 text-sm text-gray-500">Please wait...</p>
       </div>
     </div>
+  );
+}
+
+export default function LoginCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <LoginCallbackContent />
+    </Suspense>
   );
 }
