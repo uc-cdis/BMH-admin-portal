@@ -1,5 +1,6 @@
-import { getAccessToken as getAccessTokenClient, getRefreshToken, logout as logoutUser } from './oidc';
-import { refreshTokens } from './auth-api';
+'use client';
+
+import { getAccessToken, getRefreshToken, refreshTokens, logout } from './oidc';
 
 interface ResourceConfig {
   resource: string;
@@ -14,25 +15,7 @@ interface UserAuthMapping {
 }
 
 /**
- * Check if user is authorized for at least one resource (login check)
- */
-export async function authorizeLogin(
-  resources: { CREDITS: ResourceConfig; GRANTS: ResourceConfig; ADMIN: ResourceConfig },
-  arboristUri: string,
-  apiEndpoint: string,
-  apiKey: string
-): Promise<boolean> {
-  const userAuthMapping = await getUserAuthMapping(arboristUri, apiEndpoint, apiKey);
-
-  const creditsAuth = await authorize(resources.CREDITS, userAuthMapping);
-  const grantsAuth = await authorize(resources.GRANTS, userAuthMapping);
-  const adminAuth = await authorize(resources.ADMIN, userAuthMapping);
-
-  return creditsAuth || grantsAuth || adminAuth;
-}
-
-/**
- * Check if user has admin authorization
+ * Check admin authorization (client-side)
  */
 export async function authorizeAdmin(
   adminResource: ResourceConfig,
@@ -40,74 +23,46 @@ export async function authorizeAdmin(
   apiEndpoint: string,
   apiKey: string
 ): Promise<boolean> {
-  const userAuthMapping = await getUserAuthMapping(arboristUri, apiEndpoint, apiKey);
+  const userAuthMapping = await getUserAuthMapping(
+    arboristUri,
+    apiEndpoint,
+    apiKey
+  );
   return authorize(adminResource, userAuthMapping);
 }
 
 /**
- * Check if user has credits authorization
+ * Check authorization for a resource
  */
-export async function authorizeCredits(
-  creditsResource: ResourceConfig,
-  arboristUri: string,
-  apiEndpoint: string,
-  apiKey: string
-): Promise<boolean> {
-  const userAuthMapping = await getUserAuthMapping(arboristUri, apiEndpoint, apiKey);
-  return authorize(creditsResource, userAuthMapping);
-}
-
-/**
- * Check if user has grants authorization
- */
-export async function authorizeGrants(
-  grantsResource: ResourceConfig,
-  arboristUri: string,
-  apiEndpoint: string,
-  apiKey: string
-): Promise<boolean> {
-  const userAuthMapping = await getUserAuthMapping(arboristUri, apiEndpoint, apiKey);
-  return authorize(grantsResource, userAuthMapping);
-}
-
-/**
- * Check if user is authorized for a specific resource
- */
-async function authorize(
+function authorize(
   resourceMap: ResourceConfig,
   userAuthMapping: UserAuthMapping | null
-): Promise<boolean> {
+): boolean {
+  if (!userAuthMapping) return false;
+
   const { resource, service: serviceName } = resourceMap;
 
-  if (!userAuthMapping) {
-    console.error('User auth mapping was not defined');
-    return false;
-  }
-
   if (resource in userAuthMapping) {
-    const authorized = userAuthMapping[resource].some(
+    return userAuthMapping[resource].some(
       (service) => service.method === 'access' && service.service === serviceName
     );
-    return authorized;
   }
 
-  console.warn(`Resource ${resource} did not exist in user auth mapping from Arborist`);
   return false;
 }
 
 /**
- * Get user authorization mapping from Arborist
+ * Get user authorization mapping (client-side API call)
  */
 async function getUserAuthMapping(
   arboristUri: string,
   apiEndpoint: string,
   apiKey: string
 ): Promise<UserAuthMapping | null> {
-  let accessToken = getAccessTokenClient();
+  let accessToken = getAccessToken();
 
   if (!accessToken) {
-    console.error('Did not find access token, logging out');
-    logoutUser();
+    logout();
     return null;
   }
 
@@ -116,39 +71,23 @@ async function getUserAuthMapping(
 
   // If failed, try refreshing token
   if (!userAuthMapping) {
-    console.log('Did not receive user auth mapping, attempting token refresh');
+    console.log('Retrying after token refresh...');
+    const refreshed = await refreshTokens(apiEndpoint, apiKey);
 
-    const refreshToken = getRefreshToken();
-    if (!refreshToken) {
-      console.error('No refresh token available');
-      logoutUser();
+    if (!refreshed) {
+      logout();
       return null;
     }
 
-    try {
-      const tokens = await refreshTokens(refreshToken, apiEndpoint, apiKey);
-
-      accessToken = tokens.access_token;
-      userAuthMapping = await fetchUserAuthMapping(arboristUri, accessToken);
-    } catch (err) {
-      console.error('Error refreshing tokens:', err);
-      logoutUser();
-      return null;
-    }
-  }
-
-  // If still failed, log out
-  if (!userAuthMapping) {
-    console.error('Could not retrieve user auth mapping after refresh');
-    logoutUser();
-    return null;
+    accessToken = getAccessToken();
+    userAuthMapping = await fetchUserAuthMapping(arboristUri, accessToken!);
   }
 
   return userAuthMapping;
 }
 
 /**
- * Fetch user authorization mapping from Arborist API
+ * Fetch user authorization mapping
  */
 async function fetchUserAuthMapping(
   arboristUri: string,
@@ -163,14 +102,12 @@ async function fetchUserAuthMapping(
     });
 
     if (!response.ok) {
-      console.error(`Arborist API error: ${response.statusText}`);
       return null;
     }
 
-    const data = await response.json();
-    return data as UserAuthMapping;
-  } catch (err) {
-    console.error('Error getting user mapping from Arborist:', err);
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching user auth mapping:', error);
     return null;
   }
 }

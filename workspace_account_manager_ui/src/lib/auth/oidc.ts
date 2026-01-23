@@ -1,113 +1,115 @@
-'use client'
+'use client';
 
 import { jwtDecode } from 'jwt-decode';
 import { v4 as uuidv4 } from 'uuid';
 
 interface DecodedToken {
-  nonce: string;
-  context: {
-    user: {
-      name: string;
+  context?: {
+    user?: {
+      name?: string;
       [key: string]: any;
     };
   };
+  email?: string;
+  nonce?: string;
+  exp?: number;
   [key: string]: any;
 }
 
-/**
- * Set a cookie (client-side)
- */
-function setCookie(name: string, value: string, minutes: number): void {
-  if (typeof document === 'undefined') {
-    console.warn('Cannot set cookie on server side');
-    return;
-  }
+interface TokenSet {
+  id_token: string;
+  access_token: string;
+  refresh_token: string;
+}
 
-  const maxAge = minutes * 60;
-  const cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`;
-  document.cookie = cookie;
+// ============================================================================
+// LOCALSTORAGE HELPERS
+// ============================================================================
+
+/**
+ * Safe localStorage setter
+ */
+function setItem(key: string, value: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(key, value);
+  } catch (error) {
+    console.error(`Failed to set ${key} in localStorage:`, error);
+  }
 }
 
 /**
- * Get a cookie value (client-side)
+ * Safe localStorage getter
  */
-function getCookie(name: string): string | null {
-  if (typeof document === 'undefined') {
+function getItem(key: string): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const value = window.localStorage.getItem(key);
+    return value === 'undefined' ? null : value;
+  } catch (error) {
+    console.error(`Failed to get ${key} from localStorage:`, error);
     return null;
   }
+}
 
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-
-  if (parts.length === 2) {
-    const cookieValue = parts.pop()?.split(';').shift();
-    return cookieValue ? decodeURIComponent(cookieValue) : null;
+/**
+ * Safe localStorage remover
+ */
+function removeItem(key: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(key);
+  } catch (error) {
+    console.error(`Failed to remove ${key} from localStorage:`, error);
   }
-
-  return null;
-}
-
-/**
- * Delete a cookie (client-side)
- */
-function deleteCookie(name: string): void {
-  if (typeof document === 'undefined') return;
-  document.cookie = `${name}=; path=/; max-age=0`;
-}
-
-/**
- * Get all cookies as an object (client-side)
- */
-function getAllCookies(): Record<string, string> {
-  if (typeof document === 'undefined') return {};
-
-  return document.cookie.split('; ').reduce((acc, cookie) => {
-    const [name, value] = cookie.split('=');
-    if (name && value) {
-      acc[name] = decodeURIComponent(value);
-    }
-    return acc;
-  }, {} as Record<string, string>);
 }
 
 // ============================================================================
-// TOKEN GETTERS (CLIENT-SIDE)
+// TOKEN MANAGEMENT
 // ============================================================================
 
 /**
- * Get access token from cookies (client-side)
+ * Get access token
  */
 export function getAccessToken(): string | null {
-  return getCookie('access_token');
+  return getItem('access_token');
 }
 
 /**
- * Get ID token from cookies (client-side)
+ * Get ID token
  */
 export function getIdToken(): string | null {
-  return getCookie('id_token');
+  return getItem('id_token');
 }
 
 /**
- * Get refresh token from cookies (client-side)
+ * Get refresh token
  */
 export function getRefreshToken(): string | null {
-  return getCookie('refresh_token');
+  return getItem('refresh_token');
 }
 
 /**
- * Get all auth tokens from cookies (client-side)
+ * Store tokens
  */
-export function getAllTokens(): {
-  accessToken: string | null;
-  idToken: string | null;
-  refreshToken: string | null;
-} {
-  return {
-    accessToken: getAccessToken(),
-    idToken: getIdToken(),
-    refreshToken: getRefreshToken(),
-  };
+export function storeTokens(tokens: TokenSet): void {
+  setItem('id_token', tokens.id_token);
+  setItem('access_token', tokens.access_token);
+  setItem('refresh_token', tokens.refresh_token);
+  console.log('✅ Tokens stored in localStorage');
+}
+
+/**
+ * Remove all tokens
+ */
+export function removeTokens(): void {
+  removeItem('id_token');
+  removeItem('access_token');
+  removeItem('refresh_token');
+  removeItem('oauth_state');
+  removeItem('oauth_nonce');
+  removeItem('redirect_after_login');
+  console.log('🗑️ All tokens removed from localStorage');
 }
 
 // ============================================================================
@@ -115,76 +117,61 @@ export function getAllTokens(): {
 // ============================================================================
 
 /**
- * Check if user is authenticated (client-side)
+ * Check if user is authenticated
  */
 export function isAuthenticated(): boolean {
-  const accessToken = getAccessToken();
-  return !!accessToken && accessToken !== 'undefined';
+  const token = getAccessToken();
+  if (!token) return false;
+
+  // Check if token is expired
+  try {
+    const decoded = jwtDecode<DecodedToken>(token);
+    if (decoded.exp) {
+      const now = Date.now() / 1000;
+      return decoded.exp > now;
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
- * Get user name from token (client-side)
+ * Get user name from token
  */
 export function getName(): string | null {
-  const accessToken = getAccessToken();
-  if (!accessToken) {
-    return null;
-  }
+  const token = getAccessToken();
+  if (!token) return null;
 
   try {
-    const decoded = jwtDecode<DecodedToken>(accessToken);
+    const decoded = jwtDecode<DecodedToken>(token);
     return decoded.context?.user?.name ?? 'Unknown';
-  } catch (err) {
-    console.error('Error decoding token:', err);
+  } catch {
     return 'Unknown';
   }
 }
 
 /**
- * Get user email from token (client-side)
+ * Get user email from token
  */
 export function getEmail(): string | null {
   const idToken = getIdToken();
-  if (!idToken) {
-    return null;
-  }
+  if (!idToken) return null;
 
   try {
     const decoded = jwtDecode<DecodedToken>(idToken);
     return decoded.email ?? null;
-  } catch (err) {
-    console.error('Error decoding token:', err);
+  } catch {
     return null;
   }
 }
 
-/**
- * Check if token is expired (client-side)
- */
-export function isTokenExpired(token: string): boolean {
-  try {
-    const decoded = jwtDecode<DecodedToken>(token);
-    if (!decoded.exp) return true;
-
-    const expirationTime = decoded.exp * 1000; // Convert to milliseconds
-    return Date.now() >= expirationTime;
-  } catch (err) {
-    console.error('Error checking token expiration:', err);
-    return true;
-  }
-}
+// ============================================================================
+// OAUTH FLOW
+// ============================================================================
 
 /**
- * Check if access token is expired (client-side)
- */
-export function isAccessTokenExpired(): boolean {
-  const token = getAccessToken();
-  if (!token) return true;
-  return isTokenExpired(token);
-}
-
-/**
- * Generate and store state/nonce, then redirect to OIDC provider
+ * Initiate OAuth login
  */
 export function initiateLogin(
   authUri: string,
@@ -193,20 +180,19 @@ export function initiateLogin(
   authService: string,
   redirectAfterLogin: string = '/'
 ): void {
-  if (typeof window === 'undefined') {
-    console.error('❌ Cannot initiate login on server');
-    return;
-  }
+  if (typeof window === 'undefined') return;
 
   const state = uuidv4();
   const nonce = uuidv4();
 
-  // Store OAuth state/nonce in cookies (10 minutes expiry)
-  setCookie('oauth_state', state, 10);
-  setCookie('oauth_nonce', nonce, 10);
-  setCookie('redirect_after_login', redirectAfterLogin, 10);
+  console.log('🚀 Initiating OAuth login');
 
-  // Build authorization URL
+  // Store in localStorage
+  setItem('oauth_state', state);
+  setItem('oauth_nonce', nonce);
+  setItem('redirect_after_login', redirectAfterLogin);
+
+  // Build OAuth URL
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: clientId,
@@ -217,68 +203,146 @@ export function initiateLogin(
     idp: authService,
   });
 
-  const redirectLocation = `${authUri}?${params.toString()}`;
-  console.log('Redirecting to', redirectLocation);
+  const authUrl = `${authUri}?${params.toString()}`;
+  console.log('🔗 Redirecting to OAuth provider');
 
-  if (typeof window !== 'undefined') {
-    window.location.assign(redirectLocation);
-  }
-}
-/**
- * Logout user (client-side)
- */
-export function logout(): void {
-  if (typeof window === 'undefined') {
-    console.warn('⚠️ Cannot logout on server side');
-    return;
-  }
-
-  console.log('👋 Logging out...');
-
-  // Delete auth cookies
-  deleteCookie('id_token');
-  deleteCookie('access_token');
-  deleteCookie('refresh_token');
-
-  // Delete OAuth cookies (in case they're still there)
-  deleteCookie('oauth_state');
-  deleteCookie('oauth_nonce');
-  deleteCookie('redirect_after_login');
-
-  // Redirect to login
-  window.location.href = '/login';
+  window.location.assign(authUrl);
 }
 
 /**
- * Refresh tokens (client-side)
- * Calls the server API to refresh tokens
+ * Validate state (CSRF protection)
  */
-export async function refreshTokens(): Promise<boolean> {
+export function validateState(receivedState: string): boolean {
+  const storedState = getItem('oauth_state');
+  const isValid = receivedState === storedState;
+
+  console.log('🔍 State validation:', {
+    received: receivedState?.substring(0, 10),
+    stored: storedState?.substring(0, 10),
+    valid: isValid,
+  });
+
+  if (isValid) {
+    removeItem('oauth_state');
+  }
+
+  return isValid;
+}
+
+/**
+ * Validate nonce (replay protection)
+ */
+export function validateNonce(receivedNonce: string): boolean {
+  const storedNonce = getItem('oauth_nonce');
+  const isValid = receivedNonce === storedNonce;
+
+  console.log('🔍 Nonce validation:', {
+    received: receivedNonce?.substring(0, 10),
+    stored: storedNonce?.substring(0, 10),
+    valid: isValid,
+  });
+
+  if (isValid) {
+    removeItem('oauth_nonce');
+  }
+
+  return isValid;
+}
+
+/**
+ * Exchange authorization code for tokens
+ * Calls backend API directly from browser
+ */
+export async function exchangeCodeForTokens(
+  code: string,
+  apiEndpoint: string,
+  apiKey: string
+): Promise<TokenSet> {
+  console.log('💱 Exchanging code for tokens...');
+
+  const response = await fetch(
+    `${apiEndpoint}/auth/get-tokens?code=${code}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Api-Key': apiKey,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Token exchange failed:', errorText);
+    throw new Error(`Failed to exchange code: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  if (!data.id_token || !data.access_token || !data.refresh_token) {
+    throw new Error('Invalid token response');
+  }
+
+  return {
+    id_token: data.id_token,
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
+  };
+}
+
+/**
+ * Refresh tokens
+ */
+export async function refreshTokens(
+  apiEndpoint: string,
+  apiKey: string
+): Promise<boolean> {
   const refreshToken = getRefreshToken();
 
   if (!refreshToken) {
-    console.error('❌ No refresh token available');
+    console.error('❌ No refresh token');
     return false;
   }
 
   try {
-    const response = await fetch('/api/auth/refresh', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    });
+    console.log('🔄 Refreshing tokens...');
+
+    const response = await fetch(
+      `${apiEndpoint}/auth/refresh-tokens`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Key': apiKey,
+        },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      }
+    );
 
     if (!response.ok) {
       throw new Error('Token refresh failed');
     }
 
-    console.log('✅ Tokens refreshed successfully');
+    const tokens = await response.json();
+    storeTokens(tokens);
+
+    console.log('✅ Tokens refreshed');
     return true;
-  } catch (err) {
-    console.error('❌ Error refreshing tokens:', err);
-    logout();
+
+  } catch (error) {
+    console.error('❌ Token refresh error:', error);
     return false;
+  }
+}
+
+/**
+ * Logout
+ */
+export function logout(): void {
+  console.log('👋 Logging out...');
+  removeTokens();
+
+  if (typeof window !== 'undefined') {
+    window.location.href = '/login';
   }
 }

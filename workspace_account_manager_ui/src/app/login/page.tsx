@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { initiateLogin } from '@/lib/auth/oidc';
 import { useAuth } from '@/hooks/use-auth';
 
 export default function LoginPage() {

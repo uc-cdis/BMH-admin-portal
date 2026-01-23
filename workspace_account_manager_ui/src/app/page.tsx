@@ -1,7 +1,28 @@
-import { redirect } from 'next/navigation';
-import { WorkspaceAccountsClient } from '@/components/workspace-accounts-client';
-import { isAuthenticated } from '@/lib/auth/oidc';
+'use client';
 
-export default async function WorkspaceAccountsPage() {
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { isAuthenticated } from '@/lib/auth/oidc';
+import { WorkspaceAccountsClient } from '@/components/workspace-accounts-client';
+
+export default function HomePage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Client-side auth check
+    if (!isAuthenticated()) {
+      router.push('/login');
+    }
+  }, [router]);
+
+  // Show loading while checking auth
+  if (typeof window !== 'undefined' && !isAuthenticated()) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return <WorkspaceAccountsClient />;
 }
