@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "s3upload": "npm run build && aws s3 sync ./out s3://brh-portal-bucket-website --sse AES256"
   },
   "dependencies": {
     "jwt-decode": "^4.0.0",
