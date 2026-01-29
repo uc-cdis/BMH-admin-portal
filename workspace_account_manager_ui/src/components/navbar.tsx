@@ -8,30 +8,26 @@ export function Navbar() {
   const { authenticated, userName, logout } = useAuth();
   const pathname = usePathname();
 
-  if (!authenticated) {
-    return null; // Don't show navbar on login page
-  }
-
   return (
-    <nav className="bg-blue-600 text-white shadow-lg">
+    <nav className="bg-gray-900 text-gray-300 shadow-lg">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center py-4">
           <div className="flex items-center space-x-8">
-            <Link href="/" className="text-xl font-bold">
-              BMH Admin Portal
+            <Link href="/" className="text-xl text-white">
+              {(process.env.NEXT_PUBLIC_DISPLAY_NAME) || 'Workspace Admin Portal'}
             </Link>
             <div className="flex space-x-4">
               <Link
                 href="/"
-                className={`hover:text-blue-200 ${
+                className={`hover:text-gray-100 ${
                   pathname === '/' ? 'border-b-2 border-white' : ''
                 }`}
               >
-                Workspaces
+                Accounts
               </Link>
               <Link
                 href="/request-workspace"
-                className={`hover:text-blue-200 ${
+                className={`hover:text-gray-100 ${
                   pathname === '/request-workspace' ? 'border-b-2 border-white' : ''
                 }`}
               >
@@ -39,15 +35,19 @@ export function Navbar() {
               </Link>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm">{userName}</span>
-            <button
-              onClick={logout}
-              className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded text-sm"
-            >
-              Logout
-            </button>
-          </div>
+          {
+            (authenticated) ? (
+              <div className="flex items-center space-x-4">
+                <span className="text-sm">{userName}</span>
+                <button
+                  onClick={logout}
+                  className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded text-sm"
+                >
+                  Logout
+                </button>
+              </div>
+             ) : null
+          }
         </div>
       </div>
     </nav>
