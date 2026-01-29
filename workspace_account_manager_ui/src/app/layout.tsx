@@ -9,8 +9,8 @@ const geistSans = Geist({
 
 
 export const metadata = {
-  title: 'BMH Admin Portal',
-  description: 'Biomedical Research Hub Administration Portal',
+  title: 'Workspace Account Manager',
+  description: 'Workspace Account Management Portal',
 };
 
 export default function RootLayout({
