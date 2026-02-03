@@ -8,12 +8,12 @@ import { WorkspaceAccountsClient } from '@/components/workspace-accounts-client'
 export default function HomePage() {
   const router = useRouter();
 
-  useEffect(() => {
-    // Client-side auth check
-    if (!isAuthenticated()) {
-      router.push('/login');
-    }
-  }, [router]);
+  // useEffect(() => {
+  //   // Client-side auth check
+  //   if (!isAuthenticated()) {
+  //     router.push('/login');
+  //   }
+  // }, [router]);
 
   // Show loading while checking auth
   if (typeof window !== 'undefined' && !isAuthenticated()) {

@@ -293,10 +293,9 @@ export async function exchangeCodeForTokens(
 /**
  * Refresh tokens
  */
-export async function refreshTokens(
-  apiEndpoint: string,
-  apiKey: string
-): Promise<boolean> {
+export async function refreshTokens(): Promise<boolean> {
+  const apiEndpoint = process.env.NEXT_PUBLIC_API_GW_ENDPOINT!;
+  const apiKey = process.env.NEXT_PUBLIC_API_KEY!;
   const refreshToken = getRefreshToken();
 
   if (!refreshToken) {

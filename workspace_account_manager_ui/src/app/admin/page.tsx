@@ -20,12 +20,7 @@ export default function AdminPage() {
 
       // Check authorization
       try {
-        const isAdmin = await authorizeAdmin(
-          { resource: '/admin', service: 'workspace_admin' },
-          process.env.NEXT_PUBLIC_ARBORIST_URI!,
-          process.env.NEXT_PUBLIC_API_GW_ENDPOINT!,
-          process.env.NEXT_PUBLIC_API_KEY!
-        );
+        const isAdmin = await authorizeAdmin();
 
         if (!isAdmin) {
           router.push('/?error=unauthorized');

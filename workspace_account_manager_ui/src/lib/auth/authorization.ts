@@ -1,6 +1,7 @@
 'use client';
 
 import { getAccessToken, getRefreshToken, refreshTokens, logout } from './oidc';
+import config from '../../../config.json'
 
 interface ResourceConfig {
   resource: string;
@@ -14,21 +15,30 @@ interface UserAuthMapping {
   }>;
 }
 
+const resources = config['authorization']['resources']
+
 /**
  * Check admin authorization (client-side)
  */
-export async function authorizeAdmin(
-  adminResource: ResourceConfig,
-  arboristUri: string,
-  apiEndpoint: string,
-  apiKey: string
-): Promise<boolean> {
-  const userAuthMapping = await getUserAuthMapping(
-    arboristUri,
-    apiEndpoint,
-    apiKey
-  );
-  return authorize(adminResource, userAuthMapping);
+export async function authorizeAdmin(): Promise<boolean> {
+  const userAuthMapping = await getUserAuthMapping();
+  return authorize(resources['ADMIN'], userAuthMapping);
+}
+
+/**
+ * Check if user is authorized to request STRIDES credits
+ */
+export async function authorizeCredits(): Promise<boolean> {
+  const userAuthMapping = await getUserAuthMapping();
+  return authorize(resources['CREDITS'], userAuthMapping);
+}
+
+/**
+ * Check if user is authorized to request STRIDES grants
+ */
+export async function authorizeGrants(): Promise<boolean> {
+  const userAuthMapping = await getUserAuthMapping();
+  return authorize(resources['GRANTS'], userAuthMapping);
 }
 
 /**
@@ -54,11 +64,7 @@ function authorize(
 /**
  * Get user authorization mapping (client-side API call)
  */
-async function getUserAuthMapping(
-  arboristUri: string,
-  apiEndpoint: string,
-  apiKey: string
-): Promise<UserAuthMapping | null> {
+async function getUserAuthMapping(): Promise<UserAuthMapping | null> {
   let accessToken = getAccessToken();
 
   if (!accessToken) {
@@ -67,12 +73,12 @@ async function getUserAuthMapping(
   }
 
   // Try to get auth mapping
-  let userAuthMapping = await fetchUserAuthMapping(arboristUri, accessToken);
+  let userAuthMapping = await fetchUserAuthMapping();
 
   // If failed, try refreshing token
   if (!userAuthMapping) {
     console.log('Retrying after token refresh...');
-    const refreshed = await refreshTokens(apiEndpoint, apiKey);
+    const refreshed = await refreshTokens();
 
     if (!refreshed) {
       logout();
@@ -80,7 +86,7 @@ async function getUserAuthMapping(
     }
 
     accessToken = getAccessToken();
-    userAuthMapping = await fetchUserAuthMapping(arboristUri, accessToken!);
+    userAuthMapping = await fetchUserAuthMapping();
   }
 
   return userAuthMapping;
@@ -90,10 +96,10 @@ async function getUserAuthMapping(
  * Fetch user authorization mapping
  */
 async function fetchUserAuthMapping(
-  arboristUri: string,
-  accessToken: string
 ): Promise<UserAuthMapping | null> {
   try {
+    const arboristUri = process.env.NEXT_PUBLIC_ARBORIST_URI!
+    const accessToken = getAccessToken()
     const response = await fetch(arboristUri, {
       headers: {
         'Content-Type': 'application/json',

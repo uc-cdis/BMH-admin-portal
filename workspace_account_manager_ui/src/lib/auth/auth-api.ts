@@ -12,9 +12,6 @@ export async function exchangeCodeForTokens(
   apiEndpoint: string,
   apiKey: string
 ): Promise<TokenSet> {
-  console.log(apiEndpoint);
-  console.log(code);
-  console.log(apiKey);
   const response = await fetch(
     `${apiEndpoint}/auth/get-tokens?code=${code}`,
     {

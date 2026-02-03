@@ -12,7 +12,7 @@ export function WorkspaceAccountsClient() {
   const [stridesWorkspaces, setStridesWorkspaces] = useState<StridesWorkspace[]>([]);
   const [directPayWorkspaces, setDirectPayWorkspaces] = useState<DirectPayWorkspace[]>([]);
   const [loading, setLoading] = useState(true);
-  const [adminAuthorized, setAdminAuthorized] = useState(false);
+  const [adminAuthorized, setAdminAuthorized] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -20,28 +20,25 @@ export function WorkspaceAccountsClient() {
       setLoading(true);
       try {
         // Check admin authorization
-        const isAdmin = await authorizeAdmin(
-          { resource: '/admin', service: 'workspace_admin' },
-          process.env.NEXT_PUBLIC_ARBORIST_URI!,
-          process.env.NEXT_PUBLIC_API_GW_ENDPOINT!,
-          process.env.NEXT_PUBLIC_API_KEY!
-        );
-        setAdminAuthorized(isAdmin);
+        // const isAdmin = await authorizeAdmin(
+        //   { resource: '/admin', service: 'workspace_admin' },
+        // );
+        // setAdminAuthorized(isAdmin);
 
         // Fetch workspaces
-        const workspaces = await getWorkspaces();
+        // const workspaces = await getWorkspaces();
 
         // Separate workspaces by type
         const strides: StridesWorkspace[] = [];
         const directPay: DirectPayWorkspace[] = [];
 
-        workspaces.forEach((workspace) => {
-          if (workspace.workspace_type === 'Direct Pay') {
-            directPay.push(workspace as DirectPayWorkspace);
-          } else {
-            strides.push(workspace as StridesWorkspace);
-          }
-        });
+        // workspaces.forEach((workspace) => {
+        //   if (workspace.workspace_type === 'Direct Pay') {
+        //     directPay.push(workspace as DirectPayWorkspace);
+        //   } else {
+        //     strides.push(workspace as StridesWorkspace);
+        //   }
+        // });
 
         setStridesWorkspaces(strides);
         setDirectPayWorkspaces(directPay);

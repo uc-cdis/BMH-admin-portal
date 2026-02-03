@@ -1,5 +1,7 @@
 import { Geist } from "next/font/google";
 import "./globals.css";
+import '@mantine/core/styles.css';
+import { MantineProvider } from '@mantine/core';
 import { Navbar } from '@/components/navbar';
 
 const geistSans = Geist({
@@ -22,7 +24,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={geistSans.variable}>
         <Navbar />
-        <main>{children}</main>
+        <MantineProvider>{children}</MantineProvider>
       </body>
     </html>
   );
