@@ -27,10 +27,14 @@ const FORM_OPTIONS: FormOptions = {
 const DEFAULT_FORM = FORM_OPTIONS.stridesGrant!;
 
 export default function RequestWorkspacePage() {
+  const controlColorMap: Record<string, string> = {
+    [FORM_OPTIONS.directPay!]: 'green'
+  };
+
   const router = useRouter();
   const [formToggle, setFormToggle] = useState<string>(DEFAULT_FORM);
   const [redirectHome, setRedirectHome] = useState(false);
-  const [creditsAuthorized, setCreditsAuthorized] = useState(false);
+  const [creditsAuthorized, setCreditsAuthorized] = useState(true);
 
   // Calculate available forms once on mount
   const [availableForms] = useState<FormOptions>(() => {
@@ -54,19 +58,19 @@ export default function RequestWorkspacePage() {
     return FORM_OPTIONS;
   });
 
-  useEffect(() => {
-    // Check authorization for credits form
-    async function fetchAuthorized() {
-      const cAuthorized = await authorizeCredits();
+  // useEffect(() => {
+  //   // Check authorization for credits form
+  //   async function fetchAuthorized() {
+  //     const cAuthorized = await authorizeCredits();
 
-      if (cAuthorized && availableForms.stridesCredits) {
-        setFormToggle(availableForms.stridesCredits);
-      }
-      setCreditsAuthorized(cAuthorized);
-    }
+  //     if (cAuthorized && availableForms.stridesCredits) {
+  //       setFormToggle(availableForms.stridesCredits);
+  //     }
+  //     setCreditsAuthorized(cAuthorized);
+  //   }
 
-    fetchAuthorized();
-  }, [availableForms.stridesCredits]);
+  //   fetchAuthorized();
+  // }, [availableForms.stridesCredits]);
 
   useEffect(() => {
     if (redirectHome) {
@@ -180,7 +184,7 @@ export default function RequestWorkspacePage() {
                 data={segmentedControlData}
                 size="md"
                 radius="md"
-                color="blue"
+                color={controlColorMap[formToggle] || 'blue'}
               />
             </Center>
           )}
@@ -192,7 +196,7 @@ export default function RequestWorkspacePage() {
         {/* Footer */}
         <Center>
           <Text size="sm" c="dimmed">
-            &copy; 2021 {displayName}
+            &copy; 2026 {displayName}
           </Text>
         </Center>
       </Stack>
