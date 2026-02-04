@@ -11,22 +11,16 @@ import {
   Select,
   Checkbox,
 } from '@mantine/core';
-import { Form, useForm } from '@mantine/form';
+import { Form, isEmail, isNotEmpty, useForm } from '@mantine/form';
 import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 
 interface StridesGrantFormProps {
   updateRedirectHome: (redirect: boolean) => void;
 }
 
-export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFormProps) {
-  // const [formData, setFormData] = useState({
-  //   grantNumber: '',
-  //   piName: '',
-  //   piEmail: '',
-  //   institution: '',
-  //   projectTitle: '',
-  // });
+const NIH_GRANT_NUMBER_REGEX = /^([0-9]{1})([A-Z0-9]{3})([A-Z]{2}[0-9]{6})-([A-Z0-9]{2}$|[A-Z0-9]{4}$)/gm
 
+export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -37,6 +31,8 @@ export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFor
       scientific_poc: "",
       poc_email: "accounts@" + process.env.NEXT_PUBLIC_ROOT_EMAIL_DOMAIN,
       confirm_poc_email: "accounts@" + process.env.NEXT_PUBLIC_ROOT_EMAIL_DOMAIN,
+      internal_poc_email: '',
+      confirm_internal_poc_email: '',
       scientific_institution_domain_name: "",
       nih_funded_award_number: "",
       administering_nih_institute: "",
@@ -52,13 +48,19 @@ export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFor
       additional_poc_job_title: "",
       attestation: false
     },
-
+    validateInputOnChange: [ 'internal_poc_email', 'confirm_internal_poc_email', 'administering_nih_institute', 'nih_funded_award_number' ],
     // functions will be used to validate values at corresponding key
     validate: {
+      internal_poc_email: isEmail('Must be a valid email'),
+      confirm_internal_poc_email: (value, values) => (value.trim() !== values.internal_poc_email.trim()) ? 'Must match email' : null,
+      administering_nih_institute: isNotEmpty('Must select NIH IoC'),
+      nih_funded_award_number: (value) => (value.trim() && !value.trim().match(NIH_GRANT_NUMBER_REGEX)) ? "Must match NIH grant number format" : null,
+      nih_program_official_email: (value) => (value.trim() && !/^\S+@\S+$/.test(value) ? 'Must be a valid email' : null),
     },
   });
 
   const handleSubmit = (values: typeof form.values) => {
+    console.log(values)
     setIsSubmitting(true);
     setError(null);
 
@@ -121,6 +123,7 @@ export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFor
               label="Scientific POC Name"
               placeholder="John Smith"
               key={form.key('scientific_poc')}
+              {...form.getInputProps('scientific_poc')}
               required
               withAsterisk
               inputContainer={(children) => (
@@ -137,6 +140,7 @@ export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFor
               label="Scientific Institution Domain Name"
               placeholder="Domain Name of University or Institution"
               key={form.key('scientific_institution_domain_name')}
+              {...form.getInputProps('scientific_institution_domain_name')}
               required
               withAsterisk
               inputContainer={(children) => (
@@ -153,7 +157,8 @@ export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFor
             <TextInput
               label="Scientific POC Email"
               placeholder="user@email.org"
-              key={form.key('poc_email')}
+              key={form.key('internal_poc_email')}
+              {...form.getInputProps('internal_poc_email')}
               required
               withAsterisk
               inputContainer={(children) => (
@@ -168,7 +173,8 @@ export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFor
             <TextInput
               label="Confirm Scientific POC Email"
               placeholder="user@email.org"
-              key={form.key('confirm_poc_email')}
+              key={form.key('confirm_internal_poc_email')}
+              {...form.getInputProps('confirm_internal_poc_email')}
               required
               withAsterisk
             />
@@ -178,6 +184,7 @@ export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFor
               label="NIH Funded Project Award/Grant Number "
               placeholder="1A23BC012345-01 or 1A23BC012345-01D6"
               key={form.key('nih_funded_award_number')}
+              {...form.getInputProps('nih_funded_award_number')}
               required
               withAsterisk
               inputContainer={(children) => (
@@ -241,6 +248,7 @@ export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFor
               label="NIH Program Official Name"
               placeholder="Jane Doe"
               key={form.key('nih_program_official_name')}
+              {...form.getInputProps('nih_program_official_name')}
               inputContainer={(children) => (
                 <Tooltip.Floating multiline
                   w={300}
@@ -254,6 +262,7 @@ export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFor
               label="NIH Program Official Email"
               placeholder="jdoe@nih.gov"
               key={form.key('nih_program_official_email')}
+              {...form.getInputProps('nih_program_official_email')}
               inputContainer={(children) => (
                 <Tooltip.Floating multiline
                   w={300}
@@ -267,6 +276,7 @@ export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFor
           <TextInput
             label="Keywords"
             key={form.key('keywords')}
+              {...form.getInputProps('keywords')}
             required
             withAsterisk
             inputContainer={(children) => (
@@ -281,6 +291,7 @@ export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFor
           <TextInput
             label="Project Summary and Justification"
             key={form.key('summary_and_justification')}
+              {...form.getInputProps('summary_and_justification')}
             required
             withAsterisk
             inputContainer={(children) => (
@@ -297,6 +308,7 @@ export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFor
               label="Project Short Title"
               placeholder="Project Title"
               key={form.key('project_short_title')}
+              {...form.getInputProps('project_short_title')}
               maxLength={16}
               inputContainer={(children) => (
                 <Tooltip.Floating multiline
@@ -310,6 +322,7 @@ export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFor
             <TextInput
               label="Research, Condition, and Disease Categorization"
               key={form.key('rcdc')}
+              {...form.getInputProps('rcdc')}
               inputContainer={(children) => (
                 <Tooltip.Floating multiline
                   w={300}
@@ -325,11 +338,13 @@ export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFor
               label="Technical or Additional POC Email"
               placeholder="additional_poc@email.com"
               key={form.key('additional_poc_email')}
+              {...form.getInputProps('additional_poc_email')}
             />
             <TextInput
               label="Job Title of Additional POC"
               placeholder="Job Title"
               key={form.key('additional_poc_job_title')}
+              {...form.getInputProps('additional_poc_job_title')}
               inputContainer={(children) => (
                 <Tooltip.Floating multiline
                   w={300}
