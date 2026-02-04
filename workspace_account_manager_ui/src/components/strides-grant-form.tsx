@@ -13,6 +13,7 @@ import {
 } from '@mantine/core';
 import { Form, isEmail, isNotEmpty, useForm } from '@mantine/form';
 import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
+import { requestWorkspace, WorkspaceFormData } from '@/lib/api/workspace-api';
 
 interface StridesGrantFormProps {
   updateRedirectHome: (redirect: boolean) => void;
@@ -59,21 +60,13 @@ export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFor
     },
   });
 
-  const handleSubmit = (values: typeof form.values) => {
+  const handleSubmit = (values: WorkspaceFormData) => {
     console.log(values)
     setIsSubmitting(true);
     setError(null);
 
     try {
-      // TODO: Implement actual form submission logic
-      // const response = await fetch('/api/workspace/request-grant', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData),
-      // });
-
-      // if (!response.ok) throw new Error('Submission failed');
-
+      requestWorkspace(values);
       setSuccess(true);
       // Redirect after success
       setTimeout(() => {
@@ -85,10 +78,6 @@ export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFor
       setIsSubmitting(false);
     }
   };
-
-  // const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   setFormData((prev) => ({ ...prev, [field]: e.target.value }));
-  // };
 
   if (success) {
     return (
@@ -364,7 +353,7 @@ export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFor
 
         {/* Submit Button */}
         <Group justify="center" mt="md">
-          <Button type="submit" loading={isSubmitting} size="lg">
+          <Button type="submit" loading={isSubmitting} disabled={isSubmitting} size="lg">
             Submit Request
           </Button>
         </Group>
