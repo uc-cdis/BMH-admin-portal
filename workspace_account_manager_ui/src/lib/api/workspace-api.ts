@@ -109,27 +109,44 @@ export interface Workspace {
   };
 }
 
-export interface WorkspaceFormData {
+export interface StridesGrantWorkspaceFormData {
   workspace_type: string,
-      scientific_poc: string,
-      poc_email: string,
-      confirm_poc_email: string,
-      internal_poc_email: string,
-      confirm_internal_poc_email: string,
-      scientific_institution_domain_name: string,
-      nih_funded_award_number: string,
-      administering_nih_institute: string,
-      program_officer_approval: string,
-      nih_program_official_name: string,
-      nih_program_official_email: string,
-      keywords: string,
-      ecs: boolean,
-      summary_and_justification: string,
-      project_short_title: string
-      rcdc: string,
-      additional_poc_email: string,
-      additional_poc_job_title: string,
-      attestation: boolean
+  scientific_poc: string,
+  poc_email: string,
+  confirm_poc_email: string,
+  internal_poc_email: string,
+  confirm_internal_poc_email: string,
+  scientific_institution_domain_name: string,
+  nih_funded_award_number: string,
+  administering_nih_institute: string,
+  program_officer_approval: string,
+  nih_program_official_name: string,
+  nih_program_official_email: string,
+  keywords: string,
+  ecs: boolean,
+  summary_and_justification: string,
+  project_short_title: string
+  rcdc: string,
+  additional_poc_email: string,
+  additional_poc_job_title: string,
+  attestation: boolean
+}
+
+export interface StridesCreditsWorkspaceFormData {
+  workspace_type: string,
+  scientific_poc: string,
+  poc_email: string,
+  confirm_poc_email: string,
+  internal_poc_email: string,
+  confirm_internal_poc_email: string,
+  scientific_institution_domain_name: string,
+  nih_funded_award_number: string,
+  administering_nih_institute: string,
+  intramural: boolean,
+  ecs: boolean,
+  summary_and_justification: string,
+  project_short_title: string
+  attestation: boolean
 }
 
 /**
@@ -179,7 +196,7 @@ export async function getAdminWorkspaces(): Promise<Workspace[]> {
  * Request new workspace
  */
 export async function requestWorkspace(
-  formData: WorkspaceFormData
+  formData: StridesGrantWorkspaceFormData | StridesCreditsWorkspaceFormData
 ): Promise<any> {
   return makeApiCall(
     async () => {

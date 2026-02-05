@@ -11,9 +11,9 @@ import {
   Select,
   Checkbox,
 } from '@mantine/core';
-import { Form, isEmail, isNotEmpty, useForm } from '@mantine/form';
+import { Form, isEmail, isNotEmpty, matchesField, useForm } from '@mantine/form';
 import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
-import { requestWorkspace, WorkspaceFormData } from '@/lib/api/workspace-api';
+import { requestWorkspace, StridesGrantWorkspaceFormData } from '@/lib/api/workspace-api';
 
 interface StridesGrantFormProps {
   updateRedirectHome: (redirect: boolean) => void;
@@ -53,14 +53,14 @@ export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFor
     // functions will be used to validate values at corresponding key
     validate: {
       internal_poc_email: isEmail('Must be a valid email'),
-      confirm_internal_poc_email: (value, values) => (value.trim() !== values.internal_poc_email.trim()) ? 'Must match email' : null,
+      confirm_internal_poc_email: matchesField('internal_poc_email', 'Must match email'),
       administering_nih_institute: isNotEmpty('Must select NIH IoC'),
       nih_funded_award_number: (value) => (value.trim() && !value.trim().match(NIH_GRANT_NUMBER_REGEX)) ? "Must match NIH grant number format" : null,
-      nih_program_official_email: (value) => (value.trim() && !/^\S+@\S+$/.test(value) ? 'Must be a valid email' : null),
+      nih_program_official_email: isEmail('Must be a valid email'),
     },
   });
 
-  const handleSubmit = (values: WorkspaceFormData) => {
+  const handleSubmit = (values: StridesGrantWorkspaceFormData) => {
     console.log(values)
     setIsSubmitting(true);
     setError(null);
