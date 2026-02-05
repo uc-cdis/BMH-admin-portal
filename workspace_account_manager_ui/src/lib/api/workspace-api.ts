@@ -149,6 +149,13 @@ export interface StridesCreditsWorkspaceFormData {
   attestation: boolean
 }
 
+export interface DirectPayWorkspaceFormData {
+  workspace_type: string,
+  ecs: boolean,
+  summary_and_justification: string,
+  project_short_title: string
+}
+
 /**
  * Get list of workspaces for current user
  */
@@ -196,7 +203,7 @@ export async function getAdminWorkspaces(): Promise<Workspace[]> {
  * Request new workspace
  */
 export async function requestWorkspace(
-  formData: StridesGrantWorkspaceFormData | StridesCreditsWorkspaceFormData
+  formData: StridesGrantWorkspaceFormData | StridesCreditsWorkspaceFormData | DirectPayWorkspaceFormData
 ): Promise<any> {
   return makeApiCall(
     async () => {
