@@ -8,8 +8,6 @@ import StridesCreditForm from '@/components/strides-credits-form';
 import DirectPayForm from '@/components/direct-pay-form';
 import { authorizeCredits } from '@/lib/auth/authorization';
 
-type FormOption = 'strides-grant' | 'strides-credits' | 'direct-pay' | '';
-
 interface FormOptions {
   none?: string;
   stridesGrant?: string;
@@ -58,19 +56,19 @@ export default function RequestWorkspacePage() {
     return FORM_OPTIONS;
   });
 
-  // useEffect(() => {
-  //   // Check authorization for credits form
-  //   async function fetchAuthorized() {
-  //     const cAuthorized = await authorizeCredits();
+  useEffect(() => {
+    // Check authorization for credits form
+    async function fetchAuthorized() {
+      const cAuthorized = await authorizeCredits();
 
-  //     if (cAuthorized && availableForms.stridesCredits) {
-  //       setFormToggle(availableForms.stridesCredits);
-  //     }
-  //     setCreditsAuthorized(cAuthorized);
-  //   }
+      if (cAuthorized && availableForms.stridesCredits) {
+        setFormToggle(availableForms.stridesCredits);
+      }
+      setCreditsAuthorized(cAuthorized);
+    }
 
-  //   fetchAuthorized();
-  // }, [availableForms.stridesCredits]);
+    fetchAuthorized();
+  }, [availableForms.stridesCredits]);
 
   useEffect(() => {
     if (redirectHome) {
