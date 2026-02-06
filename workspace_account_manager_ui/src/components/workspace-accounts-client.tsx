@@ -2,135 +2,528 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { StridesWorkspaceTable } from './strides-workspace-table';
-import { DirectPayWorkspaceTable } from './direct-pay-workspace-table';
-import { getWorkspaces } from '@/lib/api/workspace-api';
+import {
+  Container,
+  Title,
+  Text,
+  Button,
+  Group,
+  Stack,
+  Alert,
+  Loader,
+  Center,
+  Paper,
+  ActionIcon,
+  TextInput,
+  Table,
+} from '@mantine/core';
+import { IconPencil, IconAlertTriangle } from '@tabler/icons-react';
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  flexRender,
+  type ColumnDef,
+  type SortingState,
+} from '@tanstack/react-table';
+import { getWorkspaces, setWorkspaceLimits, Workspace } from '@/lib/api/workspace-api';
 import { authorizeAdmin } from '@/lib/auth/authorization';
-import type { StridesWorkspace, DirectPayWorkspace } from '@/lib/types/workspace.types';
 
-export function WorkspaceAccountsClient() {
-  const [stridesWorkspaces, setStridesWorkspaces] = useState<StridesWorkspace[]>([]);
-  const [directPayWorkspaces, setDirectPayWorkspaces] = useState<DirectPayWorkspace[]>([]);
+
+export default function WorkspaceAccountsClient() {
+  const [stridesWorkspaces, setStridesWorkspaces] = useState<Workspace[]>([]);
+  const [occWorkspaces, setOccWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
-  const [adminAuthorized, setAdminAuthorized] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [adminAuthorized, setAdminAuthorized] = useState(false);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [editingCell, setEditingCell] = useState<{
+    rowId: string;
+    columnId: string;
+    value: string;
+  } | null>(null);
+
+  const workspaceLink = process.env.NEXT_PUBLIC_OIDC_AUTH_URI
+    ? `https://${new URL(process.env.NEXT_PUBLIC_OIDC_AUTH_URI).host}/workspace`
+    : '/workspace';
 
   useEffect(() => {
-    async function fetchData() {
+    async function loadData() {
       setLoading(true);
+
       try {
         // Check admin authorization
-        // const isAdmin = await authorizeAdmin(
-        //   { resource: '/admin', service: 'workspace_admin' },
-        // );
-        // setAdminAuthorized(isAdmin);
+        const isAdmin = await authorizeAdmin();
+        setAdminAuthorized(isAdmin);
 
-        // Fetch workspaces
-        // const workspaces = await getWorkspaces();
+        // Get workspaces
+        const data = await getWorkspaces();
 
-        // Separate workspaces by type
-        const strides: StridesWorkspace[] = [];
-        const directPay: DirectPayWorkspace[] = [];
+        // Separate STRIDES and OCC workspaces
+        const occData: Workspace[] = [];
+        const stridesData: Workspace[] = [];
 
-        // workspaces.forEach((workspace) => {
-        //   if (workspace.workspace_type === 'Direct Pay') {
-        //     directPay.push(workspace as DirectPayWorkspace);
-        //   } else {
-        //     strides.push(workspace as StridesWorkspace);
-        //   }
-        // });
+        data.forEach((workspace: any) => {
+          if (workspace.workspace_type === 'Direct Pay') {
+            occData.push(workspace);
+          } else {
+            stridesData.push(workspace);
+          }
+        });
 
-        setStridesWorkspaces(strides);
-        setDirectPayWorkspaces(directPay);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Failed to load workspaces. Please try again.');
+        setStridesWorkspaces(stridesData);
+        setOccWorkspaces(occData);
+      } catch (error) {
+        console.error('Error loading workspaces:', error);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchData();
+    loadData();
   }, []);
+
+  // Handle cell edit
+  const handleCellEdit = async (
+    workspaceId: string,
+    field: 'soft-limit' | 'hard-limit',
+    newValue: string
+  ) => {
+    const workspace = [...stridesWorkspaces, ...occWorkspaces].find(
+      (w) => w.bmh_workspace_id === workspaceId
+    );
+
+    if (!workspace) return;
+
+    const numValue = parseInt(newValue);
+
+    // Validation
+    if (field === 'soft-limit') {
+      if (numValue >= workspace['hard-limit']) {
+        alert('Soft limit must be less than hard limit.');
+        return;
+      }
+      if (numValue <= 0) {
+        alert('Soft limit must be greater than 0.');
+        return;
+      }
+    } else if (field === 'hard-limit') {
+      if (numValue <= workspace['soft-limit']) {
+        alert('Hard limit must be greater than soft limit.');
+        return;
+      }
+      if (
+        workspace['strides-credits'] &&
+        workspace['strides-credits'] !== 0 &&
+        numValue > workspace['strides-credits']
+      ) {
+        alert('Hard limit must be less than or equal to STRIDES Credits amount.');
+        return;
+      }
+    }
+
+    try {
+      const limits = {
+        'hard-limit': field === 'hard-limit' ? numValue : workspace['hard-limit'],
+        'soft-limit': field === 'soft-limit' ? numValue : workspace['soft-limit'],
+      };
+
+      await setWorkspaceLimits(workspaceId, limits);
+
+      // Update local state
+      const updateWorkspace = (ws: Workspace) =>
+        ws.bmh_workspace_id === workspaceId ? { ...ws, [field]: numValue } : ws;
+
+      setStridesWorkspaces((prev) => prev.map(updateWorkspace));
+      setOccWorkspaces((prev) => prev.map(updateWorkspace));
+
+      setEditingCell(null);
+    } catch (error) {
+      console.error('Error updating limits:', error);
+      alert('Failed to update limit. Please try again.');
+    }
+  };
+
+  // Editable cell component
+  const EditableCell = ({
+    value,
+    workspaceId,
+    field,
+  }: {
+    value: number;
+    workspaceId: string;
+    field: 'soft-limit' | 'hard-limit';
+  }) => {
+    const isEditing =
+      editingCell?.rowId === workspaceId && editingCell?.columnId === field;
+
+    if (isEditing) {
+      return (
+        <TextInput
+          value={editingCell.value}
+          onChange={(e) =>
+            setEditingCell({ ...editingCell, value: e.target.value })
+          }
+          onBlur={() => {
+            if (editingCell.value !== String(value)) {
+              handleCellEdit(workspaceId, field, editingCell.value);
+            } else {
+              setEditingCell(null);
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleCellEdit(workspaceId, field, editingCell.value);
+            } else if (e.key === 'Escape') {
+              setEditingCell(null);
+            }
+          }}
+          autoFocus
+          size="xs"
+        />
+      );
+    }
+
+    return (
+      <Group gap="xs" justify="space-between">
+        <Text>${value}</Text>
+        <ActionIcon
+          variant="subtle"
+          size="sm"
+          onClick={() =>
+            setEditingCell({ rowId: workspaceId, columnId: field, value: String(value) })
+          }
+        >
+          <IconPencil size={14} />
+        </ActionIcon>
+      </Group>
+    );
+  };
+
+  // STRIDES workspace columns
+  const stridesColumns: ColumnDef<Workspace>[] = [
+    {
+      accessorKey: 'nih_funded_award_number',
+      header: 'NIH Award/Grant ID',
+      cell: (info) => info.getValue() || 'N/A',
+    },
+    {
+      accessorKey: 'request_status',
+      header: 'Request Status',
+      cell: (info) => {
+        const status = info.getValue() as string;
+        return status.charAt(0).toUpperCase() + status.slice(1);
+      },
+    },
+    {
+      accessorKey: 'workspace_type',
+      header: 'Workspace Type',
+    },
+    {
+      accessorKey: 'total-usage',
+      header: 'Total Usage',
+      cell: (info) => `$${info.getValue()}`,
+    },
+    {
+      accessorKey: 'strides-credits',
+      header: 'STRIDES Credits',
+      cell: (info) => `$${info.getValue() || 0}`,
+    },
+    {
+      accessorKey: 'soft-limit',
+      header: () => (
+        <Group gap="xs">
+          <Text>Soft Limit</Text>
+          <IconPencil size={14} />
+        </Group>
+      ),
+      cell: (info) => (
+        <EditableCell
+          value={info.getValue() as number}
+          workspaceId={info.row.original.bmh_workspace_id}
+          field="soft-limit"
+        />
+      ),
+    },
+    {
+      accessorKey: 'hard-limit',
+      header: () => (
+        <Group gap="xs">
+          <Text>Hard Limit</Text>
+          <IconPencil size={14} />
+        </Group>
+      ),
+      cell: (info) => (
+        <EditableCell
+          value={info.getValue() as number}
+          workspaceId={info.row.original.bmh_workspace_id}
+          field="hard-limit"
+        />
+      ),
+    },
+    {
+      id: 'access-link',
+      header: 'Workspaces Link',
+      cell: () => (
+        <a
+          href={workspaceLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:text-blue-800 underline"
+        >
+          Link
+        </a>
+      ),
+    },
+  ];
+
+  // Direct Pay workspace columns
+  const directPayColumns: ColumnDef<Workspace>[] = [
+    {
+      accessorKey: 'bmh_workspace_id',
+      header: 'OCC Request ID',
+    },
+    {
+      accessorKey: 'request_status',
+      header: 'Request Status',
+      cell: (info) => {
+        const status = info.getValue() as string;
+        return status.charAt(0).toUpperCase() + status.slice(1);
+      },
+    },
+    {
+      accessorKey: 'workspace_type',
+      header: 'Workspace Type',
+    },
+    {
+      accessorKey: 'total-usage',
+      header: 'Total Usage',
+      cell: (info) => `$${info.getValue()}`,
+    },
+    {
+      accessorKey: 'direct_pay_limit',
+      header: 'Compute Purchased',
+      cell: (info) => `$${info.getValue() || 0}`,
+    },
+    {
+      accessorKey: 'soft-limit',
+      header: 'Soft Limit',
+      cell: (info) => `$${info.getValue()}`,
+    },
+    {
+      accessorKey: 'hard-limit',
+      header: 'Hard Limit',
+      cell: (info) => `$${info.getValue()}`,
+    },
+    {
+      id: 'access-link',
+      header: 'Workspaces Link',
+      cell: () => (
+        <a
+          href={workspaceLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:text-blue-800 underline"
+        >
+          Link
+        </a>
+      ),
+    },
+  ];
+
+  const stridesTable = useReactTable({
+    data: stridesWorkspaces,
+    columns: stridesColumns,
+    state: { sorting },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
+
+  const directPayTable = useReactTable({
+    data: occWorkspaces,
+    columns: directPayColumns,
+    state: { sorting },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading workspaces...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
-      </div>
+      <Container size="xl" py="xl">
+        <Center style={{ minHeight: '400px' }}>
+          <Stack align="center" gap="md">
+            <Loader size="lg" />
+            <Text c="dimmed">Loading workspaces...</Text>
+          </Stack>
+        </Center>
+      </Container>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* STRIDES Workspaces Section */}
-      <div className="py-5 text-center">
-        <h2 className="text-3xl font-bold text-gray-800">
-          STRIDES Credit Workspace Accounts
-        </h2>
-      </div>
+    <Container size="xl" py="xl">
+      <Stack gap="xl">
+        {/* STRIDES Credit Workspaces */}
+        <Stack gap="md">
+          <Title order={2} ta="center">
+            STRIDES Credit Workspace Accounts
+          </Title>
 
-      <StridesWorkspaceTable workspaces={stridesWorkspaces} />
+          <Paper shadow="sm" p="md" withBorder>
+            <div className="overflow-x-auto">
+              <Table striped highlightOnHover withTableBorder>
+                <Table.Thead>
+                  {stridesTable.getHeaderGroups().map((headerGroup) => (
+                    <Table.Tr key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <Table.Th key={header.id}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </Table.Th>
+                      ))}
+                    </Table.Tr>
+                  ))}
+                </Table.Thead>
+                <Table.Tbody>
+                  {stridesTable.getRowModel().rows.length === 0 ? (
+                    <Table.Tr>
+                      <Table.Td colSpan={stridesColumns.length}>
+                        <Text ta="center" c="dimmed" py="xl">
+                          No active workspaces to view.
+                        </Text>
+                      </Table.Td>
+                    </Table.Tr>
+                  ) : (
+                    stridesTable.getRowModel().rows.map((row) => (
+                      <Table.Tr key={row.id}>
+                        {row.getVisibleCells().map((cell) => (
+                          <Table.Td key={cell.id}>
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </Table.Td>
+                        ))}
+                      </Table.Tr>
+                    ))
+                  )}
+                </Table.Tbody>
+              </Table>
+            </div>
+          </Paper>
 
-      <div className="my-4 p-5 bg-yellow-50 border border-yellow-200 rounded">
-        <small>
-          <em className="font-bold">Warning:</em> When a Workspace reaches the STRIDES
-          Credits limit (for STRIDES Credits Workspaces) or reaches the Hard Limit (for
-          STRIDES Grant Workspaces), the Workspace will be automatically terminated.
-          Please be sure to save any work before reaching the STRIDES Credit or Hard
-          Limit.
-        </small>
-      </div>
-
-      {/* Direct Pay Workspaces Section */}
-      <div className="py-5 text-center mt-12">
-        <h2 className="text-3xl font-bold text-gray-800">
-          OCC Direct Pay Workspace Accounts
-        </h2>
-      </div>
-
-      <DirectPayWorkspaceTable workspaces={directPayWorkspaces} />
-
-      <div className="my-4 p-5 bg-yellow-50 border border-yellow-200 rounded">
-        <small>
-          <em className="font-bold">Warning:</em> When a Workspace reaches the soft
-          limit, OCC will send an email requesting more funds be added to your account.
-          If it reaches the hard limit and further payment is not processed, the
-          workspace will automatically be terminated. Please be sure to save any work
-          before reaching the Hard Limit.
-        </small>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex space-x-4 mt-8">
-        <Link
-          href="/request-workspace"
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
-        >
-          Request New Workspace
-        </Link>
-        {adminAuthorized && (
-          <Link
-            href="/admin"
-            className="px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 font-semibold"
+          <Alert
+            icon={<IconAlertTriangle size="1rem" />}
+            title="Warning"
+            color="orange"
+            variant="light"
           >
-            Administrate Workspace
-          </Link>
-        )}
-      </div>
-    </div>
+            <Text size="sm">
+              <strong>Warning:</strong> When a Workspace reaches the STRIDES Credits limit
+              (for STRIDES Credits Workspaces) or reaches the Hard Limit (for STRIDES Grant
+              Workspaces), the Workspace will be automatically terminated. Please be sure to
+              save any work before reaching the STRIDES Credit or Hard Limit.
+            </Text>
+          </Alert>
+        </Stack>
+
+        {/* OCC Direct Pay Workspaces */}
+        <Stack gap="md">
+          <Title order={2} ta="center">
+            OCC Direct Pay Workspace Accounts
+          </Title>
+
+          <Paper shadow="sm" p="md" withBorder>
+            <div className="overflow-x-auto">
+              <Table striped highlightOnHover withTableBorder>
+                <Table.Thead>
+                  {directPayTable.getHeaderGroups().map((headerGroup) => (
+                    <Table.Tr key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <Table.Th key={header.id}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </Table.Th>
+                      ))}
+                    </Table.Tr>
+                  ))}
+                </Table.Thead>
+                <Table.Tbody>
+                  {directPayTable.getRowModel().rows.length === 0 ? (
+                    <Table.Tr>
+                      <Table.Td colSpan={directPayColumns.length}>
+                        <Text ta="center" c="dimmed" py="xl">
+                          No active workspaces to view.
+                        </Text>
+                      </Table.Td>
+                    </Table.Tr>
+                  ) : (
+                    directPayTable.getRowModel().rows.map((row) => (
+                      <Table.Tr key={row.id}>
+                        {row.getVisibleCells().map((cell) => (
+                          <Table.Td key={cell.id}>
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </Table.Td>
+                        ))}
+                      </Table.Tr>
+                    ))
+                  )}
+                </Table.Tbody>
+              </Table>
+            </div>
+          </Paper>
+
+          <Alert
+            icon={<IconAlertTriangle size="1rem" />}
+            title="Warning"
+            color="orange"
+            variant="light"
+          >
+            <Text size="sm">
+              <strong>Warning:</strong> When a Workspace reaches the soft limit, OCC will
+              send an email requesting more funds be added to your account. If it reaches the
+              hard limit and further payment is not processed, the workspace will automatically
+              be terminated. Please be sure to save any work before reaching the Hard Limit.
+            </Text>
+          </Alert>
+        </Stack>
+
+        {/* Action Buttons */}
+        <Group justify="center" mt="xl">
+          <Button
+            component={Link}
+            href="/request-workspace"
+            size="lg"
+            variant="filled"
+          >
+            Request New Workspace
+          </Button>
+
+          {adminAuthorized && (
+            <Button
+              component={Link}
+              href="/admin"
+              size="lg"
+              variant="filled"
+              color="yellow"
+            >
+              Administrate Workspace
+            </Button>
+          )}
+        </Group>
+      </Stack>
+    </Container>
   );
 }

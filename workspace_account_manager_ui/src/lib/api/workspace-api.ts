@@ -101,12 +101,20 @@ function buildAuthHeaders(): HeadersInit {
  * Workspace type definitions
  */
 export interface Workspace {
-  workspace_id: string;
-  type: 'grant' | 'credits' | 'directpay';
-  limits?: {
-    soft_limit?: number;
-    hard_limit?: number;
-  };
+  bmh_workspace_id: string;
+  user_id: string;
+  account_id?: string;
+  request_status: 'pending' | 'active' | 'suspended' | 'terminated' | 'provisioning' | 'failed' | 'erronous';
+  workspace_type: string;
+  'total-usage'?: number;
+  'soft-limit': number;
+  'hard-limit': number;
+  'strides-credits'?: number;
+  direct_pay_limit?: number;
+  root_account_email?: string;
+  ecs?: string;
+  subnet?: string;
+  scientific_poc?: string;
 }
 
 export interface StridesGrantWorkspaceFormData {
@@ -160,6 +168,49 @@ export interface DirectPayWorkspaceFormData {
  * Get list of workspaces for current user
  */
 export async function getWorkspaces(): Promise<Workspace[]> {
+  const testData = [{
+    "total-usage": 116.73,
+    "strides-credits": 150,
+    "hard-limit": 125,
+    "user_id": "researcher@university.edu",
+    "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde101",
+    "soft-limit": 50,
+    "request_status": "active",
+    "workspace_type": "STRIDES Credits",
+    "nih_funded_award_number": "4325534543"
+  },
+  {
+    "total-usage": 216.73,
+    "strides-credits": 250,
+    "hard-limit": 225,
+    "user_id": "researcher@university.edu",
+    "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde101",
+    "soft-limit": 150,
+    "request_status": "active",
+    "workspace_type": "STRIDES Credits",
+    "nih_funded_award_number": "4325534543"
+  }, {
+    "total-usage": 216.73,
+    "strides-credits": 250,
+    "hard-limit": 225,
+    "user_id": "researcher@university.edu",
+    "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde101",
+    "soft-limit": 150,
+    "request_status": "active",
+    "workspace_type": "STRIDES Credits",
+    "nih_funded_award_number": "4325534543"
+  }, {
+    "total-usage": 216.73,
+    "strides-credits": 250,
+    "hard-limit": 225,
+    "user_id": "researcher@university.edu",
+    "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde101",
+    "soft-limit": 150,
+    "request_status": "active",
+    "workspace_type": "STRIDES Credits",
+    "nih_funded_award_number": "4325534543"
+  }
+  ];
   return makeApiCall(
     async () => {
       const api = `${baseUrl}/workspaces`;
