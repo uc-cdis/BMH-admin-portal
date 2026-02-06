@@ -208,14 +208,16 @@ export default function DirectPayForm({ updateRedirectHome }: DirectPayFormProps
       {/* Billing ID Confirmation Form */}
       <Form onSubmit={handleBillingFormSubmit} form={directPayBillingForm}>
         <Stack gap="md">
-          <Title order={5}>Billing ID Confirmation</Title>
-
           <TextInput
-            label={
-              <Group gap="xs">
-                <Text>Billing ID</Text>
-                <Tooltip
-                  label={
+            label='Billing ID'
+            placeholder="Enter BillingID"
+            required
+            withAsterisk
+            disabled={billingFormDisabled}
+            inputContainer={(children) => (
+              <Tooltip.Floating multiline
+                w={300}
+                label={
                     <>
                       Enter the Billing ID provided from registration through the Payment
                       Solutions Portal.
@@ -230,45 +232,31 @@ export default function DirectPayForm({ updateRedirectHome }: DirectPayFormProps
                       </Anchor>
                     </>
                   }
-                  multiline
-                  w={300}
-                >
-                  <ActionIcon variant="transparent" size="sm">
-                    <IconHelp size="1rem" />
-                  </ActionIcon>
-                </Tooltip>
-              </Group>
-            }
-            placeholder="Enter BillingID"
-            required
-            withAsterisk
-            disabled={billingFormDisabled}
+                position="top-start">
+                {children}
+              </Tooltip.Floating>
+            )}
             {...directPayBillingForm.getInputProps('billing_id')}
           />
 
           <TextInput
-            label={
-              <Group gap="xs">
-                <Text>First 3 Characters of Associated Email Address</Text>
-                <Tooltip
-                  label="Enter the first three characters of the email associated with your OCC BillingID. Ex: Email address JohnDoe@gmail.com should enter 'Joh' in the box"
-                  multiline
-                  w={300}
-                >
-                  <ActionIcon variant="transparent" size="sm">
-                    <IconHelp size="1rem" />
-                  </ActionIcon>
-                </Tooltip>
-              </Group>
-            }
+            label="First 3 Characters of Associated Email Address"
             placeholder="Enter First Three Characters of Email"
             required
             withAsterisk
             disabled={billingFormDisabled}
             maxLength={3}
+            inputContainer={(children) => (
+              <Tooltip.Floating multiline
+                w={300}
+                label="Enter the first three characters of the email associated with your OCC BillingID. Ex: Email address JohnDoe@gmail.com should enter 'Joh' in the box"
+                position="top-start">
+                {children}
+              </Tooltip.Floating>
+            )}
             {...directPayBillingForm.getInputProps('leading_partial_email')}
           />
-
+          <Group justify="flex-start" mt="sm">
           <Button
             type="submit"
             loading={isConfirmingBilling}
@@ -277,6 +265,7 @@ export default function DirectPayForm({ updateRedirectHome }: DirectPayFormProps
           >
             Confirm BillingID
           </Button>
+          </Group>
         </Stack>
       </Form>
 
