@@ -18,7 +18,7 @@ import {
   Group,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconPencil, IconSortAscending, IconAlertTriangle } from '@tabler/icons-react';
+import { IconPencil, IconAlertTriangle } from '@tabler/icons-react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -29,7 +29,7 @@ import {
 } from '@tanstack/react-table';
 import { getAdminWorkspaces, approveWorkspace, Workspace } from '@/lib/api/workspace-api';
 import { authorizeAdmin } from '@/lib/auth/authorization';
-
+import { SortableHeader, BoldHeader } from '@/components/sortable-header';
 
 const DIRECT_PAY = 'Direct Pay';
 
@@ -178,19 +178,15 @@ export default function WorkspaceAccountsAdminClient() {
   const columns: ColumnDef<Workspace>[] = [
     {
       accessorKey: 'user_id',
-      header: () => (
-        <Group gap="xs">
-          <Text>User ID</Text>
-          <IconSortAscending size={14} />
-        </Group>
-      ),
+      header: ({ column }) => <SortableHeader column={column}>User ID</SortableHeader>,
       cell: (info) => <Text size="sm">{info.getValue() as string}</Text>,
+      enableSorting: true,
     },
     {
       accessorKey: 'account_id',
       header: () => (
         <Group gap="xs">
-          <Text>AWS Account</Text>
+          <BoldHeader>AWS Account</BoldHeader>
           <IconPencil size={14} />
         </Group>
       ),
@@ -200,79 +196,63 @@ export default function WorkspaceAccountsAdminClient() {
           workspaceId={info.row.original.bmh_workspace_id}
         />
       ),
+      enableSorting: false,
     },
     {
       accessorKey: 'request_status',
-      header: () => (
-        <Group gap="xs">
-          <Text>Request Status</Text>
-          <IconSortAscending size={14} />
-        </Group>
-      ),
+      header: ({ column }) => <SortableHeader column={column}>Request Status</SortableHeader>,
       cell: (info) => {
         const status = info.getValue() as string;
         return (
           <Text size="sm">{status.charAt(0).toUpperCase() + status.slice(1)}</Text>
         );
       },
+      enableSorting: true,
     },
     {
       accessorKey: 'workspace_type',
-      header: () => (
-        <Group gap="xs">
-          <Text>Workspace Type</Text>
-          <IconSortAscending size={14} />
-        </Group>
-      ),
+      header: ({ column }) => <SortableHeader column={column}>Workspace Type</SortableHeader>,
       cell: (info) => <Text size="sm">{info.getValue() as string}</Text>,
+      enableSorting: true,
     },
     {
       accessorKey: 'total-usage',
-      header: () => (
-        <Group gap="xs">
-          <Text>Total Usage</Text>
-          <IconSortAscending size={14} />
-        </Group>
-      ),
+      header: ({ column }) => <SortableHeader column={column}>Total Usage</SortableHeader>,
       cell: (info) => {
         const value = info.getValue() as number | undefined;
         return <Text size="sm">{value !== undefined ? `$${value}` : ''}</Text>;
       },
+      enableSorting: true,
     },
     {
       accessorKey: 'soft-limit',
-      header: () => (
-        <Group gap="xs">
-          <Text>Soft Limit</Text>
-          <IconSortAscending size={14} />
-        </Group>
-      ),
+      header: ({ column }) => <SortableHeader column={column}>Soft Limit</SortableHeader>,
       cell: (info) => {
         const value = info.getValue() as number | undefined;
         return <Text size="sm">{value !== undefined ? `$${value}` : ''}</Text>;
       },
+      enableSorting: true,
     },
     {
       accessorKey: 'hard-limit',
-      header: () => (
-        <Group gap="xs">
-          <Text>Hard Limit</Text>
-          <IconSortAscending size={14} />
-        </Group>
-      ),
+      header: ({ column }) => <SortableHeader column={column}>Hard Limit</SortableHeader>,
       cell: (info) => {
         const value = info.getValue() as number | undefined;
         return <Text size="sm">{value !== undefined ? `$${value}` : ''}</Text>;
       },
+      enableSorting: true,
     },
     {
       id: 'total-funds',
-      header: () => (
-        <Group gap="xs">
-          <Text>Total Funds</Text>
-          <IconSortAscending size={14} />
-        </Group>
-      ),
+      header: ({ column }) => <SortableHeader column={column}>Total Funds</SortableHeader>,
+      accessorFn: (row) => {
+        if (row.workspace_type === DIRECT_PAY && row.direct_pay_limit !== undefined) {
+          return row.direct_pay_limit;
+        } else if (row['strides-credits'] !== undefined) {
+          return row['strides-credits'];
+        }
+        return 0;
+      },
       cell: (info) => {
         const row = info.row.original;
         let value: number | undefined;
@@ -285,46 +265,31 @@ export default function WorkspaceAccountsAdminClient() {
 
         return <Text size="sm">{value !== undefined ? `$${value}` : ''}</Text>;
       },
+      enableSorting: true,
     },
     {
       accessorKey: 'root_account_email',
-      header: () => (
-        <Group gap="xs">
-          <Text>Root Email</Text>
-          <IconSortAscending size={14} />
-        </Group>
-      ),
+      header: ({ column }) => <SortableHeader column={column}>Root Email</SortableHeader>,
       cell: (info) => <Text size="sm">{(info.getValue() as string) || ''}</Text>,
+      enableSorting: true,
     },
     {
       accessorKey: 'ecs',
-      header: () => (
-        <Group gap="xs">
-          <Text>ECS</Text>
-          <IconSortAscending size={14} />
-        </Group>
-      ),
+      header: ({ column }) => <SortableHeader column={column}>ECS</SortableHeader>,
       cell: (info) => <Text size="sm">{(info.getValue() as string) || ''}</Text>,
+      enableSorting: true,
     },
     {
       accessorKey: 'subnet',
-      header: () => (
-        <Group gap="xs">
-          <Text>Subnet</Text>
-          <IconSortAscending size={14} />
-        </Group>
-      ),
+      header: ({ column }) => <SortableHeader column={column}>Subnet</SortableHeader>,
       cell: (info) => <Text size="sm">{(info.getValue() as string) || ''}</Text>,
+      enableSorting: true,
     },
     {
       accessorKey: 'scientific_poc',
-      header: () => (
-        <Group gap="xs">
-          <Text>Scientific POC</Text>
-          <IconSortAscending size={14} />
-        </Group>
-      ),
+      header: ({ column }) => <SortableHeader column={column}>Scientific POC</SortableHeader>,
       cell: (info) => <Text size="sm">{(info.getValue() as string) || ''}</Text>,
+      enableSorting: true,
     },
   ];
 
@@ -406,9 +371,9 @@ export default function WorkspaceAccountsAdminClient() {
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                       </Table.Th>
                     ))}
                   </Table.Tr>

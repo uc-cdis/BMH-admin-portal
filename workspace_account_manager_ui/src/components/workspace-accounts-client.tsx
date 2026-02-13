@@ -26,23 +26,10 @@ import {
   type ColumnDef,
   type SortingState,
 } from '@tanstack/react-table';
-import { getWorkspaces, setWorkspaceLimits } from '@/lib/api/workspace-api';
+import { getWorkspaces, setWorkspaceLimits, Workspace } from '@/lib/api/workspace-api';
 import { authorizeAdmin } from '@/lib/auth/authorization';
 import { SortableHeader, BoldHeader } from '@/components/sortable-header';
 
-
-interface Workspace {
-  bmh_workspace_id: string;
-  directpay_workspace_id?: string;
-  nih_funded_award_number?: string;
-  request_status: 'pending' | 'active' | 'suspended' | 'terminated';
-  workspace_type: string;
-  'total-usage': number;
-  'strides-credits'?: number;
-  direct_pay_limit?: number;
-  'soft-limit': number;
-  'hard-limit': number;
-}
 
 export default function WorkspaceAccountsClient() {
   const [stridesWorkspaces, setStridesWorkspaces] = useState<Workspace[]>([]);
