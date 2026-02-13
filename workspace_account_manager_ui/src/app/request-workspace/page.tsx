@@ -7,6 +7,7 @@ import StridesGrantForm from '@/components/strides-grant-form';
 import StridesCreditForm from '@/components/strides-credits-form';
 import DirectPayForm from '@/components/direct-pay-form';
 import { authorizeCredits } from '@/lib/auth/authorization';
+import { ProtectedRoute } from '@/components/protected-route';
 
 interface FormOptions {
   none?: string;
@@ -24,7 +25,7 @@ const FORM_OPTIONS: FormOptions = {
 
 const DEFAULT_FORM = FORM_OPTIONS.stridesGrant!;
 
-export default function RequestWorkspacePage() {
+function RequestWorkspaceContent() {
   const controlColorMap: Record<string, string> = {
     [FORM_OPTIONS.directPay!]: 'green'
   };
@@ -199,5 +200,13 @@ export default function RequestWorkspacePage() {
         </Center>
       </Stack>
     </Container>
+  );
+}
+
+export default function RequestWorkspacePage() {
+  return (
+    <ProtectedRoute>
+      <RequestWorkspaceContent />
+    </ProtectedRoute>
   );
 }

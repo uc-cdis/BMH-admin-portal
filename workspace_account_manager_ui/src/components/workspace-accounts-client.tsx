@@ -29,9 +29,10 @@ import {
 import { getWorkspaces, setWorkspaceLimits, Workspace } from '@/lib/api/workspace-api';
 import { authorizeAdmin } from '@/lib/auth/authorization';
 import { SortableHeader, BoldHeader } from '@/components/sortable-header';
+import { ProtectedRoute } from './protected-route';
 
 
-export default function WorkspaceAccountsClient() {
+function WorkspaceAccountsContent() {
   const [stridesWorkspaces, setStridesWorkspaces] = useState<Workspace[]>([]);
   const [occWorkspaces, setOccWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,8 +55,8 @@ export default function WorkspaceAccountsClient() {
 
       try {
         // Check admin authorization
-        // const isAdmin = await authorizeAdmin();
-        // setAdminAuthorized(isAdmin);
+        const isAdmin = await authorizeAdmin();
+        setAdminAuthorized(isAdmin);
 
         // Get workspaces
         const data = await getWorkspaces();
@@ -551,5 +552,13 @@ export default function WorkspaceAccountsClient() {
         </Group>
       </Stack>
     </Container>
+  );
+}
+
+export default function WorkspaceAccountsClient() {
+  return (
+    <ProtectedRoute requireAuth={false}>
+      <WorkspaceAccountsContent />
+    </ProtectedRoute>
   );
 }

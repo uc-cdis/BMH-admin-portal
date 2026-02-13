@@ -28,15 +28,14 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import { getAdminWorkspaces, approveWorkspace, Workspace } from '@/lib/api/workspace-api';
-import { authorizeAdmin } from '@/lib/auth/authorization';
 import { SortableHeader, BoldHeader } from '@/components/sortable-header';
+import { ProtectedRoute } from './protected-route';
 
 const DIRECT_PAY = 'Direct Pay';
 
-export default function WorkspaceAccountsAdminClient() {
+function WorkspaceAccountsAdminContent() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
-  const [adminAuthorized, setAdminAuthorized] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [editingCell, setEditingCell] = useState<{
     rowId: string;
@@ -53,15 +52,6 @@ export default function WorkspaceAccountsAdminClient() {
       setLoading(true);
 
       try {
-        // Check admin authorization
-        const isAdmin = await authorizeAdmin();
-        setAdminAuthorized(isAdmin);
-
-        if (!isAdmin) {
-          setLoading(false);
-          return;
-        }
-
         // Get all workspaces
         const data = await getAdminWorkspaces();
 
@@ -315,21 +305,6 @@ export default function WorkspaceAccountsAdminClient() {
     );
   }
 
-  if (!adminAuthorized) {
-    return (
-      <Container size="xl" py="xl">
-        <Alert
-          icon={<IconAlertTriangle size="1rem" />}
-          title="Access Denied"
-          color="red"
-          variant="light"
-        >
-          You do not have permission to access the admin workspace management page.
-        </Alert>
-      </Container>
-    );
-  }
-
   return (
     <Container size="xl" py="xl">
       <Stack gap="xl">
@@ -437,5 +412,13 @@ export default function WorkspaceAccountsAdminClient() {
         </Stack>
       </Modal>
     </Container>
+  );
+}
+
+export default function WorkspaceAccountsAdminClient() {
+  return (
+    <ProtectedRoute requireAdmin>
+      <WorkspaceAccountsAdminContent />
+    </ProtectedRoute>
   );
 }
