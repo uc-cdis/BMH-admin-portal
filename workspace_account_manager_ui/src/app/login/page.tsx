@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import { useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
+import { Button, Stack } from '@mantine/core';
 
 function LoginContent() {
   const searchParams = useSearchParams();
@@ -44,14 +45,15 @@ function LoginContent() {
           </div>
         )}
 
-        <div>
-          <button
+        <Stack align="center" gap="md">
+          <Button
             onClick={handleLogin}
-            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            size="lg"
+            variant="filled"
           >
             Sign in with SSO
-          </button>
-        </div>
+          </Button>
+        </Stack>
       </div>
     </div>
   );
