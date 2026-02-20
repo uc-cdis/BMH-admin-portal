@@ -557,7 +557,7 @@ function WorkspaceAccountsContent() {
 
 export default function WorkspaceAccountsClient() {
   return (
-    <ProtectedRoute requireAuth={false}>
+    <ProtectedRoute>
       <WorkspaceAccountsContent />
     </ProtectedRoute>
   );
