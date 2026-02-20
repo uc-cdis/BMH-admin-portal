@@ -48,10 +48,7 @@ export function useAuth() {
   }, []);
 
   const refresh = useCallback(async () => {
-    const success = await refreshTokens(
-      process.env.NEXT_PUBLIC_API_GW_ENDPOINT!,
-      process.env.NEXT_PUBLIC_API_KEY!
-    );
+    const success = await refreshTokens();
     if (success) {
       // Update state
       setAuthenticated(isAuthenticated());
