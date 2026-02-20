@@ -1,6 +1,6 @@
 'use client';
 
-import { getAccessToken, getRefreshToken, refreshTokens, logout } from './oidc';
+import { getAccessToken, refreshTokens, logout } from './oidc';
 import config from '../../../config.json'
 
 interface ResourceConfig {

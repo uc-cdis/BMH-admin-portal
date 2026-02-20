@@ -170,67 +170,67 @@ export interface DirectPayWorkspaceFormData {
  * Get list of workspaces for current user
  */
 export async function getWorkspaces(): Promise<Workspace[]> {
-  const activeStatus: RequestStatus = "active"
-  const pendingStatus: RequestStatus = "pending"
-  const testData = [{
-    "total-usage": 116.73,
-    "strides-credits": 150,
-    "hard-limit": 125,
-    "user_id": "researcher@university.edu",
-    "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde101",
-    "soft-limit": 50,
-    "request_status": activeStatus,
-    "workspace_type": "STRIDES Grant",
-    "nih_funded_award_number": "4325534543"
-  },
-  {
-    "total-usage": 216.73,
-    "strides-credits": 250,
-    "hard-limit": 225,
-    "user_id": "researcher@university.edu",
-    "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde12",
-    "soft-limit": 150,
-    "request_status": activeStatus,
-    "workspace_type": "STRIDES Credits",
-    "nih_funded_award_number": "4325534543"
-  }, {
-    "total-usage": 316.73,
-    "strides-credits": 350,
-    "hard-limit": 325,
-    "user_id": "researcher@university.edu",
-    "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde103",
-    "soft-limit": 150,
-    "request_status": pendingStatus,
-    "workspace_type": "STRIDES Credits",
-    "nih_funded_award_number": "4325534543"
-  }, {
-    "total-usage": 416.73,
-    "strides-credits": 450,
-    "hard-limit": 425,
-    "user_id": "researcher@university.edu",
-    "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde104",
-    "soft-limit": 150,
-    "request_status": pendingStatus,
-    "workspace_type": "Direct Pay",
-    "nih_funded_award_number": "4325534543"
-  }
-  ];
-  return Promise.resolve(testData);
-  // return makeApiCall(
-  //   async () => {
-  //     const api = `${baseUrl}/workspaces`;
-  //     const headers = buildAuthHeaders();
-  //     return await fetch(api, { headers });
-  //   },
-  //   async (resp) => {
-  //     let data: Workspace[] = [];
-  //     // 204 No Content
-  //     if (resp.status !== 204) {
-  //       data = await resp.json();
-  //     }
-  //     return data;
-  //   }
-  // ) as Promise<Workspace[]>;
+  // const activeStatus: RequestStatus = "active"
+  // const pendingStatus: RequestStatus = "pending"
+  // const testData = [{
+  //   "total-usage": 116.73,
+  //   "strides-credits": 150,
+  //   "hard-limit": 125,
+  //   "user_id": "researcher@university.edu",
+  //   "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde101",
+  //   "soft-limit": 50,
+  //   "request_status": activeStatus,
+  //   "workspace_type": "STRIDES Grant",
+  //   "nih_funded_award_number": "4325534543"
+  // },
+  // {
+  //   "total-usage": 216.73,
+  //   "strides-credits": 250,
+  //   "hard-limit": 225,
+  //   "user_id": "researcher@university.edu",
+  //   "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde12",
+  //   "soft-limit": 150,
+  //   "request_status": activeStatus,
+  //   "workspace_type": "STRIDES Credits",
+  //   "nih_funded_award_number": "4325534543"
+  // }, {
+  //   "total-usage": 316.73,
+  //   "strides-credits": 350,
+  //   "hard-limit": 325,
+  //   "user_id": "researcher@university.edu",
+  //   "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde103",
+  //   "soft-limit": 150,
+  //   "request_status": pendingStatus,
+  //   "workspace_type": "STRIDES Credits",
+  //   "nih_funded_award_number": "4325534543"
+  // }, {
+  //   "total-usage": 416.73,
+  //   "strides-credits": 450,
+  //   "hard-limit": 425,
+  //   "user_id": "researcher@university.edu",
+  //   "bmh_workspace_id": "2bbdfd3b-b402-47a2-b244-b0b053dde104",
+  //   "soft-limit": 150,
+  //   "request_status": pendingStatus,
+  //   "workspace_type": "Direct Pay",
+  //   "nih_funded_award_number": "4325534543"
+  // }
+  // ];
+  // return Promise.resolve(testData);
+  return makeApiCall(
+    async () => {
+      const api = `${baseUrl}/workspaces`;
+      const headers = buildAuthHeaders();
+      return await fetch(api, { headers });
+    },
+    async (resp) => {
+      let data: Workspace[] = [];
+      // 204 No Content
+      if (resp.status !== 204) {
+        data = await resp.json();
+      }
+      return data;
+    }
+  ) as Promise<Workspace[]>;
 }
 
 /**
