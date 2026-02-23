@@ -82,7 +82,7 @@ function LoginCallbackContent() {
         console.log('✅ Authentication complete! Redirecting to:', redirectUrl);
 
         // Redirect to app
-        router.push(redirectUrl);
+        window.location.href = redirectUrl;
 
       } catch (err) {
         console.error('❌ Authentication error:', err);
