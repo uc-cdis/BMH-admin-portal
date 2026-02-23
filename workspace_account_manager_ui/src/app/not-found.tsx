@@ -6,7 +6,7 @@ import { Alert, Button, Stack, Text } from '@mantine/core';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import Link from 'next/link';
 import { LoadingScreen } from '@/components/loading-screen';
-import { isValidRoute, APP_ROUTES } from '@/lib/routes';
+import { isValidRoute, APP_ROUTES } from '@/lib/utils/routes';
 
 
 function NotFoundContent() {

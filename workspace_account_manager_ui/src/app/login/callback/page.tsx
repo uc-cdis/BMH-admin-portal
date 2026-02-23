@@ -10,6 +10,7 @@ import {
   exchangeCodeForTokens,
   storeTokens,
 } from '@/lib/auth/oidc';
+import { validateRedirectPath } from '@/lib/utils/secure-redirect';
 
 function LoginCallbackContent() {
   const searchParams = useSearchParams();
@@ -68,8 +69,10 @@ function LoginCallbackContent() {
         storeTokens(tokens);
 
         // Get redirect URL
-        const redirectUrl = localStorage.getItem('redirect_after_login') || '/';
+        const storedPath = localStorage.getItem('redirect_after_login') || '/';
         localStorage.removeItem('redirect_after_login');
+
+        const redirectUrl = validateRedirectPath(storedPath, '/');
 
         // Redirect to app
         window.location.href = redirectUrl;
