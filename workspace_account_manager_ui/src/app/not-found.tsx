@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Alert, Button, Stack, Text } from '@mantine/core';
 import { IconAlertTriangle } from '@tabler/icons-react';
@@ -8,8 +8,9 @@ import Link from 'next/link';
 import { LoadingScreen } from '@/components/loading-screen';
 import { isValidRoute, APP_ROUTES } from '@/lib/routes';
 
-export default function NotFound() {
-    const pathname = usePathname();
+
+function NotFoundContent() {
+     const pathname = usePathname();
     const searchParams = useSearchParams();
     const router = useRouter();
     const isValid = isValidRoute(pathname);
@@ -75,5 +76,13 @@ export default function NotFound() {
                 </div>
             </Stack>
         </div>
+    );
+}
+
+export default function NotFound() {
+    return (
+        <Suspense fallback={<LoadingScreen message="Loading..." />}>
+            <NotFoundContent />
+        </Suspense>
     );
 }
