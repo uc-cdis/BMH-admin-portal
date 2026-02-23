@@ -23,8 +23,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={geistSans.variable}>
-        <Navbar />
-        <MantineProvider>{children}</MantineProvider>
+        <MantineProvider>
+          <Navbar />
+          {children}
+        </MantineProvider>
       </body>
     </html>
   );
