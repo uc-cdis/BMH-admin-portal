@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
+import { Button } from '@mantine/core';
 
 export function Navbar() {
   const { authenticated, userName, logout } = useAuth();
@@ -21,17 +22,15 @@ export function Navbar() {
             <div className="flex space-x-4">
               <Link
                 href="/"
-                className={`hover:text-gray-100 ${
-                  pathname === '/' ? 'border-b-2 border-white' : ''
-                }`}
+                className={`hover:text-gray-100 ${pathname === '/' ? 'border-b-2 border-white' : ''
+                  }`}
               >
                 Accounts
               </Link>
               <Link
                 href="/request-workspace"
-                className={`hover:text-gray-100 ${
-                  pathname === '/request-workspace' ? 'border-b-2 border-white' : ''
-                }`}
+                className={`hover:text-gray-100 ${pathname === '/request-workspace' ? 'border-b-2 border-white' : ''
+                  }`}
               >
                 Request Workspace
               </Link>
@@ -40,15 +39,16 @@ export function Navbar() {
           {
             (authenticated) ? (
               <div className="flex items-center space-x-4">
-                <span className="text-sm">{userName}</span>
-                <button
+                <Button
                   onClick={logout}
-                  className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded text-sm"
+                  size="lg"
+                  variant="filled"
+                  fullWidth
                 >
-                  Logout
-                </button>
+                  {`Logout ${userName}`}
+                </Button>
               </div>
-             ) : null
+            ) : null
           }
         </div>
       </div>
