@@ -103,7 +103,6 @@ export default function DirectPayForm({ updateRedirectHome }: DirectPayFormProps
         setBillingIdConfirmed(true);
         setDirectPayLimit(response.body[0].Message.body);
         setBillingFormDisabled(true);
-        console.log('Billing ID confirmed, limit:', response.body[0].Message.body);
       } else {
         console.error('Billing ID confirmation failed');
         setBillingIdConfirmed(false);
@@ -140,7 +139,6 @@ export default function DirectPayForm({ updateRedirectHome }: DirectPayFormProps
         await requestAPICall(requestId, directPayBillingForm.values, values);
       }
 
-      console.log('Workspace request submitted:', response);
       setSuccess(true);
 
       // Redirect after success
@@ -182,8 +180,7 @@ export default function DirectPayForm({ updateRedirectHome }: DirectPayFormProps
         'Content-Type': 'text/plain',
       };
 
-      const response = await callExternalURL(occHelpURL!, 'POST', headers, data);
-      console.log('OCC API call response:', response);
+      await callExternalURL(occHelpURL!, 'POST', headers, data);
     } catch (err) {
       console.error('OCC API call error:', err);
       // Don't throw error here, workspace request was already successful

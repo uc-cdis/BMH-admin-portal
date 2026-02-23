@@ -66,7 +66,6 @@ export default function StridesCreditsForm({ updateRedirectHome }: StridesCredit
   });
 
   const handleSubmit = (values: StridesCreditsWorkspaceFormData) => {
-    console.log(values)
     setIsSubmitting(true);
     setError(null);
 

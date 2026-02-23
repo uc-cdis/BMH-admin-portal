@@ -78,7 +78,6 @@ async function getUserAuthMapping(): Promise<UserAuthMapping | null> {
 
   // If failed, try refreshing token
   if (!userAuthMapping) {
-    console.log('Retrying after token refresh...');
     const refreshed = await refreshTokens();
 
     if (!refreshed) {

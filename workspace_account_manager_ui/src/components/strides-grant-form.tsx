@@ -61,7 +61,6 @@ export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFor
   });
 
   const handleSubmit = (values: StridesGrantWorkspaceFormData) => {
-    console.log(values)
     setIsSubmitting(true);
     setError(null);
 

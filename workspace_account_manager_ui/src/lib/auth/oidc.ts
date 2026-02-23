@@ -96,7 +96,6 @@ export function storeTokens(tokens: TokenSet): void {
   setItem('id_token', tokens.id_token);
   setItem('access_token', tokens.access_token);
   setItem('refresh_token', tokens.refresh_token);
-  console.log('✅ Tokens stored in localStorage');
 }
 
 /**
@@ -109,7 +108,6 @@ export function removeTokens(): void {
   removeItem('oauth_state');
   removeItem('oauth_nonce');
   removeItem('redirect_after_login');
-  console.log('🗑️ All tokens removed from localStorage');
 }
 
 // ============================================================================
@@ -185,8 +183,6 @@ export function initiateLogin(
   const state = uuidv4();
   const nonce = uuidv4();
 
-  console.log('🚀 Initiating OAuth login');
-
   // Store in localStorage
   setItem('oauth_state', state);
   setItem('oauth_nonce', nonce);
@@ -204,7 +200,6 @@ export function initiateLogin(
   });
 
   const authUrl = `${authUri}?${params.toString()}`;
-  console.log('🔗 Redirecting to OAuth provider');
 
   window.location.assign(authUrl);
 }
@@ -215,12 +210,6 @@ export function initiateLogin(
 export function validateState(receivedState: string): boolean {
   const storedState = getItem('oauth_state');
   const isValid = receivedState === storedState;
-
-  console.log('🔍 State validation:', {
-    received: receivedState?.substring(0, 10),
-    stored: storedState?.substring(0, 10),
-    valid: isValid,
-  });
 
   if (isValid) {
     removeItem('oauth_state');
@@ -235,12 +224,6 @@ export function validateState(receivedState: string): boolean {
 export function validateNonce(receivedNonce: string): boolean {
   const storedNonce = getItem('oauth_nonce');
   const isValid = receivedNonce === storedNonce;
-
-  console.log('🔍 Nonce validation:', {
-    received: receivedNonce?.substring(0, 10),
-    stored: storedNonce?.substring(0, 10),
-    valid: isValid,
-  });
 
   if (isValid) {
     removeItem('oauth_nonce');
@@ -258,7 +241,6 @@ export async function exchangeCodeForTokens(
   apiEndpoint: string,
   apiKey: string
 ): Promise<TokenSet> {
-  console.log('💱 Exchanging code for tokens...');
 
   const response = await fetch(
     `${apiEndpoint}/auth/get-tokens?code=${code}`,
@@ -304,8 +286,6 @@ export async function refreshTokens(): Promise<boolean> {
   }
 
   try {
-    console.log('🔄 Refreshing tokens...');
-
     const response = await fetch(
       `${apiEndpoint}/auth/refresh-tokens`,
       {
@@ -324,8 +304,6 @@ export async function refreshTokens(): Promise<boolean> {
 
     const tokens = await response.json();
     storeTokens(tokens);
-
-    console.log('✅ Tokens refreshed');
     return true;
 
   } catch (error) {
@@ -338,7 +316,6 @@ export async function refreshTokens(): Promise<boolean> {
  * Logout
  */
 export function logout(): void {
-  console.log('👋 Logging out...');
   removeTokens();
 
   if (typeof window !== 'undefined') {

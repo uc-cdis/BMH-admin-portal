@@ -19,8 +19,6 @@ function LoginCallbackContent() {
 
   useEffect(() => {
     async function handleCallback() {
-      console.log('🔐 Processing OAuth callback (client-side)');
-
       const code = searchParams.get('code');
       const state = searchParams.get('state');
       const oauthError = searchParams.get('error');
@@ -49,8 +47,6 @@ function LoginCallbackContent() {
         return;
       }
 
-      console.log('✅ State validated');
-
       try {
         // Exchange code for tokens (direct API call)
         const tokens = await exchangeCodeForTokens(
@@ -58,8 +54,6 @@ function LoginCallbackContent() {
           process.env.NEXT_PUBLIC_API_GW_ENDPOINT!,
           process.env.NEXT_PUBLIC_API_KEY!
         );
-
-        console.log('✅ Tokens received');
 
         // Validate nonce
         const decoded: any = jwtDecode(tokens.id_token);
@@ -70,16 +64,12 @@ function LoginCallbackContent() {
           return;
         }
 
-        console.log('✅ Nonce validated');
-
         // Store tokens in localStorage
         storeTokens(tokens);
 
         // Get redirect URL
         const redirectUrl = localStorage.getItem('redirect_after_login') || '/';
         localStorage.removeItem('redirect_after_login');
-
-        console.log('✅ Authentication complete! Redirecting to:', redirectUrl);
 
         // Redirect to app
         window.location.href = redirectUrl;

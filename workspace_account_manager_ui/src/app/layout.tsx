@@ -9,7 +9,6 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-
 export const metadata = {
   title: 'Workspace Account Manager',
   description: 'Workspace Account Management Portal',

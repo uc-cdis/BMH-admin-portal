@@ -350,13 +350,6 @@ export async function callExternalURL<T = any>(
         throw new Error('No access token available');
       }
 
-      console.log('Request:', {
-        url,
-        method,
-        headers,
-        body: method === 'GET' ? undefined : data,
-      });
-
       try {
         const response = await fetch(url, {
           method,
@@ -366,8 +359,6 @@ export async function callExternalURL<T = any>(
 
         if (!response.ok) {
           console.error(`Request failed with status ${response.status}`);
-        } else {
-          console.log('Response received:', response);
         }
 
         return response;
