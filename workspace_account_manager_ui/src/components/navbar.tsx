@@ -8,6 +8,8 @@ export function Navbar() {
   const { authenticated, userName, logout } = useAuth();
   const pathname = usePathname();
 
+  console.log('Navbar state:', { authenticated, userName });
+
   return (
     <nav className="bg-gray-900 text-gray-300 shadow-lg">
       <div className="container mx-auto px-4">

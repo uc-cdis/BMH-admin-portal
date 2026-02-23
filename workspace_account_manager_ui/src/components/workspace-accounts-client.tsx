@@ -373,7 +373,7 @@ function WorkspaceAccountsContent() {
         <Center style={{ minHeight: '400px' }}>
           <Stack align="center" gap="md">
             <Loader size="lg" />
-            <Text c="dimmed">Loading workspaces...</Text>
+            <Text c="dimmed">Loading workspace accounts...</Text>
           </Stack>
         </Center>
       </Container>
@@ -417,7 +417,7 @@ function WorkspaceAccountsContent() {
                     <Table.Tr>
                       <Table.Td colSpan={stridesColumns.length}>
                         <Text ta="center" c="dimmed" py="xl">
-                          No active workspaces to view.
+                          No active workspace accounts to view.
                         </Text>
                       </Table.Td>
                     </Table.Tr>
@@ -489,7 +489,7 @@ function WorkspaceAccountsContent() {
                     <Table.Tr>
                       <Table.Td colSpan={directPayColumns.length}>
                         <Text ta="center" c="dimmed" py="xl">
-                          No active workspaces to view.
+                          No active workspace accounts to view.
                         </Text>
                       </Table.Td>
                     </Table.Tr>
@@ -535,7 +535,7 @@ function WorkspaceAccountsContent() {
             size="lg"
             variant="filled"
           >
-            Request New Workspace
+            Request New Workspace Account
           </Button>
 
           {adminAuthorized && (
@@ -546,7 +546,7 @@ function WorkspaceAccountsContent() {
               variant="filled"
               color="yellow"
             >
-              Administrate Workspace
+              Administrate Workspace Accounts
             </Button>
           )}
         </Group>

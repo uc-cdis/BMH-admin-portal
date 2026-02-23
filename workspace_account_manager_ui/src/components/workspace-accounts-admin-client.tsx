@@ -298,7 +298,7 @@ function WorkspaceAccountsAdminContent() {
         <Center style={{ minHeight: '400px' }}>
           <Stack align="center" gap="md">
             <Loader size="lg" />
-            <Text c="dimmed">Loading admin workspaces...</Text>
+            <Text c="dimmed">Loading workspace accounts administration page...</Text>
           </Stack>
         </Center>
       </Container>

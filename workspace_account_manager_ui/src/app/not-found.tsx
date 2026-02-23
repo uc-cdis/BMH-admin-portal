@@ -10,7 +10,7 @@ import { isValidRoute, APP_ROUTES } from '@/lib/routes';
 
 
 function NotFoundContent() {
-     const pathname = usePathname();
+    const pathname = usePathname();
     const searchParams = useSearchParams();
     const router = useRouter();
     const isValid = isValidRoute(pathname);
@@ -20,18 +20,7 @@ function NotFoundContent() {
         const queryString = searchParams.toString();
         const fullPath = queryString ? `${pathname}?${queryString}` : pathname;
 
-        console.log('🔍 NotFound:', {
-            pathname,
-            queryString,
-            fullPath,
-            isValid
-        });
-
         if (isValid) {
-            console.log('✅ Valid route detected, redirecting with query params...');
-            console.log('🔀 Redirecting to:', fullPath);
-
-            // Redirect with full path including query parameters
             router.push(fullPath);
         }
     }, [pathname, searchParams, isValid, router]);
