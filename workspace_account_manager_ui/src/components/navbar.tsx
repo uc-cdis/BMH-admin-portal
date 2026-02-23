@@ -41,11 +41,10 @@ export function Navbar() {
               <div className="flex items-center space-x-4">
                 <Button
                   onClick={logout}
-                  size="lg"
-                  variant="filled"
+                  variant="danger"
                   fullWidth
                 >
-                  {`Logout ${userName}`}
+                  {`Logout (${userName})`}
                 </Button>
               </div>
             ) : null
