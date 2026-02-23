@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
-import { Alert, Button, Stack, Text } from '@mantine/core';
+import { Alert, Stack, Text } from '@mantine/core';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import Link from 'next/link';
 import { LoadingScreen } from '@/components/loading-screen';
@@ -13,30 +13,48 @@ export default function NotFound() {
   const [showRealError, setShowRealError] = useState(false);
 
   // Check if route is valid (memoized to prevent recalculation)
-  const isValid = useMemo(() => isValidRoute(pathname), [pathname]);
+  const isValid = useMemo(() => {
+    const result = isValidRoute(pathname);
+    console.log('🔍 NotFound: Route validation', { pathname, isValid: result });
+    return result;
+  }, [pathname]);
 
   useEffect(() => {
+    console.log('🔄 NotFound: useEffect triggered', { isValid, pathname });
+
     if (!isValid) {
+      console.log('⏰ NotFound: Setting timer for real error display');
       // For invalid routes, show error after brief delay to prevent flash
       const timer = setTimeout(() => {
+        console.log('✋ NotFound: Showing real error page');
         setShowRealError(true);
       }, 300);
 
-      return () => clearTimeout(timer);
+      return () => {
+        console.log('🧹 NotFound: Cleaning up timer');
+        clearTimeout(timer);
+      };
+    } else {
+      console.log('✅ NotFound: Valid route - waiting for Next.js router');
     }
-  }, [isValid]);
+  }, [isValid, pathname]);
+
+  console.log('🎨 NotFound: Rendering', { isValid, showRealError, pathname });
 
   // Valid route - show loader while Next.js takes over
   if (isValid) {
+    console.log('🔄 Rendering: LoadingScreen (valid route)');
     return <LoadingScreen message="Loading page..." />;
   }
 
   // Invalid route but still in delay period - show loader
   if (!showRealError) {
+    console.log('🔄 Rendering: LoadingScreen (delay period)');
     return <LoadingScreen message="Loading..." />;
   }
 
   // Real 404 error
+  console.log('❌ Rendering: 404 error page');
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <Stack align="center" gap="lg" maw={500}>
@@ -52,21 +70,18 @@ export default function NotFound() {
               The page <strong>{pathname}</strong> could not be found.
             </Text>
             <Text size="sm" c="dimmed">
-              The page you&apos;re looking for doesn&apos;t exist or may have been moved.
+              The page you're looking for doesn't exist or may have been moved.
             </Text>
           </Stack>
         </Alert>
 
-        <Stack gap="sm" align="center">
-          <Button
-            component={Link}
-            href={APP_ROUTES.HOME}
-            size="lg"
-            variant="filled"
-          >
-            Go to Homepage
-          </Button>
-        </Stack>
+        <div className="w-full max-w-md space-y-3">
+          <Link href={APP_ROUTES.HOME}>
+            <button className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              Go to Homepage
+            </button>
+          </Link>
+        </div>
       </Stack>
     </div>
   );

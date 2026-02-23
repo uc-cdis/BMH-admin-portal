@@ -136,3 +136,5 @@ dmypy.json
 
 #VSCode config files
 .vscode/
+
+*.bak
