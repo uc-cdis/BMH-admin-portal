@@ -101,7 +101,7 @@ function WorkspaceAccountsContent() {
 
     // Validation
     if (field === 'soft-limit') {
-      if (numValue >= workspace['hard-limit']) {
+      if (numValue >= (workspace['hard-limit'] || 0)) {
         alert('Soft limit must be less than hard limit.');
         return;
       }
@@ -110,7 +110,7 @@ function WorkspaceAccountsContent() {
         return;
       }
     } else if (field === 'hard-limit') {
-      if (numValue <= workspace['soft-limit']) {
+      if (numValue <= (workspace['soft-limit'] || 0)) {
         alert('Hard limit must be greater than soft limit.');
         return;
       }
@@ -319,19 +319,19 @@ function WorkspaceAccountsContent() {
     {
       accessorKey: 'direct_pay_limit',
       header: () => <BoldHeader>Compute Purchased</BoldHeader>,
-      cell: (info) => `$${info.getValue() || 0}`,
+      cell: (info) => `$${info.getValue() || ''}`,
       enableSorting: false,
     },
     {
       accessorKey: 'soft-limit',
       header: () => <BoldHeader>Soft Limit</BoldHeader>,
-      cell: (info) => `$${info.getValue()}`,
+      cell: (info) => `$${info.getValue() || ''}`,
       enableSorting: false,
     },
     {
       accessorKey: 'hard-limit',
       header: () => <BoldHeader>Hard Limit</BoldHeader>,
-      cell: (info) => `$${info.getValue()}`,
+      cell: (info) => `$${info.getValue() || ''}`,
       enableSorting: false,
     },
     {
