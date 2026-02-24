@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Alert, Button, Stack, Text } from '@mantine/core';
 import { IconAlertTriangle } from '@tabler/icons-react';
@@ -13,6 +13,7 @@ function NotFoundContent() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const router = useRouter();
+    const [isConfirmed404, setIsConfirmed404] = useState(false);
 
     useEffect(() => {
         // Build full URL with query parameters
@@ -22,8 +23,16 @@ function NotFoundContent() {
 
         if (redirectUrl) {
             router.push(redirectUrl);
+        } else {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setIsConfirmed404(true);
         }
     }, [pathname, searchParams, router]);
+
+    // Show loader until we confirm it's a real 404
+    if (!isConfirmed404) {
+        return null;
+    }
 
     // Real 404 error
     return (
