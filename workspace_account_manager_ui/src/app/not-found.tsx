@@ -11,13 +11,15 @@ import { validateRedirectPath, APP_ROUTES } from '@/lib/utils/routes';
 
 function NotFoundContent() {
     const pathname = usePathname();
-    const redirectUrl = validateRedirectPath(pathname);
 
     useEffect(() => {
-        if (typeof window !== 'undefined') {
+        if (typeof window === 'undefined') return;
+
+        const redirectUrl = validateRedirectPath(pathname);
+        if (redirectUrl) {
             window.location.href = redirectUrl;
         }
-    }, [redirectUrl]);
+    }, [pathname]);
 
     // Real 404 error
     return (
