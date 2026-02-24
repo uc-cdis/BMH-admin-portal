@@ -10,7 +10,7 @@ import {
   exchangeCodeForTokens,
   storeTokens,
 } from '@/lib/auth/oidc';
-import { validateRedirectPath } from '@/lib/utils/secure-redirect';
+import { validateRedirectPath } from '@/lib/utils/routes';
 
 function LoginCallbackContent() {
   const searchParams = useSearchParams();

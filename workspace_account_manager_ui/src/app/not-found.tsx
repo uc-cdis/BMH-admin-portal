@@ -1,34 +1,21 @@
 'use client';
 
 import { Suspense, useEffect } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { Alert, Button, Stack, Text } from '@mantine/core';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import Link from 'next/link';
 import { LoadingScreen } from '@/components/loading-screen';
-import { isValidRoute, APP_ROUTES } from '@/lib/utils/routes';
+import { validateRedirectPath, APP_ROUTES } from '@/lib/utils/routes';
 
 
 function NotFoundContent() {
     const pathname = usePathname();
-    const searchParams = useSearchParams();
-    const router = useRouter();
-    const isValid = isValidRoute(pathname);
+    const redirectUrl = validateRedirectPath(pathname);
 
     useEffect(() => {
-        // Build full URL with query parameters
-        const queryString = searchParams.toString();
-        const fullPath = queryString ? `${pathname}?${queryString}` : pathname;
-
-        if (isValid) {
-            router.push(fullPath);
-        }
-    }, [pathname, searchParams, isValid, router]);
-
-    // Show loader while redirecting
-    if (isValid) {
-        return <LoadingScreen message="Redirecting..." />;
-    }
+        window.location.href = redirectUrl;
+    }, [redirectUrl]);
 
     // Real 404 error
     return (
