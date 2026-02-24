@@ -432,7 +432,7 @@ def _workspace_provision(body, path_params):
         ":snstopic": topic_arn,
         ":requeststatus": "provisioning",
         ":accountid": account_id,
-        ":provisiontime": int(datetime.utcnow().timestamp()),
+        ":provisiontime": int(datetime.now(timezone.utc).timestamp()),
     }
     expression_attribute_names = {
         "#apikey": "api-key",
@@ -638,7 +638,7 @@ def _workspaces_set_limits(body, path_params, user):
             ExpressionAttributeValues={
                 ":soft": round(decimal.Decimal(body["soft-limit"]), 2),
                 ":hard": round(decimal.Decimal(body["hard-limit"]), 2),
-                ":limitupdatetime": int(datetime.utcnow().timestamp()),
+                ":limitupdatetime": int(datetime.now(timezone.utc).timestamp()),
                 ":ecs": bool(False),
                 ":local": bool(True),
                 ":status": "active",
@@ -751,7 +751,7 @@ def _workspaces_set_total_usage(body, path_params, api_key):
             ConditionExpression="attribute_exists(bmh_workspace_id)",
             ExpressionAttributeValues={
                 ":totalUsage": formatted_total_usage,
-                ":usageupdatetime": int(datetime.utcnow().timestamp()),
+                ":usageupdatetime": int(datetime.now(timezone.utc).timestamp()),
             },
             ExpressionAttributeNames={
                 "#totalUsage": "total-usage",
