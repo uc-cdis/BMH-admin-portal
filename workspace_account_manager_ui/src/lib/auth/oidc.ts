@@ -2,6 +2,7 @@
 
 import { jwtDecode } from 'jwt-decode';
 import { v4 as uuidv4 } from 'uuid';
+import { APP_ROUTES } from '../utils/routes';
 
 interface DecodedToken {
   context?: {
@@ -176,7 +177,7 @@ export function initiateLogin(
   clientId: string,
   redirectUri: string,
   authService: string,
-  redirectAfterLogin: string = '/'
+  redirectAfterLogin: string = APP_ROUTES.HOME
 ): void {
   if (typeof window === 'undefined') return;
 
@@ -319,6 +320,6 @@ export function logout(): void {
   removeTokens();
 
   if (typeof window !== 'undefined') {
-    window.location.href = '/';
+    window.location.href = APP_ROUTES.HOME;
   }
 }

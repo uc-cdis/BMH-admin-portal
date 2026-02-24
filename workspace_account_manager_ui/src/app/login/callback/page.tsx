@@ -11,6 +11,7 @@ import {
   storeTokens,
 } from '@/lib/auth/oidc';
 import { validateRedirectPath } from '@/lib/utils/secure-redirect';
+import { APP_ROUTES } from '@/lib/utils/routes';
 
 function LoginCallbackContent() {
   const searchParams = useSearchParams();
@@ -69,10 +70,10 @@ function LoginCallbackContent() {
         storeTokens(tokens);
 
         // Get redirect URL
-        const storedPath = localStorage.getItem('redirect_after_login') || '/';
+        const storedPath = localStorage.getItem('redirect_after_login') || APP_ROUTES.HOME;
         localStorage.removeItem('redirect_after_login');
 
-        const redirectUrl = validateRedirectPath(storedPath, '/');
+        const redirectUrl = validateRedirectPath(storedPath, APP_ROUTES.HOME);
 
         // Redirect to app
         window.location.href = redirectUrl;

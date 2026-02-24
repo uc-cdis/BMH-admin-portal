@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@mantine/core';
+import { APP_ROUTES } from '@/lib/utils/routes';
 
 export function Navbar() {
   const { authenticated, userName, logout } = useAuth();
@@ -14,20 +15,20 @@ export function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center py-4">
           <div className="flex items-center space-x-8">
-            <Link href="/" className="text-xl text-white">
+            <Link href={APP_ROUTES.HOME} className="text-xl text-white">
               {(process.env.NEXT_PUBLIC_DISPLAY_NAME) || 'Workspace Admin Portal'}
             </Link>
             <div className="flex space-x-4">
               <Link
-                href="/"
-                className={`hover:text-gray-100 ${pathname === '/' ? 'border-b-2 border-white' : ''
+                href={APP_ROUTES.HOME}
+                className={`hover:text-gray-100 ${pathname === APP_ROUTES.HOME ? 'border-b-2 border-white' : ''
                   }`}
               >
                 Accounts
               </Link>
               <Link
                 href="/request-workspace"
-                className={`hover:text-gray-100 ${pathname === '/request-workspace' ? 'border-b-2 border-white' : ''
+                className={`hover:text-gray-100 ${pathname === APP_ROUTES.REQUEST_WORKSPACE? 'border-b-2 border-white' : ''
                   }`}
               >
                 Request Workspace

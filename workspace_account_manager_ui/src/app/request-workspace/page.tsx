@@ -8,6 +8,7 @@ import StridesCreditForm from '@/components/strides-credits-form';
 import DirectPayForm from '@/components/direct-pay-form';
 import { authorizeCredits } from '@/lib/auth/authorization';
 import { ProtectedRoute } from '@/components/protected-route';
+import { APP_ROUTES } from '@/lib/utils/routes';
 
 interface FormOptions {
   none?: string;
@@ -73,7 +74,7 @@ function RequestWorkspaceContent() {
 
   useEffect(() => {
     if (redirectHome) {
-      router.push('/');
+      router.push(APP_ROUTES.HOME);
     }
   }, [redirectHome, router]);
 

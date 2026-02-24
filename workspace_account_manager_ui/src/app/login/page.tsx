@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Button, Stack } from '@mantine/core';
+import { APP_ROUTES } from '@/lib/utils/routes';
 
 function LoginContent() {
   const searchParams = useSearchParams();
@@ -14,7 +15,7 @@ function LoginContent() {
   // Redirect to home if already authenticated
   useEffect(() => {
     if (authenticated) {
-      window.location.href = '/';
+      window.location.href = APP_ROUTES.HOME;
     }
   }, [authenticated]);
 

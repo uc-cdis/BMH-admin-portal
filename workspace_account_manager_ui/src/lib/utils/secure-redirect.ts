@@ -1,8 +1,10 @@
 // lib/utils/secure-redirect.ts
 
+import { APP_ROUTES } from "./routes";
+
 export function validateRedirectPath(
   path: string | null | undefined,
-  defaultPath: string = '/'
+  defaultPath: string = APP_ROUTES.HOME
 ): string {
   // No path provided - use default
   if (!path || typeof path !== 'string') {
