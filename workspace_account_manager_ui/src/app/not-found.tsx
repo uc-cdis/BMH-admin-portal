@@ -6,29 +6,24 @@ import { Alert, Button, Stack, Text } from '@mantine/core';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import Link from 'next/link';
 import { LoadingScreen } from '@/components/loading-screen';
-import { isValidRoute, APP_ROUTES } from '@/lib/utils/routes';
+import { validateRedirectPath, APP_ROUTES } from '@/lib/utils/routes';
 
 
 function NotFoundContent() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const router = useRouter();
-    const isValid = isValidRoute(pathname);
 
     useEffect(() => {
         // Build full URL with query parameters
         const queryString = searchParams.toString();
         const fullPath = queryString ? `${pathname}?${queryString}` : pathname;
+        const redirectUrl = validateRedirectPath(fullPath)
 
-        if (isValid) {
-            router.push(fullPath);
+        if (redirectUrl) {
+            router.push(redirectUrl);
         }
-    }, [pathname, searchParams, isValid, router]);
-
-    // Show loader while redirecting
-    if (isValid) {
-        return <LoadingScreen message="Redirecting..." />;
-    }
+    }, [pathname, searchParams, router]);
 
     // Real 404 error
     return (

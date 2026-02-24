@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import { useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
 import {
   validateState,
@@ -10,12 +10,11 @@ import {
   exchangeCodeForTokens,
   storeTokens,
 } from '@/lib/auth/oidc';
-import { validateRedirectPath } from '@/lib/utils/secure-redirect';
+import { validateRedirectPath } from '@/lib/utils/routes';
 import { APP_ROUTES } from '@/lib/utils/routes';
 
 function LoginCallbackContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(true);
 
@@ -73,10 +72,12 @@ function LoginCallbackContent() {
         const storedPath = localStorage.getItem('redirect_after_login') || APP_ROUTES.HOME;
         localStorage.removeItem('redirect_after_login');
 
-        const redirectUrl = validateRedirectPath(storedPath, APP_ROUTES.HOME);
+        const redirectUrl = validateRedirectPath(storedPath);
 
         // Redirect to app
-        window.location.href = redirectUrl;
+        if (redirectUrl) {
+          window.location.href = redirectUrl;
+        }
 
       } catch (err) {
         console.error('❌ Authentication error:', err);
@@ -86,7 +87,7 @@ function LoginCallbackContent() {
     }
 
     handleCallback();
-  }, [searchParams, router]);
+  }, [searchParams]);
 
   if (error) {
     return (
