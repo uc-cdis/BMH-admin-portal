@@ -119,11 +119,18 @@ function WorkspaceAccountsAdminContent() {
   const EditableAccountCell = ({
     value,
     workspaceId,
+    workspaceType,
   }: {
     value?: string;
     workspaceId: string;
+    workspaceType: string;
   }) => {
     const isEditing = editingCell?.rowId === workspaceId;
+
+    // Non-editable for Trial Workspaces
+    if (workspaceType === 'Trial Workspace') {
+      return <Text size="sm">{value || '-'}</Text>;
+    }
 
     if (isEditing) {
       return (
@@ -184,6 +191,7 @@ function WorkspaceAccountsAdminContent() {
         <EditableAccountCell
           value={info.getValue() as string | undefined}
           workspaceId={info.row.original.bmh_workspace_id}
+          workspaceType={info.row.original.workspace_type}
         />
       ),
       enableSorting: false,
