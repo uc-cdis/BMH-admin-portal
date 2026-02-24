@@ -162,6 +162,7 @@ function WorkspaceAccountsContent() {
     if (isEditing) {
       return (
         <TextInput
+          data-testid={`edit-input-${workspaceId}-${field}`}
           value={editingCell.value}
           onChange={(e) =>
             setEditingCell({ ...editingCell, value: e.target.value })
@@ -190,6 +191,7 @@ function WorkspaceAccountsContent() {
       <Group gap="xs" justify="space-between">
         <Text>${value}</Text>
         <ActionIcon
+          data-testid={`edit-btn-${workspaceId}-${field}`}
           variant="subtle"
           size="sm"
           onClick={() =>
