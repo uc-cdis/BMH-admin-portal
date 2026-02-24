@@ -14,7 +14,9 @@ function NotFoundContent() {
     const redirectUrl = validateRedirectPath(pathname);
 
     useEffect(() => {
-        window.location.href = redirectUrl;
+        if (typeof window !== 'undefined') {
+            window.location.href = redirectUrl;
+        }
     }, [redirectUrl]);
 
     // Real 404 error
