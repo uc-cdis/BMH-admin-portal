@@ -30,7 +30,6 @@ import { getWorkspaces, setWorkspaceLimits, Workspace } from '@/lib/api/workspac
 import { authorizeAdmin } from '@/lib/auth/authorization';
 import { SortableHeader, BoldHeader } from '@/components/sortable-header';
 import { ProtectedRoute } from './protected-route';
-import { APP_ROUTES } from '@/lib/utils/routes';
 
 
 function WorkspaceAccountsContent() {
@@ -534,7 +533,7 @@ function WorkspaceAccountsContent() {
         <Group justify="center" mt="xl">
           <Button
             component={Link}
-            href={APP_ROUTES.REQUEST_WORKSPACE}
+            href="/request-workspace"
             size="lg"
             variant="filled"
           >
@@ -544,7 +543,7 @@ function WorkspaceAccountsContent() {
           {adminAuthorized && (
             <Button
               component={Link}
-              href={APP_ROUTES.ADMIN}
+              href="/admin"
               size="lg"
               variant="filled"
               color="yellow"

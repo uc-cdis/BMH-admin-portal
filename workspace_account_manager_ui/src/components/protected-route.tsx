@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { isAuthenticated } from '@/lib/auth/oidc';
 import { authorizeAdmin } from '@/lib/auth/authorization';
 import { Center, Loader, Stack, Text, Alert } from '@mantine/core';
 import { IconAlertTriangle } from '@tabler/icons-react';
-import { APP_ROUTES } from '@/lib/utils/routes';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -13,12 +13,32 @@ interface ProtectedRouteProps {
   requireAdmin?: boolean;
 }
 
-
+/**
+ * ProtectedRoute component for Next.js App Router
+ *
+ * Handles both basic authentication and admin authorization checks.
+ *
+ * @param requireAuth - Requires user to be logged in (default: true)
+ * @param requireAdmin - Requires user to have admin privileges (default: false)
+ *
+ * @example
+ * // Basic auth protection
+ * <ProtectedRoute>
+ *   <WorkspaceAccountsPage />
+ * </ProtectedRoute>
+ *
+ * @example
+ * // Admin auth protection
+ * <ProtectedRoute requireAdmin>
+ *   <AdminPage />
+ * </ProtectedRoute>
+ */
 export function ProtectedRoute({
   children,
   requireAuth = true,
   requireAdmin = false,
 }: ProtectedRouteProps) {
+  const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
@@ -26,10 +46,8 @@ export function ProtectedRoute({
     async function checkAuth() {
       // Check basic authentication first
       if (requireAuth && !isAuthenticated()) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('redirect_after_login', window.location.pathname);
-          window.location.href = APP_ROUTES.LOGIN;
-        }
+        localStorage.setItem('redirect_after_login', window.location.pathname);
+        router.push('/login');
         return;
       }
 
@@ -58,7 +76,7 @@ export function ProtectedRoute({
     }
 
     checkAuth();
-  }, [requireAuth, requireAdmin]);
+  }, [requireAuth, requireAdmin, router]);
 
   // Show loading state while checking auth
   if (isChecking) {

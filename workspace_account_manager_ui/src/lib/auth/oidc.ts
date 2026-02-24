@@ -2,7 +2,6 @@
 
 import { jwtDecode } from 'jwt-decode';
 import { v4 as uuidv4 } from 'uuid';
-import { APP_ROUTES } from '../utils/routes';
 
 interface DecodedToken {
   context?: {
@@ -177,7 +176,7 @@ export function initiateLogin(
   clientId: string,
   redirectUri: string,
   authService: string,
-  redirectAfterLogin: string = APP_ROUTES.HOME
+  redirectAfterLogin: string = '/'
 ): void {
   if (typeof window === 'undefined') return;
 
@@ -187,10 +186,7 @@ export function initiateLogin(
   // Store in localStorage
   setItem('oauth_state', state);
   setItem('oauth_nonce', nonce);
-  const existingRedirect = getItem('redirect_after_login');
-  if (!existingRedirect) {
-    setItem('redirect_after_login', redirectAfterLogin);
-  }
+  setItem('redirect_after_login', redirectAfterLogin);
 
   // Build OAuth URL
   const params = new URLSearchParams({
@@ -323,6 +319,6 @@ export function logout(): void {
   removeTokens();
 
   if (typeof window !== 'undefined') {
-    window.location.href = APP_ROUTES.HOME;
+    window.location.href = '/';
   }
 }

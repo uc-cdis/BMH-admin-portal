@@ -10,7 +10,7 @@ import {
   exchangeCodeForTokens,
   storeTokens,
 } from '@/lib/auth/oidc';
-import { APP_ROUTES, validateRedirectPath } from '@/lib/utils/routes';
+import { validateRedirectPath } from '@/lib/utils/secure-redirect';
 
 function LoginCallbackContent() {
   const searchParams = useSearchParams();
@@ -69,15 +69,13 @@ function LoginCallbackContent() {
         storeTokens(tokens);
 
         // Get redirect URL
-        const storedPath = localStorage.getItem('redirect_after_login') || APP_ROUTES.HOME;
+        const storedPath = localStorage.getItem('redirect_after_login') || '/';
         localStorage.removeItem('redirect_after_login');
 
-        const redirectUrl = validateRedirectPath(storedPath);
+        const redirectUrl = validateRedirectPath(storedPath, '/');
 
         // Redirect to app
-        if (redirectUrl){
-          window.location.href = redirectUrl;
-        }
+        window.location.href = redirectUrl;
 
       } catch (err) {
         console.error('❌ Authentication error:', err);
@@ -102,7 +100,7 @@ function LoginCallbackContent() {
               {error === 'invalid_request' && 'Invalid request. Missing required parameters.'}
             </p>
             <a
-              href={APP_ROUTES.LOGIN}
+              href="/login"
               className="mt-4 inline-block text-sm underline hover:text-red-800"
             >
               Back to Login

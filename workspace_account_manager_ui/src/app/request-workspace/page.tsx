@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Container, Title, Text, SegmentedControl, Paper, Stack, Center } from '@mantine/core';
 import StridesGrantForm from '@/components/strides-grant-form';
 import StridesCreditForm from '@/components/strides-credits-form';
 import DirectPayForm from '@/components/direct-pay-form';
 import { authorizeCredits } from '@/lib/auth/authorization';
 import { ProtectedRoute } from '@/components/protected-route';
-import { APP_ROUTES } from '@/lib/utils/routes';
 
 interface FormOptions {
   none?: string;
@@ -30,6 +30,7 @@ function RequestWorkspaceContent() {
     [FORM_OPTIONS.directPay!]: 'green'
   };
 
+  const router = useRouter();
   const [formToggle, setFormToggle] = useState<string>(DEFAULT_FORM);
   const [redirectHome, setRedirectHome] = useState(false);
   const [creditsAuthorized, setCreditsAuthorized] = useState(true);
@@ -72,9 +73,9 @@ function RequestWorkspaceContent() {
 
   useEffect(() => {
     if (redirectHome) {
-      window.location.href = APP_ROUTES.HOME
+      router.push('/');
     }
-  }, [redirectHome]);
+  }, [redirectHome, router]);
 
   const handleChange = (value: string) => {
     setFormToggle(value);
