@@ -9,6 +9,7 @@ export const APP_ROUTES = {
   REQUEST_WORKSPACE: '/request-workspace',
 } as const;
 
+export const VALID_ROUTES: string[] = Object.values(APP_ROUTES);
 
 export function validateRedirectPath(
   path: string | null | undefined
@@ -30,6 +31,8 @@ export function validateRedirectPath(
     }
 
     const url = new URL(path, window.location.origin);
+
+    if (!VALID_ROUTES.includes(url.pathname)) return null;
 
     // All checks passed - return sanitized path
     const sanitizedPath = url.pathname + url.search + url.hash;
