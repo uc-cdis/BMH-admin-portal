@@ -25,6 +25,8 @@ function NotFoundContent() {
         }
     }, [pathname, searchParams, router]);
 
+    if (typeof window === 'undefined') return;
+
     // Real 404 error
     return (
         <div className="min-h-screen flex items-center justify-center p-4">
