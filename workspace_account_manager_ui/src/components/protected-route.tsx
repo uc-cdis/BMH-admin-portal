@@ -26,8 +26,10 @@ export function ProtectedRoute({
     async function checkAuth() {
       // Check basic authentication first
       if (requireAuth && !isAuthenticated()) {
-        localStorage.setItem('redirect_after_login', window.location.pathname);
-        window.location.href = APP_ROUTES.LOGIN;
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('redirect_after_login', window.location.pathname);
+          window.location.href = APP_ROUTES.LOGIN;
+        }
         return;
       }
 
