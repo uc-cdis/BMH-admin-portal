@@ -13,26 +13,7 @@ interface ProtectedRouteProps {
   requireAdmin?: boolean;
 }
 
-/**
- * ProtectedRoute component for Next.js App Router
- *
- * Handles both basic authentication and admin authorization checks.
- *
- * @param requireAuth - Requires user to be logged in (default: true)
- * @param requireAdmin - Requires user to have admin privileges (default: false)
- *
- * @example
- * // Basic auth protection
- * <ProtectedRoute>
- *   <WorkspaceAccountsPage />
- * </ProtectedRoute>
- *
- * @example
- * // Admin auth protection
- * <ProtectedRoute requireAdmin>
- *   <AdminPage />
- * </ProtectedRoute>
- */
+
 export function ProtectedRoute({
   children,
   requireAuth = true,
@@ -47,7 +28,7 @@ export function ProtectedRoute({
       // Check basic authentication first
       if (requireAuth && !isAuthenticated()) {
         localStorage.setItem('redirect_after_login', window.location.pathname);
-        router.push('/login');
+        window.location.href = '/login';
         return;
       }
 
