@@ -10,18 +10,22 @@ import { APP_ROUTES } from '@/lib/utils/routes';
 function LoginContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
-  const { authenticated, login } = useAuth();
+  const { authenticated, login, loading } = useAuth();
 
   // Redirect to home if already authenticated
   useEffect(() => {
-    if (authenticated) {
+    if (!loading && authenticated) {
       window.location.href = APP_ROUTES.HOME;
     }
-  }, [authenticated]);
+  }, [authenticated, loading]);
 
   const handleLogin = () => {
     login()
   };
+
+  if (loading) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">

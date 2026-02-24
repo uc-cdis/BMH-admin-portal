@@ -72,10 +72,12 @@ function LoginCallbackContent() {
         const storedPath = localStorage.getItem('redirect_after_login') || APP_ROUTES.HOME;
         localStorage.removeItem('redirect_after_login');
 
-        const redirectUrl = validateRedirectPath(storedPath, APP_ROUTES.HOME);
+        const redirectUrl = validateRedirectPath(storedPath);
 
         // Redirect to app
-        window.location.href = redirectUrl;
+        if (redirectUrl){
+          window.location.href = redirectUrl;
+        }
 
       } catch (err) {
         console.error('❌ Authentication error:', err);

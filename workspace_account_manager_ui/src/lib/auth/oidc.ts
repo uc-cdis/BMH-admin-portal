@@ -187,7 +187,10 @@ export function initiateLogin(
   // Store in localStorage
   setItem('oauth_state', state);
   setItem('oauth_nonce', nonce);
-  setItem('redirect_after_login', redirectAfterLogin);
+  const existingRedirect = getItem('redirect_after_login');
+  if (!existingRedirect) {
+    setItem('redirect_after_login', redirectAfterLogin);
+  }
 
   // Build OAuth URL
   const params = new URLSearchParams({

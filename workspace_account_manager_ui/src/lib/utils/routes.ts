@@ -34,13 +34,12 @@ export function isValidRoute(pathname: string): boolean {
 }
 
 export function validateRedirectPath(
-  path: string | null | undefined,
-  defaultPath: string = APP_ROUTES.HOME
-): string {
+  path: string | null | undefined
+): string | null {
   // No path provided - use default
   if (!path || typeof path !== 'string') {
-    console.log('ℹ️ No redirect path provided, using default:', defaultPath);
-    return defaultPath;
+    console.log('ℹ️ No redirect path provided');
+    return null;
   }
 
   try {
@@ -50,13 +49,13 @@ export function validateRedirectPath(
     // Check 1: Must start with / (relative path)
     if (!path.startsWith('/')) {
       console.warn('⚠️ Redirect path must start with /:', path);
-      return defaultPath;
+      return null;
     }
 
     // Check 2: Must not be protocol-relative URL (//)
     if (path.startsWith('//')) {
       console.warn('⚠️ Protocol-relative URLs blocked:', path);
-      return defaultPath;
+      return null;
     }
 
     // Check 3: Parse as URL to validate format
@@ -68,7 +67,7 @@ export function validateRedirectPath(
         attempted: url.origin,
         current: window.location.origin,
       });
-      return defaultPath;
+      return null;
     }
 
     // All checks passed - return sanitized path
@@ -76,6 +75,6 @@ export function validateRedirectPath(
     return sanitizedPath;
   } catch (err) {
     console.warn('⚠️ Invalid redirect path:', path, err);
-    return defaultPath;
+    return null;
   }
 }
