@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "s3upload": "npm run build && aws s3 sync ./out s3://brh-portal-bucket-website --sse AES256",
+    "s3upload": "npm run build && aws s3 sync ./out s3://brh-portal-bucket-website --sse AES256 --delete",
     "test": "jest"
   },
   "dependencies": {
