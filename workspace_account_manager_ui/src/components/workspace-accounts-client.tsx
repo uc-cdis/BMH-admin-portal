@@ -366,9 +366,7 @@ function WorkspaceAccountsContent() {
 
   if (loading) {
     return (
-      <Container size="xl" py="xl">
         <LoadingScreen primaryMessage='Loading workspace accounts...'/>
-      </Container>
     );
   }
 
