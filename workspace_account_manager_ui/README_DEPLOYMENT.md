@@ -1,8 +1,8 @@
-# BMH Admin Portal CloudFront Distribution and React Application
+# Workspace Account Management Portal (formerly known as BMH Admin Portal) CloudFront Distribution and React Application
 
 ## Introduction
 
-This document contains the instructions for deploying the CloudFormation templates that will deploy the BRH Portal CloudFront distribution, and set up an S3 bucket as the source for the React static files.
+This document contains the instructions for deploying the CloudFormation templates that will deploy the Workspace Account Management Portal CloudFront distribution, and set up an S3 bucket as the source for the React static files.
 
 ## Pre-Requisites
 
