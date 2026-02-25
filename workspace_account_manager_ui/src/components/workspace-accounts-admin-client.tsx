@@ -6,8 +6,6 @@ import {
   Title,
   Text,
   Alert,
-  Loader,
-  Center,
   Stack,
   Paper,
   ActionIcon,

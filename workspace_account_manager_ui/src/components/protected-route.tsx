@@ -4,9 +4,10 @@ import { useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { isAuthenticated } from '@/lib/auth/oidc';
 import { authorizeAdmin } from '@/lib/auth/authorization';
-import { Center, Loader, Stack, Text, Alert } from '@mantine/core';
+import { Center, Text, Alert } from '@mantine/core';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { APP_ROUTES } from '@/lib/utils/routes';
+import { LoadingScreen } from './loading-screen';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -63,12 +64,7 @@ export function ProtectedRoute({
   // Show loading state while checking auth
   if (isChecking) {
     return (
-      <Center style={{ minHeight: '100vh' }}>
-        <Stack align="center" gap="md">
-          <Loader size="lg" />
-          <Text c="dimmed">Checking authorization...</Text>
-        </Stack>
-      </Center>
+      <LoadingScreen primaryMessage='Checking authorization...' />
     );
   }
 

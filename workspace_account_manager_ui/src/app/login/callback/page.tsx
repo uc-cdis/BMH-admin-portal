@@ -17,7 +17,6 @@ import { LoadingScreen } from '@/components/loading-screen';
 function LoginCallbackContent() {
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
-  const [processing, setProcessing] = useState(true);
 
   useEffect(() => {
     async function handleCallback() {
@@ -29,7 +28,6 @@ function LoginCallbackContent() {
       if (oauthError) {
         console.error('❌ OAuth error:', oauthError);
         setError(oauthError);
-        setProcessing(false);
         return;
       }
 
@@ -37,7 +35,6 @@ function LoginCallbackContent() {
       if (!code || !state) {
         console.error('❌ Missing code or state');
         setError('invalid_request');
-        setProcessing(false);
         return;
       }
 
@@ -45,7 +42,6 @@ function LoginCallbackContent() {
       if (!validateState(state)) {
         console.error('❌ State validation failed');
         setError('invalid_state');
-        setProcessing(false);
         return;
       }
 
@@ -62,7 +58,6 @@ function LoginCallbackContent() {
         if (!validateNonce(decoded.nonce)) {
           console.error('❌ Nonce validation failed');
           setError('invalid_nonce');
-          setProcessing(false);
           return;
         }
 
@@ -83,7 +78,6 @@ function LoginCallbackContent() {
       } catch (err) {
         console.error('❌ Authentication error:', err);
         setError('authentication_failed');
-        setProcessing(false);
       }
     }
 
