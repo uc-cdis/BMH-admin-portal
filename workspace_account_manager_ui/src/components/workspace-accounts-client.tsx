@@ -30,6 +30,7 @@ import { getWorkspaces, setWorkspaceLimits, Workspace } from '@/lib/api/workspac
 import { authorizeAdmin } from '@/lib/auth/authorization';
 import { SortableHeader, BoldHeader } from '@/components/sortable-header';
 import { ProtectedRoute } from './protected-route';
+import { LoadingScreen } from './loading-screen';
 
 
 function WorkspaceAccountsContent() {
@@ -368,12 +369,7 @@ function WorkspaceAccountsContent() {
   if (loading) {
     return (
       <Container size="xl" py="xl">
-        <Center style={{ minHeight: '400px' }}>
-          <Stack align="center" gap="md">
-            <Loader size="lg" />
-            <Text c="dimmed">Loading workspace accounts...</Text>
-          </Stack>
-        </Center>
+        <LoadingScreen primaryMessage='Loading workspace accounts...'/>
       </Container>
     );
   }

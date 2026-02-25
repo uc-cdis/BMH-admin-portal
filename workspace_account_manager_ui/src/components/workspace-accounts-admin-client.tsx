@@ -30,6 +30,7 @@ import {
 import { getAdminWorkspaces, approveWorkspace, Workspace } from '@/lib/api/workspace-api';
 import { SortableHeader, BoldHeader } from '@/components/sortable-header';
 import { ProtectedRoute } from './protected-route';
+import { LoadingScreen } from './loading-screen';
 
 const DIRECT_PAY = 'Direct Pay';
 
@@ -299,12 +300,7 @@ function WorkspaceAccountsAdminContent() {
   if (loading) {
     return (
       <Container size="xl" py="xl">
-        <Center style={{ minHeight: '400px' }}>
-          <Stack align="center" gap="md">
-            <Loader size="lg" />
-            <Text c="dimmed">Loading workspace accounts administration page...</Text>
-          </Stack>
-        </Center>
+        <LoadingScreen primaryMessage='Loading workspace accounts administration page...'/>
       </Container>
     );
   }
