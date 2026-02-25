@@ -98,7 +98,7 @@ Open the **package.json** file in a text editor. Under the **scripts** section o
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "s3upload": "npm run build && aws s3 sync ./out s3://bmh-admin-portal-bucket --sse AES256"
+    "s3upload": "npm run build && aws s3 sync ./out s3://bmh-admin-portal-bucket --sse AES256 --delete"
   }
 ```
 
