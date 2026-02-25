@@ -90,8 +90,6 @@ describe('WorkspaceAccountsAdminClient', () => {
     mockedApproveWorkspace.mockResolvedValue(undefined);
   });
 
-  // ── Loading state ──────────────────────────────────────────────────────────
-
   describe('Loading state', () => {
     it('shows a loading spinner while data is being fetched', () => {
       // Never resolve so we stay in loading state
@@ -107,8 +105,6 @@ describe('WorkspaceAccountsAdminClient', () => {
       );
     });
   });
-
-  // ── Table rendering ────────────────────────────────────────────────────────
 
   describe('Table rendering', () => {
     it('renders the page title', async () => {
@@ -184,8 +180,6 @@ describe('WorkspaceAccountsAdminClient', () => {
     });
   });
 
-  // ── Editable account ID cell ───────────────────────────────────────────────
-
   describe('Editable Account ID cell', () => {
     it('renders a pencil icon edit button for non-Trial workspaces', async () => {
       setup();
@@ -259,8 +253,6 @@ describe('WorkspaceAccountsAdminClient', () => {
       expect(screen.queryByText(/confirm workspace approval/i)).not.toBeInTheDocument();
     });
   });
-
-  // ── API interactions ───────────────────────────────────────────────────────
 
   describe('API interactions', () => {
     it('calls getAdminWorkspaces once on mount', async () => {

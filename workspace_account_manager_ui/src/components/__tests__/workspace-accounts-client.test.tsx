@@ -6,7 +6,7 @@ import WorkspaceAccountsClient from '../workspace-accounts-client';
 import { getWorkspaces, setWorkspaceLimits } from '@/lib/api/workspace-api';
 import { authorizeAdmin } from '@/lib/auth/authorization';
 
-// --- Mocks ---
+// ─── Mocks ───────────────────────────────────────────────────────────────────
 
 jest.mock('@/lib/api/workspace-api', () => ({
     getWorkspaces: jest.fn(),
@@ -27,7 +27,7 @@ jest.mock('next/link', () =>
     }
 );
 
-// --- Fixtures ---
+// ─── Fixtures ────────────────────────────────────────────────────────────────────
 
 const stridesWorkspace = {
     bmh_workspace_id: 'ws-strides-1',
@@ -51,7 +51,7 @@ const directPayWorkspace = {
     'hard-limit': 600,
 };
 
-// --- Helpers ---
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const mockGetWorkspaces = getWorkspaces as jest.MockedFunction<typeof getWorkspaces>;
 const mockAuthorizeAdmin = authorizeAdmin as jest.MockedFunction<typeof authorizeAdmin>;
@@ -64,7 +64,7 @@ function setup(workspaces = [stridesWorkspace, directPayWorkspace], isAdmin = fa
     return render(<WorkspaceAccountsClient />);
 }
 
-// --- Tests ---
+// ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('WorkspaceAccountsClient', () => {
     beforeEach(() => {
