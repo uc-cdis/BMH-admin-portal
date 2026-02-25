@@ -399,7 +399,7 @@ function WorkspaceAccountsAdminContent() {
             this account. Make sure the account ID is correct.
           </Text>
           <Group justify="flex-end" mt="md">
-            <Button variant="default" onClick={handleCancelApproval}>
+            <Button variant="default" onClick={handleCancelApproval} disabled={!!pendingApproval?.confirming}>
               Cancel
             </Button>
             <Button color="blue" onClick={handleConfirmApproval} loading={!!pendingApproval?.confirming} disabled={!!pendingApproval?.confirming}>
