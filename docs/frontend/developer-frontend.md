@@ -1,13 +1,13 @@
-# BRH Frontend Infrastructure
+# Workspace Account Management Portal Frontend Infrastructure
 
 ## Overview
-The BRH Portal FrontEnd component is a React application deployed using S3 hosting with a CloudFront distribution for a CDN. For instructions on deploying the frontend, see [Frontend Deployment Instructions](../bmh_admin_portal_ui/../../bmh_admin_portal_ui/README_DEPLOYMENT.md)
+The Workspace Account Management Portal (formerly known as the BMH Admin Portal) FrontEnd component is a React application deployed using S3 hosting with a CloudFront distribution for a CDN. For instructions on deploying the frontend, see [Frontend Deployment Instructions](../workspace_account_manager_ui/README_DEPLOYMENT.md)
 
 ## Authentication (Fence)
-Authentication is performed by using [Fence](https://github.com/uc-cdis/fence). The site was tested using Google and RAS logins (this can be configured in `bmh_admin_portal_ui/src/config.json`).
+Authentication is performed by using [Fence](https://github.com/uc-cdis/fence). The site was tested using Google and RAS logins (this can be configured in `workspace_account_manager_ui/.env`).
 
 ## Authorization (Arborist)
-Authorization is performed by using [Arborist](https://github.com/uc-cdis/arborist). There are 2 resources which apply to the BRH Admin Portal (these can be configured in `bmh_admin_portal_ui/src/config.json`).
+Authorization is performed by using [Arborist](https://github.com/uc-cdis/arborist). There are 2 resources which apply to the Workspace Account Management Portal (these can be configured in `workspace_account_manager_ui/config.json`).
 
 1. /workspace_stride_credits (service: workspace_stride_credits)
 2. /workspace_stride_grants (service: workspace_stride_grants)
@@ -21,7 +21,7 @@ The workspace page shows a list of requested workspaces, their statuses (Pending
 This page implements forms which are used to request a new workspace. The form provided will be sent directly to the configured emails (in the backend bmh_admin_portal_config.py file).
 
 ## Running Front End Unit Tests
-cd bmh_admin_portal_ui
+cd workspace_account_manager_ui
 npm ci
 npm run build --if-present
 npm test .
