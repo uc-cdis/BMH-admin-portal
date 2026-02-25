@@ -383,6 +383,7 @@ function WorkspaceAccountsAdminContent() {
 
       <Modal
         opened={confirmModalOpened}
+        withCloseButton={false}
         onClose={handleCancelApproval}
         title="Confirm Workspace Approval"
         centered
