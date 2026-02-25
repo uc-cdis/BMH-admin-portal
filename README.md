@@ -1,5 +1,5 @@
 # BMH-admin-portal
-Shared Codebase for the Biomedical Research Hub Initiative. This repository contains information related to the BRH Admin Portal.
+Shared Codebase for the Biomedical Research Hub Initiative. This repository contains information related to the Workspace Account Management Portal (formerly known as BMH Admin Portal).
 # Developer Documentation
 An overview of the application and infrastructure (including architecture diagram) can be found:
 * [Developer Documentation](./docs/README.md)
@@ -33,8 +33,8 @@ You should then be ready to deploy the CloudFormation template `AccountCreationL
    4.  ArtifactBucketName - The bucket name from above where deployment artifacts are located (i.e. occ-account-deploy, no `s3://` or `https://` prefixes)
    5.  ServiceCatalogTag - Tag used for the service catalog infrastructure (not used for BRH, but required in the CloudFormation)
 
-## Deploy BRH Admin Portal Backend
+## Deploy Workspace Account Management Portal Backend
 This will deploy the backend API which will handle requests. The deployment instructions can be found [here](bmh_admin_portal_backend/README.md).
 
-## Deploy BRH Admin Portal Frontend
-This will deploy the front end React application. The deployment instructions can be found [here](bmh_admin_portal_ui/README_DEPLOYMENT.md).
+## Deploy Workspace Account Management Portal Frontend
+This will deploy the front end React application. The deployment instructions can be found [here](workspace_account_manager_ui/README_DEPLOYMENT.md).
