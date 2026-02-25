@@ -27,7 +27,6 @@ interface DirectPayFormProps {
 const occHelpURL = process.env.NEXT_PUBLIC_OCC_HELPER_URL;
 
 export default function DirectPayForm({ updateRedirectHome }: DirectPayFormProps) {
-  // Billing ID confirmation state
   const [billingIdConfirmed, setBillingIdConfirmed] = useState<boolean | null>(null);
   const [directPayLimit, setDirectPayLimit] = useState(0);
   const [isConfirmingBilling, setIsConfirming] = useState(false);
@@ -36,7 +35,6 @@ export default function DirectPayForm({ updateRedirectHome }: DirectPayFormProps
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // Billing ID confirmation form
   const directPayBillingForm = useForm({
     initialValues: {
       billing_id: '',
@@ -68,7 +66,6 @@ export default function DirectPayForm({ updateRedirectHome }: DirectPayFormProps
     },
   });
 
-  // Handle billing ID confirmation
   const handleBillingFormSubmit = async (values: typeof directPayBillingForm.values) => {
     setIsConfirming(true);
     setError(null);
@@ -117,7 +114,6 @@ export default function DirectPayForm({ updateRedirectHome }: DirectPayFormProps
     }
   };
 
-  // Handle workspace request submission
   const handleWorkspaceFormSubmit = async (values: typeof directPayWorkspaceForm.values) => {
     setIsSubmitting(true);
     setError(null);
@@ -202,7 +198,6 @@ export default function DirectPayForm({ updateRedirectHome }: DirectPayFormProps
 
   return (
     <Stack gap="lg">
-      {/* Billing ID Confirmation Form */}
       <Form onSubmit={handleBillingFormSubmit} form={directPayBillingForm}>
         <Stack gap="md">
           <TextInput
@@ -266,7 +261,6 @@ export default function DirectPayForm({ updateRedirectHome }: DirectPayFormProps
         </Stack>
       </Form>
 
-      {/* Error Alert */}
       {billingIdConfirmed === false && (
         <Alert
           icon={<IconAlertCircle size="1rem" />}
@@ -280,7 +274,6 @@ export default function DirectPayForm({ updateRedirectHome }: DirectPayFormProps
         </Alert>
       )}
 
-      {/* Main Form (shown after billing ID confirmation) */}
       {billingIdConfirmed === true && (
         <Form onSubmit={handleWorkspaceFormSubmit} form={directPayWorkspaceForm}>
           <Stack gap="lg">
@@ -295,7 +288,6 @@ export default function DirectPayForm({ updateRedirectHome }: DirectPayFormProps
               </Alert>
             )}
 
-            {/* Credit Card Consent */}
             <Checkbox
               label={
                 <Text size="sm">
@@ -315,7 +307,6 @@ export default function DirectPayForm({ updateRedirectHome }: DirectPayFormProps
               update your request amount.
             </Text>
 
-            {/* Project Information */}
             <Stack gap="md">
               <Title order={5}>Project Information</Title>
 
@@ -402,7 +393,6 @@ export default function DirectPayForm({ updateRedirectHome }: DirectPayFormProps
               />
             </Stack>
 
-            {/* Submit Button */}
             <Group justify="center" mt="md">
               <Button type="submit" loading={isSubmitting} disabled={isSubmitting} size="lg" color="blue">
                 Submit Request

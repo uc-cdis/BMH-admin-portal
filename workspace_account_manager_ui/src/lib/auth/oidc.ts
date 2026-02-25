@@ -23,13 +23,6 @@ interface TokenSet {
   refresh_token: string;
 }
 
-// ============================================================================
-// LOCALSTORAGE HELPERS
-// ============================================================================
-
-/**
- * Safe localStorage setter
- */
 function setItem(key: string, value: string): void {
   if (typeof window === 'undefined') return;
   try {
@@ -39,9 +32,6 @@ function setItem(key: string, value: string): void {
   }
 }
 
-/**
- * Safe localStorage getter
- */
 function getItem(key: string): string | null {
   if (typeof window === 'undefined') return null;
   try {
@@ -53,9 +43,6 @@ function getItem(key: string): string | null {
   }
 }
 
-/**
- * Safe localStorage remover
- */
 function removeItem(key: string): void {
   if (typeof window === 'undefined') return;
   try {
@@ -65,43 +52,24 @@ function removeItem(key: string): void {
   }
 }
 
-// ============================================================================
-// TOKEN MANAGEMENT
-// ============================================================================
-
-/**
- * Get access token
- */
 export function getAccessToken(): string | null {
   return getItem('access_token');
 }
 
-/**
- * Get ID token
- */
 export function getIdToken(): string | null {
   return getItem('id_token');
 }
 
-/**
- * Get refresh token
- */
 export function getRefreshToken(): string | null {
   return getItem('refresh_token');
 }
 
-/**
- * Store tokens
- */
 export function storeTokens(tokens: TokenSet): void {
   setItem('id_token', tokens.id_token);
   setItem('access_token', tokens.access_token);
   setItem('refresh_token', tokens.refresh_token);
 }
 
-/**
- * Remove all tokens
- */
 export function removeTokens(): void {
   removeItem('id_token');
   removeItem('access_token');
@@ -110,10 +78,6 @@ export function removeTokens(): void {
   removeItem('oauth_nonce');
   removeItem('redirect_after_login');
 }
-
-// ============================================================================
-// AUTHENTICATION STATUS
-// ============================================================================
 
 /**
  * Check if user is authenticated
@@ -165,13 +129,6 @@ export function getEmail(): string | null {
   }
 }
 
-// ============================================================================
-// OAUTH FLOW
-// ============================================================================
-
-/**
- * Initiate OAuth login
- */
 export function initiateLogin(
   authUri: string,
   clientId: string,
@@ -205,9 +162,6 @@ export function initiateLogin(
   window.location.assign(authUrl);
 }
 
-/**
- * Validate state (CSRF protection)
- */
 export function validateState(receivedState: string): boolean {
   const storedState = getItem('oauth_state');
   const isValid = receivedState === storedState;
@@ -219,9 +173,6 @@ export function validateState(receivedState: string): boolean {
   return isValid;
 }
 
-/**
- * Validate nonce (replay protection)
- */
 export function validateNonce(receivedNonce: string): boolean {
   const storedNonce = getItem('oauth_nonce');
   const isValid = receivedNonce === storedNonce;
@@ -273,9 +224,6 @@ export async function exchangeCodeForTokens(
   };
 }
 
-/**
- * Refresh tokens
- */
 export async function refreshTokens(): Promise<boolean> {
   const apiEndpoint = process.env.NEXT_PUBLIC_API_GW_ENDPOINT!;
   const apiKey = process.env.NEXT_PUBLIC_API_KEY!;
@@ -313,9 +261,6 @@ export async function refreshTokens(): Promise<boolean> {
   }
 }
 
-/**
- * Logout
- */
 export function logout(): void {
   removeTokens();
 

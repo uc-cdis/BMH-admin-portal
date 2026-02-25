@@ -52,7 +52,6 @@ function WorkspaceAccountsAdminContent() {
       setLoading(true);
 
       try {
-        // Get all workspaces
         const data = await getAdminWorkspaces();
 
         // Sort by user_id
@@ -91,7 +90,6 @@ function WorkspaceAccountsAdminContent() {
 
       await approveWorkspace(pendingApproval.workspaceId, account);
 
-      // Update local state
       setWorkspaces((prev) =>
         prev.map((ws) =>
           ws.bmh_workspace_id === pendingApproval.workspaceId
@@ -127,7 +125,6 @@ function WorkspaceAccountsAdminContent() {
   }) => {
     const isEditing = editingCell?.rowId === workspaceId;
 
-    // Non-editable for Trial Workspaces
     if (workspaceType === 'Trial Workspace') {
       return <Text size="sm">{value || '-'}</Text>;
     }
@@ -171,7 +168,6 @@ function WorkspaceAccountsAdminContent() {
     );
   };
 
-  // Column definitions
   const columns: ColumnDef<Workspace>[] = [
     {
       accessorKey: 'user_id',
@@ -391,7 +387,6 @@ function WorkspaceAccountsAdminContent() {
         </Paper>
       </Stack>
 
-      {/* Confirmation Modal */}
       <Modal
         opened={confirmModalOpened}
         onClose={handleCancelApproval}

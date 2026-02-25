@@ -1,4 +1,3 @@
-// components/table/sortable-header.tsx
 // Reusable sortable table header component for React Table
 
 import { Group, Text } from '@mantine/core';
@@ -10,22 +9,6 @@ interface SortableHeaderProps {
   children: React.ReactNode;
 }
 
-/**
- * Sortable table header component that displays dynamic sort icons
- * based on the current sort state.
- *
- * @param column - The React Table column instance
- * @param children - The header text/content
- *
- * @example
- * ```tsx
- * {
- *   accessorKey: 'name',
- *   header: ({ column }) => <SortableHeader column={column}>Name</SortableHeader>,
- *   enableSorting: true,
- * }
- * ```
- */
 export function SortableHeader({ column, children }: SortableHeaderProps) {
   const sortDirection = column.getIsSorted();
 
@@ -43,18 +26,6 @@ export function SortableHeader({ column, children }: SortableHeaderProps) {
   );
 }
 
-/**
- * Simple bold header (non-sortable)
- *
- * @example
- * ```tsx
- * {
- *   accessorKey: 'id',
- *   header: () => <BoldHeader>ID</BoldHeader>,
- *   enableSorting: false,
- * }
- * ```
- */
 export function BoldHeader({ children }: { children: React.ReactNode }) {
   return <Text fw={700}>{children}</Text>;
 }

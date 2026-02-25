@@ -29,7 +29,6 @@ function NotFoundContent() {
         }
     }, [pathname, searchParams, router]);
 
-    // Show loader until we confirm it's a real 404
     if (!isConfirmed404) {
         return null;
     }

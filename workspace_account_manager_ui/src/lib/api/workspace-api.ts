@@ -327,9 +327,6 @@ export async function callExternalURL<T = any>(
   ) as Promise<T>;
 }
 
-/**
- * Default export with all API functions
- */
 const workspaceAPIClient = {
   getWorkspaces,
   getAdminWorkspaces,

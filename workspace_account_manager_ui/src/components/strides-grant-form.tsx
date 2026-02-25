@@ -350,7 +350,6 @@ export default function StridesGrantForm({ updateRedirectHome }: StridesGrantFor
           />
         </Stack>
 
-        {/* Submit Button */}
         <Group justify="center" mt="md">
           <Button type="submit" loading={isSubmitting} disabled={isSubmitting} size="lg">
             Submit Request

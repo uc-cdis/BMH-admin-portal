@@ -9,10 +9,6 @@ jest.mock('@/lib/auth/oidc', () => ({
   logout: jest.fn(),
 }));
 
-// config.json is mocked via moduleNameMapper in jest.config.ts:
-//   'config\.json$': '<rootDir>/src/__mocks__/config.json'
-// No jest.mock() call needed here — the mapper intercepts it globally.
-
 const mockedGetAccessToken = getAccessToken as jest.MockedFunction<typeof getAccessToken>;
 const mockedRefreshTokens = refreshTokens as jest.MockedFunction<typeof refreshTokens>;
 const mockedLogout = logout as jest.MockedFunction<typeof logout>;
@@ -43,8 +39,6 @@ describe('authorization', () => {
     mockedGetAccessToken.mockReturnValue('mock-access-token');
     global.fetch = jest.fn();
   });
-
-  // ── fetchUserAuthMapping / token handling ──────────────────────────────────
 
   describe('token handling', () => {
     it('calls logout and returns false when no access token is available', async () => {
@@ -141,8 +135,6 @@ describe('authorization', () => {
     });
   });
 
-  // ── authorize() logic ──────────────────────────────────────────────────────
-
   describe('authorize() logic', () => {
     it('returns false when userAuthMapping is null', async () => {
       // No token → getUserAuthMapping returns null
@@ -219,8 +211,6 @@ describe('authorization', () => {
     });
   });
 
-  // ── authorizeAdmin ─────────────────────────────────────────────────────────
-
   describe('authorizeAdmin', () => {
     it('returns true when user has admin access', async () => {
       (global.fetch as jest.Mock).mockResolvedValue(
@@ -238,8 +228,6 @@ describe('authorization', () => {
       expect(await authorizeAdmin()).toBe(false);
     });
   });
-
-  // ── authorizeCredits ───────────────────────────────────────────────────────
 
   describe('authorizeCredits', () => {
     it('returns true when user has credits access', async () => {
@@ -259,8 +247,6 @@ describe('authorization', () => {
     });
   });
 
-  // ── authorizeGrants ────────────────────────────────────────────────────────
-
   describe('authorizeGrants', () => {
     it('returns true when user has grants access', async () => {
       (global.fetch as jest.Mock).mockResolvedValue(
@@ -279,8 +265,6 @@ describe('authorization', () => {
     });
   });
 
-  // ── multiple resources in mapping ──────────────────────────────────────────
-
   describe('multiple resources in mapping', () => {
     it('each authorize function only checks its own resource', async () => {
       // Mapping grants access to all three resources
@@ -290,8 +274,6 @@ describe('authorization', () => {
         '/workspace_stride_grants': [{ method: 'access', service: 'workspace_stride_grants' }],
       };
 
-      // Each authorizeX() call invokes fetchUserAuthMapping which calls fetch once.
-      // Re-mock before each call so the resolved value is always fresh.
       (global.fetch as jest.Mock).mockResolvedValue(makeResponse(fullMapping));
       expect(await authorizeAdmin()).toBe(true);
 

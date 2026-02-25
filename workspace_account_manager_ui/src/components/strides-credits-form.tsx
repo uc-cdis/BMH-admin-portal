@@ -277,7 +277,6 @@ export default function StridesCreditsForm({ updateRedirectHome }: StridesCredit
           />
         </Stack>
 
-        {/* Submit Button */}
         <Group justify="center" mt="md">
           <Button type="submit" loading={isSubmitting} disabled={isSubmitting} size="lg">
             Submit Request

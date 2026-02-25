@@ -85,7 +85,6 @@ function WorkspaceAccountsContent() {
     loadData();
   }, []);
 
-  // Handle cell edit
   const handleCellEdit = async (
     workspaceId: string,
     field: 'soft-limit' | 'hard-limit',
@@ -132,7 +131,6 @@ function WorkspaceAccountsContent() {
 
       await setWorkspaceLimits(workspaceId, limits);
 
-      // Update local state
       const updateWorkspace = (ws: Workspace) =>
         ws.bmh_workspace_id === workspaceId ? { ...ws, [field]: numValue } : ws;
 
@@ -204,7 +202,6 @@ function WorkspaceAccountsContent() {
     );
   };
 
- // STRIDES workspace columns
   const stridesColumns: ColumnDef<Workspace>[] = [
     {
       accessorKey: 'nih_funded_award_number',
@@ -289,7 +286,6 @@ function WorkspaceAccountsContent() {
     },
   ];
 
-  // Direct Pay workspace columns
   const directPayColumns: ColumnDef<Workspace>[] = [
     {
       accessorKey: 'bmh_workspace_id',
@@ -385,7 +381,6 @@ function WorkspaceAccountsContent() {
   return (
     <Container size="xl" py="xl">
       <Stack gap="xl">
-        {/* STRIDES Credit Workspaces */}
         <Stack gap="md">
           <Title order={2} ta="center">
             STRIDES Credit Workspace Accounts
@@ -457,7 +452,6 @@ function WorkspaceAccountsContent() {
           </Alert>
         </Stack>
 
-        {/* OCC Direct Pay Workspaces */}
         <Stack gap="md">
           <Title order={2} ta="center">
             OCC Direct Pay Workspace Accounts
@@ -529,7 +523,6 @@ function WorkspaceAccountsContent() {
           </Alert>
         </Stack>
 
-        {/* Action Buttons */}
         <Group justify="center" mt="xl">
           <Button
             component={Link}

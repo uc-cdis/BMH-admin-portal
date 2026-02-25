@@ -21,7 +21,6 @@ const resources = config['authorization']['resources']
  * Check admin authorization (client-side)
  */
 export async function authorizeAdmin(): Promise<boolean> {
-  // return Promise.resolve(true);
   const userAuthMapping = await getUserAuthMapping();
   return authorize(resources['ADMIN'], userAuthMapping);
 }
@@ -63,7 +62,7 @@ function authorize(
 }
 
 /**
- * Get user authorization mapping (client-side API call)
+ * Get user authorization mapping
  */
 async function getUserAuthMapping(): Promise<UserAuthMapping | null> {
   let accessToken = getAccessToken();
@@ -73,10 +72,8 @@ async function getUserAuthMapping(): Promise<UserAuthMapping | null> {
     return null;
   }
 
-  // Try to get auth mapping
   let userAuthMapping = await fetchUserAuthMapping();
 
-  // If failed, try refreshing token
   if (!userAuthMapping) {
     const refreshed = await refreshTokens();
 

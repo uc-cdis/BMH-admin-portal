@@ -50,7 +50,6 @@ export function useAuth() {
   const refresh = useCallback(async () => {
     const success = await refreshTokens();
     if (success) {
-      // Update state
       setAuthenticated(isAuthenticated());
       setUserName(getName());
     }

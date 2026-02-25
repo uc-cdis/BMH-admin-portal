@@ -174,8 +174,6 @@ function RequestWorkspaceContent() {
               </Stack>
             </Center>
           </Stack>
-
-          {/* Form Type Toggle */}
           {segmentedControlData.length > 0 && (
             <Center mb="xl">
               <SegmentedControl
@@ -188,12 +186,8 @@ function RequestWorkspaceContent() {
               />
             </Center>
           )}
-
-          {/* Form Content */}
           {componentToRender}
         </Paper>
-
-        {/* Footer */}
         <Center>
           <Text size="sm" c="dimmed">
             &copy; 2026 {displayName}

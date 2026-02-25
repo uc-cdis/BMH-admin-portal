@@ -151,7 +151,6 @@ describe('WorkspaceAccountsAdminClient', () => {
     it('capitalises the first letter of request_status', async () => {
       setup();
       await waitFor(() => {
-        // "active" → "Active", "pending" → "Pending"
         expect(screen.getAllByText('Active').length).toBeGreaterThan(0);
         expect(screen.getByText('Pending')).toBeInTheDocument();
       });
@@ -160,7 +159,6 @@ describe('WorkspaceAccountsAdminClient', () => {
     it('displays dollar-prefixed usage values', async () => {
       setup();
       await waitFor(() => {
-        // $500 appears in multiple cells (total-usage and possibly soft-limit columns)
         expect(screen.getAllByText('$500').length).toBeGreaterThan(0);
       });
     });
