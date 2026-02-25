@@ -80,8 +80,7 @@ export function ProtectedRoute({
           maw={500}
         >
           <Text>
-            You do not have permission to access this page. Admin privileges are
-            required.
+            You do not have permission to access this page. Admin privileges are required.
           </Text>
         </Alert>
       </Center>
