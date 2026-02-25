@@ -12,6 +12,7 @@ import {
 } from '@/lib/auth/oidc';
 import { validateRedirectPath } from '@/lib/utils/routes';
 import { APP_ROUTES } from '@/lib/utils/routes';
+import { LoadingScreen } from '@/components/loading-screen';
 
 function LoginCallbackContent() {
   const searchParams = useSearchParams();
@@ -114,27 +115,14 @@ function LoginCallbackContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Completing authentication...</p>
-        <p className="mt-2 text-sm text-gray-500">Please wait...</p>
-      </div>
-    </div>
+    <LoadingScreen primaryMessage='Completing authentication...' secondaryMessage='Please wait...' />
   );
 }
 
 export default function LoginCallbackPage() {
   return (
     <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading...</p>
-          </div>
-        </div>
-      }
+      fallback={<LoadingScreen />}
     >
       <LoginCallbackContent />
     </Suspense>

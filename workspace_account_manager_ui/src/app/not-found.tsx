@@ -73,7 +73,7 @@ function NotFoundContent() {
 
 export default function NotFound() {
     return (
-        <Suspense fallback={<LoadingScreen message="Loading..." />}>
+        <Suspense fallback={<LoadingScreen />}>
             <NotFoundContent />
         </Suspense>
     );
