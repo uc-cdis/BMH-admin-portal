@@ -44,6 +44,7 @@ function WorkspaceAccountsAdminContent() {
   const [pendingApproval, setPendingApproval] = useState<{
     workspaceId: string;
     accountId: string;
+    confirming?: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -82,6 +83,7 @@ function WorkspaceAccountsAdminContent() {
   const handleConfirmApproval = async () => {
     if (!pendingApproval) return;
 
+    setPendingApproval((prev) => prev && { ...prev, confirming: true });
     try {
       const account = {
         account_id: pendingApproval.accountId,
@@ -400,7 +402,7 @@ function WorkspaceAccountsAdminContent() {
             <Button variant="default" onClick={handleCancelApproval}>
               Cancel
             </Button>
-            <Button color="blue" onClick={handleConfirmApproval}>
+            <Button color="blue" onClick={handleConfirmApproval} loading={!!pendingApproval?.confirming} disabled={!!pendingApproval?.confirming}>
               Confirm Approval
             </Button>
           </Group>
