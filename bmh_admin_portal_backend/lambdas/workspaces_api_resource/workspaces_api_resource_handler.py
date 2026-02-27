@@ -19,7 +19,6 @@ import boto3
 import botocore
 from botocore.exceptions import ClientError
 from boto3.dynamodb.conditions import Key
-from boto3.session import Session
 
 # Boilerplate code to have a workaround for unit tests and AWS deployment for relative imports
 sys.path.append(os.path.join(os.path.dirname(__file__)))
@@ -150,7 +149,7 @@ def create_response(status_code=200, body=None, headers=None):
     retval = {
         "statusCode": status_code,
         "headers": headers,
-        "body": json.dumps(body, cls=DecimalEncoder),
+        "body": json.dumps(body, cls=CustomEncoder),
     }
 
     logger.info("Response: ")
@@ -299,7 +298,7 @@ def _workspaces_post(body, email):
     item["user_id"] = email
     # Storing timestamp in integer format because dynamodb does not support datetime type natively.
     # Retrieval: datetime.fromtimestamp(int(item['creation_date']))
-    item["creation_date"] = int(datetime.utcnow().timestamp())
+    item["creation_date"] = int(datetime.now(timezone.utc).timestamp())
 
     if workspace_type == STRIDES_CREDITS_WORKSPACE_TYPE:
         item["strides-credits"] = decimal.Decimal(DEFAULT_STRIDES_CREDITS_AMOUNT)
@@ -338,7 +337,7 @@ def _workspaces_post(body, email):
 
 def _workspace_provision(body, path_params):
     """For now, this is a place holder for the actual process
-    which will create a workpace. Currently, it performs the following:
+    which will create a workspace. Currently, it performs the following:
         1. Create API Key - used by Workspace accounts to communicate
             back to the portal account.
         2. Create Workspace and Account IDs (randomly generated placeholders).
@@ -433,7 +432,7 @@ def _workspace_provision(body, path_params):
         ":snstopic": topic_arn,
         ":requeststatus": "provisioning",
         ":accountid": account_id,
-        ":provisiontime": int(datetime.utcnow().timestamp()),
+        ":provisiontime": int(datetime.now(timezone.utc).timestamp()),
     }
     expression_attribute_names = {
         "#apikey": "api-key",
@@ -639,7 +638,7 @@ def _workspaces_set_limits(body, path_params, user):
             ExpressionAttributeValues={
                 ":soft": round(decimal.Decimal(body["soft-limit"]), 2),
                 ":hard": round(decimal.Decimal(body["hard-limit"]), 2),
-                ":limitupdatetime": int(datetime.utcnow().timestamp()),
+                ":limitupdatetime": int(datetime.now(timezone.utc).timestamp()),
                 ":ecs": bool(False),
                 ":local": bool(True),
                 ":status": "active",
@@ -729,7 +728,9 @@ def _workspaces_set_total_usage(body, path_params, api_key):
         if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
             return create_response(
                 status_code=400,
-                body={"message": f"Could not find Workspace with id {workspace_id}"},
+                body={
+                    "message": f"Could not find Workspace with id {path_params['workspace_id']}"
+                },
             )
         else:
             raise e
@@ -750,7 +751,7 @@ def _workspaces_set_total_usage(body, path_params, api_key):
             ConditionExpression="attribute_exists(bmh_workspace_id)",
             ExpressionAttributeValues={
                 ":totalUsage": formatted_total_usage,
-                ":usageupdatetime": int(datetime.utcnow().timestamp()),
+                ":usageupdatetime": int(datetime.now(timezone.utc).timestamp()),
             },
             ExpressionAttributeNames={
                 "#totalUsage": "total-usage",
@@ -758,7 +759,7 @@ def _workspaces_set_total_usage(body, path_params, api_key):
             },
             ReturnValues="ALL_OLD",
         )
-        logger.info(f"Table response: {json.dumps(table_response, cls=DecimalEncoder)}")
+        logger.info(f"Table response: {json.dumps(table_response, cls=CustomEncoder)}")
     except ClientError as e:
         if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
             raise Exception("Could not find Workspace " f"with id {workspace_id}")
@@ -999,16 +1000,14 @@ def _get_site_info():
 
 
 # Helper class to convert a DynamoDB item to JSON.
-class DecimalEncoder(json.JSONEncoder):
-    # Usage explained here:
-    # https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GettingStarted.Python.03.html
-    def default(self, o):
-        if isinstance(o, decimal.Decimal):
-            if o % 1 > 0:
-                return float(o)
-            else:
-                return int(o)
-        return super(DecimalEncoder, self).default(o)
+class CustomEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, set):
+            return list(obj)
+        # Handle Decimal types which DynamoDB uses for numbers
+        if isinstance(obj, decimal.Decimal):
+            return float(obj)
+        return json.JSONEncoder.default(self, obj)
 
 
 def get_secret(secret_name):

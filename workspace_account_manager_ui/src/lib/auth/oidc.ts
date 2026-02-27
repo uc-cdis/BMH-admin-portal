@@ -1,0 +1,270 @@
+'use client';
+
+import { jwtDecode } from 'jwt-decode';
+import { v4 as uuidv4 } from 'uuid';
+import { APP_ROUTES } from '../utils/routes';
+
+interface DecodedToken {
+  context?: {
+    user?: {
+      name?: string;
+      [key: string]: any;
+    };
+  };
+  email?: string;
+  nonce?: string;
+  exp?: number;
+  [key: string]: any;
+}
+
+interface TokenSet {
+  id_token: string;
+  access_token: string;
+  refresh_token: string;
+}
+
+function setItem(key: string, value: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(key, value);
+  } catch (error) {
+    console.error(`Failed to set ${key} in localStorage:`, error);
+  }
+}
+
+function getItem(key: string): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const value = window.localStorage.getItem(key);
+    return value === 'undefined' ? null : value;
+  } catch (error) {
+    console.error(`Failed to get ${key} from localStorage:`, error);
+    return null;
+  }
+}
+
+function removeItem(key: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(key);
+  } catch (error) {
+    console.error(`Failed to remove ${key} from localStorage:`, error);
+  }
+}
+
+export function getAccessToken(): string | null {
+  return getItem('access_token');
+}
+
+export function getIdToken(): string | null {
+  return getItem('id_token');
+}
+
+export function getRefreshToken(): string | null {
+  return getItem('refresh_token');
+}
+
+export function storeTokens(tokens: TokenSet): void {
+  setItem('id_token', tokens.id_token);
+  setItem('access_token', tokens.access_token);
+  setItem('refresh_token', tokens.refresh_token);
+}
+
+export function removeTokens(): void {
+  removeItem('id_token');
+  removeItem('access_token');
+  removeItem('refresh_token');
+  removeItem('oauth_state');
+  removeItem('oauth_nonce');
+  removeItem('redirect_after_login');
+}
+
+/**
+ * Check if user is authenticated
+ */
+export function isAuthenticated(): boolean {
+  const token = getAccessToken();
+  if (!token) return false;
+
+  // Check if token is expired
+  try {
+    const decoded = jwtDecode<DecodedToken>(token);
+    if (decoded.exp) {
+      const now = Date.now() / 1000;
+      return decoded.exp > now;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get user name from token
+ */
+export function getName(): string | null {
+  const token = getAccessToken();
+  if (!token) return null;
+
+  try {
+    const decoded = jwtDecode<DecodedToken>(token);
+    return decoded.context?.user?.name ?? 'Unknown';
+  } catch {
+    return 'Unknown';
+  }
+}
+
+/**
+ * Get user email from token
+ */
+export function getEmail(): string | null {
+  const idToken = getIdToken();
+  if (!idToken) return null;
+
+  try {
+    const decoded = jwtDecode<DecodedToken>(idToken);
+    return decoded.email ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function initiateLogin(
+  authUri: string,
+  clientId: string,
+  redirectUri: string,
+  authService: string,
+  redirectAfterLogin: string = APP_ROUTES.HOME
+): void {
+  if (typeof window === 'undefined') return;
+
+  const state = uuidv4();
+  const nonce = uuidv4();
+
+  // Store in localStorage
+  setItem('oauth_state', state);
+  setItem('oauth_nonce', nonce);
+  setItem('redirect_after_login', redirectAfterLogin);
+
+  // Build OAuth URL
+  const params = new URLSearchParams({
+    response_type: 'code',
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    state: state,
+    nonce: nonce,
+    scope: 'openid user',
+    idp: authService,
+  });
+
+  const authUrl = `${authUri}?${params.toString()}`;
+
+  window.location.assign(authUrl);
+}
+
+export function validateState(receivedState: string): boolean {
+  const storedState = getItem('oauth_state');
+  const isValid = receivedState === storedState;
+
+  if (isValid) {
+    removeItem('oauth_state');
+  }
+
+  return isValid;
+}
+
+export function validateNonce(receivedNonce: string): boolean {
+  const storedNonce = getItem('oauth_nonce');
+  const isValid = receivedNonce === storedNonce;
+
+  if (isValid) {
+    removeItem('oauth_nonce');
+  }
+
+  return isValid;
+}
+
+/**
+ * Exchange authorization code for tokens
+ * Calls backend API directly from browser
+ */
+export async function exchangeCodeForTokens(
+  code: string,
+  apiEndpoint: string,
+  apiKey: string
+): Promise<TokenSet> {
+
+  const response = await fetch(
+    `${apiEndpoint}/auth/get-tokens?code=${code}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Api-Key': apiKey,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Token exchange failed:', errorText);
+    throw new Error(`Failed to exchange code: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  if (!data.id_token || !data.access_token || !data.refresh_token) {
+    throw new Error('Invalid token response');
+  }
+
+  return {
+    id_token: data.id_token,
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
+  };
+}
+
+export async function refreshTokens(): Promise<boolean> {
+  const apiEndpoint = process.env.NEXT_PUBLIC_API_GW_ENDPOINT!;
+  const apiKey = process.env.NEXT_PUBLIC_API_KEY!;
+  const refreshToken = getRefreshToken();
+
+  if (!refreshToken) {
+    console.error('❌ No refresh token');
+    return false;
+  }
+
+  try {
+    const response = await fetch(
+      `${apiEndpoint}/auth/refresh-tokens`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Key': apiKey,
+        },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Token refresh failed');
+    }
+
+    const tokens = await response.json();
+    storeTokens(tokens);
+    return true;
+
+  } catch (error) {
+    console.error('❌ Token refresh error:', error);
+    return false;
+  }
+}
+
+export function logout(): void {
+  removeTokens();
+
+  if (typeof window !== 'undefined') {
+    window.location.href = APP_ROUTES.HOME;
+  }
+}

@@ -1,0 +1,124 @@
+'use client';
+
+import { Suspense } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { jwtDecode } from 'jwt-decode';
+import {
+  validateState,
+  validateNonce,
+  exchangeCodeForTokens,
+  storeTokens,
+} from '@/lib/auth/oidc';
+import { validateRedirectPath } from '@/lib/utils/routes';
+import { APP_ROUTES } from '@/lib/utils/routes';
+import { LoadingScreen } from '@/components/loading-screen';
+
+function LoginCallbackContent() {
+  const searchParams = useSearchParams();
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function handleCallback() {
+      const code = searchParams.get('code');
+      const state = searchParams.get('state');
+      const oauthError = searchParams.get('error');
+
+      // Handle OAuth errors
+      if (oauthError) {
+        console.error('❌ OAuth error:', oauthError);
+        setError(oauthError);
+        return;
+      }
+
+      // Check required parameters
+      if (!code || !state) {
+        console.error('❌ Missing code or state');
+        setError('invalid_request');
+        return;
+      }
+
+      // Validate state (CSRF protection)
+      if (!validateState(state)) {
+        console.error('❌ State validation failed');
+        setError('invalid_state');
+        return;
+      }
+
+      try {
+        // Exchange code for tokens (direct API call)
+        const tokens = await exchangeCodeForTokens(
+          code,
+          process.env.NEXT_PUBLIC_API_GW_ENDPOINT!,
+          process.env.NEXT_PUBLIC_API_KEY!
+        );
+
+        // Validate nonce
+        const decoded: any = jwtDecode(tokens.id_token);
+        if (!validateNonce(decoded.nonce)) {
+          console.error('❌ Nonce validation failed');
+          setError('invalid_nonce');
+          return;
+        }
+
+        // Store tokens in localStorage
+        storeTokens(tokens);
+
+        // Get redirect URL
+        const storedPath = localStorage.getItem('redirect_after_login') || APP_ROUTES.HOME;
+        localStorage.removeItem('redirect_after_login');
+
+        const redirectUrl = validateRedirectPath(storedPath);
+
+        // Redirect to app
+        if (redirectUrl) {
+          window.location.href = redirectUrl;
+        }
+
+      } catch (err) {
+        console.error('❌ Authentication error:', err);
+        setError('authentication_failed');
+      }
+    }
+
+    handleCallback();
+  }, [searchParams]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full p-8">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <p className="font-bold">Authentication Error</p>
+            <p className="text-sm mt-2">
+              {error === 'invalid_state' && 'Security validation failed. Please try again.'}
+              {error === 'invalid_nonce' && 'Security validation failed. Please try again.'}
+              {error === 'authentication_failed' && 'Authentication failed. Please try again.'}
+              {error === 'invalid_request' && 'Invalid request. Missing required parameters.'}
+            </p>
+            <a
+              href="/login"
+              className="mt-4 inline-block text-sm underline hover:text-red-800"
+            >
+              Back to Login
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <LoadingScreen primaryMessage='Completing authentication...' secondaryMessage='Please wait...' />
+  );
+}
+
+export default function LoginCallbackPage() {
+  return (
+    <Suspense
+      fallback={<LoadingScreen />}
+    >
+      <LoginCallbackContent />
+    </Suspense>
+  );
+}
