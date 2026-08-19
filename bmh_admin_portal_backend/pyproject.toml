@@ -22,6 +22,8 @@ python = ">=3.13,<4"
 boto3 = ">=1.40.2"
 botocore = "*"
 jwt = ">=1,<2"
+# CVE-2026-69247 (SNYK-PYTHON-CRYPTOGRAPHY-18516621): PKCS7 decryption timing side channel
+cryptography = ">=50.0.0"
 "aws-cdk.core" = "^1.196.0"
 "aws-cdk.aws-apigateway" = "*"
 "aws-cdk.aws-logs" = "*"
