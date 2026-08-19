@@ -7,13 +7,15 @@
 ## DEPRECATED. This is not currently being used. It was originally used to demo
 ## authentication capabilities.
 
-from aws_cdk import core, aws_ssm as ssm, aws_cognito as cognito
+from aws_cdk import aws_ssm as ssm, aws_cognito as cognito
+from aws_cdk import Duration
+from constructs import Construct
 
 from bmh_admin_portal_backend.bmh_admin_portal_config import BMHAdminPortalBackendConfig
 
 
 class BMHAdminPortalCognitoUserPool(core.Construct):
-    def __init__(self, scope: core.Construct, construct_id: str, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         config = BMHAdminPortalBackendConfig.get_config()

@@ -1,5 +1,6 @@
 from aws_cdk import (
-    core,
+    Duration,
+    Aws,
     aws_lambda as lambda_,
     aws_stepfunctions as stepfunctions,
     aws_stepfunctions_tasks as sfn_tasks,
@@ -7,13 +8,14 @@ from aws_cdk import (
     aws_iam as iam,
     aws_logs as logs,
 )
+from constructs import Construct
 from ..bmh_admin_portal_config import BMHAdminPortalBackendConfig
 
 
-class ProvisioningWorkflow(core.Construct):
+class ProvisioningWorkflow(Construct):
     def __init__(
         self,
-        scope: core.Construct,
+        scope: Construct,
         construct_id: str,
         brh_asset_bucket=None,
         dynamodb_table=None,
@@ -62,8 +64,8 @@ class ProvisioningWorkflow(core.Construct):
             self,
             "stepfn-handler",
             runtime=lambda_.Runtime.PYTHON_3_9,
-            timeout=core.Duration.seconds(600),
-            code=lambda_.Code.asset("lambdas/step_functions_handler"),
+            timeout=Duration.seconds(600),
+            code=lambda_.Code.from_asset("lambdas/step_functions_handler"),
             handler="src.app.handler",
             description="Function which deploys BRH specific infrastructure (cost and usage, etc.) to member accounts.",
             environment={
@@ -109,7 +111,7 @@ class ProvisioningWorkflow(core.Construct):
                     "ssm:GetParameterHistory",
                 ],
                 resources=[
-                    f"arn:aws:ssm:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:parameter/bmh/*"
+                    f"arn:aws:ssm:{Aws.REGION}:{Aws.ACCOUNT_ID}:parameter/bmh/*"
                 ],
             )
         )
@@ -216,7 +218,7 @@ class ProvisioningWorkflow(core.Construct):
         state_machine = stepfunctions.StateMachine(
             self,
             "workflow-request-state-machine",
-            definition=chain,
+            definition_body=stepfunctions.DefinitionBody.from_chainable(chain),
             logs={"destination": log_group, "level": stepfunctions.LogLevel.ALL},
         )
 
