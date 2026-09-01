@@ -52,7 +52,6 @@ class ProvisioningWorkflow(Construct):
         #     - BRH Provision Task                                                        #
         #     - Example Run Command Task                                                  #
         ###################################################################################
-        self.occ_lambda_task = self.create_occ_lambda_task(config)
         self.brh_provision_task = self.create_brh_provision_task()
         self.email_task = self.create_email_task()
         self.workflow = self.create_step_functions_workflow()
@@ -128,26 +127,6 @@ class ProvisioningWorkflow(Construct):
 
         return stepfn_lambda
 
-    def create_occ_lambda_task(self, config):
-        create_workspace_lambda = lambda_.Function.from_function_arn(
-            self,
-            "workspace-occ-create-function",
-            function_arn=config["account_creation_lambda_arn"],
-        )
-
-        create_workspace_task = sfn_tasks.LambdaInvoke(
-            self,
-            "create-workspace-task",
-            lambda_function=create_workspace_lambda,
-            payload_response_only=True,
-            input_path="$.ddi_lambda_input",
-            result_path="$.brh_infrastructure.ddi_lambda_output",
-        )
-
-        create_workspace_task.add_catch(
-            self.get_handle_error_task(), result_path="$.error"
-        )
-        return create_workspace_task
 
     def get_handle_error_task(self):
         if self.handle_error_task == None:
@@ -207,7 +186,7 @@ class ProvisioningWorkflow(Construct):
         )
 
         chain = (
-            self.occ_lambda_task.next(self.brh_provision_task)
+            self.brh_provision_task
             .next(self.email_task)
             .next(finish_task)
         )
