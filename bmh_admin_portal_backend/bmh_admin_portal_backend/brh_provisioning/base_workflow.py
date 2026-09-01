@@ -63,7 +63,7 @@ class ProvisioningWorkflow(Construct):
         stepfn_lambda = lambda_.Function(
             self,
             "stepfn-handler",
-            runtime=lambda_.Runtime.PYTHON_3_9,
+            runtime=lambda_.Runtime.PYTHON_3_13,
             timeout=Duration.seconds(600),
             code=lambda_.Code.from_asset("lambdas/step_functions_handler"),
             handler="src.app.handler",
