@@ -14,7 +14,7 @@ from constructs import Construct
 from bmh_admin_portal_backend.bmh_admin_portal_config import BMHAdminPortalBackendConfig
 
 
-class BMHAdminPortalCognitoUserPool(core.Construct):
+class BMHAdminPortalCognitoUserPool(Construct):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
@@ -44,9 +44,9 @@ class BMHAdminPortalCognitoUserPool(core.Construct):
         app_client = pool.add_client(
             "bmh-portal-client",
             auth_flows=cognito.AuthFlow(user_srp=True),
-            access_token_validity=core.Duration.hours(8),
-            id_token_validity=core.Duration.hours(8),
-            refresh_token_validity=core.Duration.days(30),
+            access_token_validity=Duration.hours(8),
+            id_token_validity=Duration.hours(8),
+            refresh_token_validity=Duration.days(30),
         )
 
         # Store the AppClient ID to SSM
