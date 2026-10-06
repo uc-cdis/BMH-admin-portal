@@ -1007,6 +1007,8 @@ class CustomEncoder(json.JSONEncoder):
         # Handle Decimal types which DynamoDB uses for numbers
         if isinstance(obj, decimal.Decimal):
             return float(obj)
+        if isinstance(o, (set, frozenset)):
+            return list(o)
         return json.JSONEncoder.default(self, obj)
 
 
