@@ -85,6 +85,7 @@ def lambda_handler(event, context):
         policy.allowMethod("PUT", "/workspaces/*/limits")
         policy.allowMethod("PUT", "/workspaces/*/direct-pay-limit")
         policy.allowMethod("GET", "/workspaces/*")
+        policy.allowMethod("POST", "/workspaces")
 
     # Finally, build the policy
     authResponse = policy.build()
