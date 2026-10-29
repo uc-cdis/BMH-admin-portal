@@ -11,11 +11,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js 20.x
+      - uses: actions/checkout@v7
+      - name: Use Node.js from .nvmrc
         uses: actions/setup-node@v6
         with:
-          node-version: 20.x
+          node-version-file: workspace_account_manager_ui/.nvmrc
       - name: Setup and run npm test
         run: |
             cd workspace_account_manager_ui
@@ -28,9 +28,9 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
       - name: Set up python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Install poetry
@@ -49,9 +49,9 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
       - name: Set up python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Install pip requirements
