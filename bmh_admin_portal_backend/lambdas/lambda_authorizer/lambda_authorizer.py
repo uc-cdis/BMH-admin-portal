@@ -21,7 +21,7 @@ logger.setLevel(logging.INFO)
 def lambda_handler(event, context):
     """Do not print the auth token unless absolutely necessary"""
     # logger.info(json.dumps(event))
-    # logger.info("Method ARN: " + event['methodArn'])
+    logger.info("Method ARN: " + event['methodArn'])
     """validate the incoming token"""
     """and produce the principal user identifier associated with the token"""
 
@@ -253,6 +253,7 @@ class AuthPolicy(object):
     def allowMethod(self, verb, resource):
         """Adds an API Gateway method (Http verb + Resource path) to the list of allowed
         methods for the policy"""
+        logger.info(f"Allowing {verb=} on {resource=}")
         self._addMethod("Allow", verb, resource, [])
 
     def denyMethod(self, verb, resource):
