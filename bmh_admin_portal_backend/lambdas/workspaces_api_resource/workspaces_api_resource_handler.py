@@ -288,14 +288,18 @@ def _workspaces_post(body, email):
     if body is not None:
         item = body
 
-    item["workspace_request_id"] = workspace_request_id
-    item["user_id"] = email
-    item["root_account_email"] = root_email
+    if not email:
+        if "user" in body:
+            email = body["user"]
+        else:
+            raise Exception("Required `user` parameter in request body")
 
     # Set some defaults
-    item["bmh_workspace_id"] = workspace_request_id
-    item["request_status"] = "pending"
     item["user_id"] = email
+    item["workspace_request_id"] = workspace_request_id
+    item["bmh_workspace_id"] = workspace_request_id
+    item["root_account_email"] = root_email
+    item["request_status"] = "pending"
     # Storing timestamp in integer format because dynamodb does not support datetime type natively.
     # Retrieval: datetime.fromtimestamp(int(item['creation_date']))
     item["creation_date"] = int(datetime.now(timezone.utc).timestamp())
@@ -636,8 +640,8 @@ def _workspaces_set_limits(body, path_params, user):
             UpdateExpression=update_expression,
             ConditionExpression="attribute_exists(bmh_workspace_id)",
             ExpressionAttributeValues={
-                ":soft": round(decimal.Decimal(body["soft-limit"]), 2),
-                ":hard": round(decimal.Decimal(body["hard-limit"]), 2),
+                ":soft": soft_limit,
+                ":hard": hard_limit,
                 ":limitupdatetime": int(datetime.now(timezone.utc).timestamp()),
                 ":ecs": bool(False),
                 ":local": bool(True),
