@@ -6,6 +6,7 @@ from constructs import Construct
 from aws_cdk import (
     Stack,
     Duration,
+    RemovalPolicy,
     aws_lambda as lambda_,
     aws_apigateway as apigateway,
     aws_logs as logs,
@@ -41,6 +42,8 @@ class BmhAdminPortalBackendStack(Stack):
             ),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             encryption=dynamodb.TableEncryption.AWS_MANAGED,
+            point_in_time_recovery=True,
+            removal_policy=RemovalPolicy.DESTROY,
         )
 
         # This should be unique per stack deployment, but consistent
