@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Container, Title, Text, SegmentedControl, Paper, Stack, Center } from '@mantine/core';
 import StridesGrantForm from '@/components/strides-grant-form';
 import StridesCreditForm from '@/components/strides-credits-form';
-import DirectPayForm from '@/components/direct-pay-form';
+// import DirectPayForm from '@/components/direct-pay-form';
 import { authorizeCredits } from '@/lib/auth/authorization';
 import { ProtectedRoute } from '@/components/protected-route';
 import { APP_ROUTES } from '@/lib/utils/routes';
@@ -135,26 +135,22 @@ function RequestWorkspaceContent() {
     componentToRender = (
       <Stack gap="md">
         <Text c="dimmed">
-          If you have registered through Payment Solutions Portal, received a unique Billing ID
-          from OCC, and are requesting a workspace account through Direct Pay, please proceed
-          with filling out the form below. If your request is approved, then a new account with a
-          spending limit will be provisioned for usage. If you have not received a Billing ID from
-          OCC, please proceed to the{' '}
-          <Text
+          Please follow the following link to OCC Payment Portal to set up
+          an account.
+        </Text>
+        <Title order={4}>Link to OCC Payment Portal</Title>
+        <Center>
+          <Button
             component="a"
-            href="https://payments.occ-data.org/"
-            c="blue"
-            td="underline"
+            href="https://ppk8s.mc2dp.occ-pla.net/"
             target="_blank"
             rel="noopener noreferrer"
+            color="green"
+            size="md"
           >
-            Payment Solutions Portal
-          </Text>{' '}
-          to complete your registration, and return to make a request here once you receive your
-          Billing ID.
-        </Text>
-        <Title order={4}>Request Form for OCC Direct Pay Account</Title>
-        <DirectPayForm updateRedirectHome={setRedirectHome} />
+            Request OCC Direct Pay Account
+          </Button>
+        </Center>
       </Stack>
     );
   }
